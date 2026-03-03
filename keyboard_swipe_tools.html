@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鍵盤上下滑配置視覺化編輯器</title>
+    <style>
+        body {
+            background-color: #f0f8ff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header-title { margin-bottom: 10px; color: #1c1c1e; }
+        
+        .author-badge {
+            display: inline-block;
+            background: #007AFF;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .steps-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed #5ac8fa;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #5ac8fa;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background-color: #e6f7ff;
+            border-color: #007aff;
+            color: #007aff;
+        }
+
+        .btn {
+            background-color: #5ac8fa;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+        }
+        .btn:hover { background-color: #47b5e8; }
+        .btn.success { background-color: #34c759; }
+        .btn.success:hover { background-color: #2eb350; }
+        .btn.warning { background-color: #ff9500; }
+        .btn.warning:hover { background-color: #e08300; }
+        .btn.outline { background-color: transparent; border: 1px solid #5ac8fa; color: #007aff; box-shadow: none; }
+        .btn.outline:hover { background-color: #e6f7ff; }
+
+        .workspace {
+            display: flex;
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            align-items: stretch;
+            flex: 1;
+        }
+
+        .left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            min-width: 0;
+        }
+
+        .keyboard-area {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5ea;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            min-height: 300px;
+            flex-shrink: 0;
+        }
+
+        .code-area {
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5ea;
+            box-sizing: border-box;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        textarea {
+            width: 100%;
+            flex: 1;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            background: #f4f5f7;
+            color: #333;
+            box-sizing: border-box;
+            resize: none;
+            white-space: pre;
+            min-height: 200px;
+        }
+
+        .editor-area {
+            flex: 1.2;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5ea;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: opacity 0.3s;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .key {
+            position: relative;
+            width: 45px;
+            height: 60px;
+            background: #ffffff;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 18px;
+            font-weight: 500;
+            color: #1c1c1e;
+            transition: all 0.1s;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        .key:hover { filter: brightness(0.95); }
+        .key.selected {
+            border: 3px solid #007aff;
+            box-shadow: 0 0 8px rgba(0,122,255,0.5);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .swipe-label {
+            position: absolute;
+            font-size: 11px;
+            color: #8e8e93;
+            font-weight: 500;
+            pointer-events: none;
+        }
+        .swipe-up-label { top: 4px; }
+        .swipe-down-label { bottom: 4px; }
+
+        .editor-group {
+            background: #f9f9f9;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e5ea;
+        }
+        .editor-group h3 { margin: 0 0 10px 0; font-size: 14px; color: #1c1c1e; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .input-row label { font-size: 13px; color: #555; }
+        .input-row input[type="text"]:not(.hex-input), .input-row input[type="number"], .input-row select {
+            padding: 5px 8px;
+            border: 1px solid #d1d1d6;
+            border-radius: 6px;
+            width: 140px;
+            font-size: 13px;
+        }
+        
+        .input-row input[type="number"]::placeholder {
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* 顏色與色碼專用排版 */
+        .color-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .hex-input {
+            font-family: monospace;
+            font-size: 13px;
+            color: #333;
+            background: #fff;
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid #c7c7cc;
+            width: 65px !important;
+            text-align: center;
+            box-sizing: border-box;
+            text-transform: uppercase;
+        }
+        .hex-input:focus { outline: none; border-color: #007AFF; box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+
+        .input-row input[type="color"] {
+            padding: 0;
+            width: 40px;
+            height: 28px;
+            border: 1px solid #d1d1d6;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="header-title">⌨️ 鍵盤上下滑配置視覺化編輯器</h2>
+    <div class="author-badge">版權所有 ＆ 製作：WHY</div>
+
+    <div class="steps-container">
+        <div class="drop-zone" id="dropZone1">
+            <div style="font-size: 14px; margin-bottom: 5px; color: #888;">Step 1</div>
+            <span id="dz1Text">拖放「鍵盤配置與顏色設定檔 (如 pinyin_26.jsonnet)」<br>以還原你的原始鍵盤佈局與底色</span>
+            <input type="file" id="fileInput1" accept=".libsonnet,.json,.jsonnet" style="display: none;">
+        </div>
+
+        <div class="drop-zone" id="dropZone2">
+            <div style="font-size: 14px; margin-bottom: 5px; color: #888;">Step 2</div>
+            <span id="dz2Text">拖放「swipeData.libsonnet」<br>載入上下滑設定資料</span>
+            <input type="file" id="fileInput2" accept=".libsonnet,.json,.jsonnet" style="display: none;">
+        </div>
+    </div>
+
+    <div class="workspace">
+        
+        <div class="left-panel">
+            <div class="keyboard-area" id="keyboardArea">
+                <p style="color: #8e8e93; margin-top: 50px;">請先完成 Step 1 或 Step 2 上傳檔案</p>
+            </div>
+
+            <div class="code-area">
+                <div class="code-header">
+                    <h3 style="margin: 0; color: #1c1c1e;">程式碼預覽 (swipeData)</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn outline" id="copyFullBtn">📄 複製完整程式碼</button>
+                        <button class="btn success" id="downloadBtn">💾 下載程式碼檔案</button>
+                    </div>
+                </div>
+                <textarea id="codeOutput" readonly placeholder="// 當您套用更新後，程式碼將會顯示於此..."></textarea>
+            </div>
+        </div>
+
+        <div class="editor-area" id="editorArea" style="opacity: 0.5; pointer-events: none;">
+            <h2 style="margin: 0; font-size: 18px;">Step 3: 編輯按鍵 <span id="currentKeyDisplay" style="color:#007aff;">-</span></h2>
+            
+            <div class="editor-group">
+                <h3>⇧ 上滑 (Swipe Up)</h3>
+                <div class="input-row">
+                    <label>輸出類型:</label>
+                    <select id="upType">
+                        <option value="character">character (單一字元)</option>
+                        <option value="symbol">symbol (符號)</option>
+                        <option value="sendKeys">sendKeys (組合/快捷鍵)</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>輸出內容:</label>
+                    <input type="text" id="upSymbol" placeholder="例如: 1, @, Control+,">
+                </div>
+                <div class="input-row">
+                    <label>鍵盤顯示文字:</label>
+                    <input type="text" id="upLabel" placeholder="顯示的提示詞">
+                </div>
+                <div class="input-row">
+                    <label>字體大小:</label>
+                    <input type="number" id="upSize" placeholder="預設 (未指定)">
+                </div>
+                <div class="input-row">
+                    <label>字體顏色:</label>
+                    <div class="color-wrapper">
+                        <input type="text" id="upColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                        <input type="color" id="upColor" value="#8e8e93">
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-group">
+                <h3>⇩ 下滑 (Swipe Down)</h3>
+                <div class="input-row">
+                    <label>輸出類型:</label>
+                    <select id="downType">
+                        <option value="character">character (單一字元)</option>
+                        <option value="symbol">symbol (符號)</option>
+                        <option value="sendKeys">sendKeys (組合/快捷鍵)</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label>輸出內容:</label>
+                    <input type="text" id="downSymbol" placeholder="例如: 1, @, Control+,">
+                </div>
+                <div class="input-row">
+                    <label>鍵盤顯示文字:</label>
+                    <input type="text" id="downLabel" placeholder="顯示的提示詞">
+                </div>
+                <div class="input-row">
+                    <label>字體大小:</label>
+                    <input type="number" id="downSize" placeholder="預設 (未指定)">
+                </div>
+                <div class="input-row">
+                    <label>字體顏色:</label>
+                    <div class="color-wrapper">
+                        <input type="text" id="downColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                        <input type="color" id="downColor" value="#8e8e93">
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed #d1d1d6; width: 100%; margin: 5px 0;">
+
+            <div class="editor-group" style="background: #e6f7ff; border-color: #5ac8fa;">
+                <h3 style="color: #007aff; border-bottom: 1px solid #b3e5fc;">🎨 一鍵批次修改所有按鍵</h3>
+                
+                <div class="input-row" style="justify-content: flex-start; gap: 6px;">
+                    <label style="width: 58px;">上滑設定:</label>
+                    <input type="number" id="batchUpSize" placeholder="尺寸" style="width: 40px !important;">
+                    <input type="text" id="batchUpColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                    <input type="color" id="batchUpColor" value="#8e8e93">
+                    <button class="btn" style="flex: 1; padding: 5px; font-size: 13px; min-width: 0;" onclick="batchUpdate('up')">套用上滑</button>
+                </div>
+
+                <div class="input-row" style="justify-content: flex-start; gap: 6px; margin-bottom: 0;">
+                    <label style="width: 58px;">下滑設定:</label>
+                    <input type="number" id="batchDownSize" placeholder="尺寸" style="width: 40px !important;">
+                    <input type="text" id="batchDownColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                    <input type="color" id="batchDownColor" value="#8e8e93">
+                    <button class="btn" style="flex: 1; padding: 5px; font-size: 13px; min-width: 0;" onclick="batchUpdate('down')">套用下滑</button>
+                </div>
+            </div>
+
+            <button class="btn success" id="mainSaveBtn" style="width: 100%; font-size: 15px; margin-top: 5px;" onclick="saveKeyData()">套用上下滑配置更新並產出程式碼</button>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <button class="btn outline" style="flex: 1; font-size: 13px;" id="copyPanelBtn">📄 複製上下滑配置</button>
+                <button class="btn warning" style="flex: 1; font-size: 13px;" id="pastePanelBtn">📋 貼上上下滑配置</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let layoutRows = [
+            ['q','w','e','r','t','y','u','i','o','p'],
+            ['a','s','d','f','g','h','j','k','l'],
+            ['shift','z','x','c','v','b','n','m','backspace'],
+            ['numeric','space','enter']
+        ];
+        
+        let swipeData = { swipe_up: {}, swipe_down: {} };
+        let currentSelectedKey = null;
+        let originalLayoutColors = {};
+        let defaultBgMap = {
+            'alphabeticBackgroundStyle': '#ffffff',
+            'systemButtonBackgroundStyle': '#e5e5ea',
+            'searchButtonBackgroundStyle': '#007aff'
+        };
+        let step2FileName = 'swipeData.libsonnet';
+        
+        let internalClipboardText = "";
+
+        // ==========================================
+        // 顏色雙向連動綁定函數
+        // ==========================================
+        function bindColorInputs(colorId, textId) {
+            const colorEl = document.getElementById(colorId);
+            const textEl = document.getElementById(textId);
+            
+            colorEl.addEventListener('input', (e) => {
+                textEl.value = e.target.value.toUpperCase();
+            });
+            
+            textEl.addEventListener('input', (e) => {
+                let val = e.target.value.trim();
+                // 檢查是否為合法色碼
+                if (val.match(/^#[0-9A-Fa-f]{6}$/i)) {
+                    colorEl.value = val.toLowerCase();
+                }
+            });
+        }
+        
+        // 啟動顏色連動
+        bindColorInputs('upColor', 'upColorText');
+        bindColorInputs('downColor', 'downColorText');
+        bindColorInputs('batchUpColor', 'batchUpColorText');
+        bindColorInputs('batchDownColor', 'batchDownColorText');
+
+        function extractKeyName(cellName) {
+            if (!cellName) return null;
+            let name = cellName.replace('Button', '').toLowerCase();
+            const map = {
+                'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
+                'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'zero': '0',
+                'semicolon': ';', 'slash': '/', 'comma': ',', 'period': '.',
+                'perioddirect': '.', 'tildedirect': '~'
+            };
+            return map[name] || name;
+        }
+
+        function parseStep1Safe(text) {
+            let extractedRows = [];
+            const hstackRegex = /HStack:\s*\{\s*subviews:\s*\[(.*?)\]\s*\}/g;
+            let match;
+            while ((match = hstackRegex.exec(text)) !== null) {
+                const cellsMatch = match[1].match(/Cell:\s*'([^']+)'/g);
+                if (cellsMatch) {
+                    let row = cellsMatch.map(c => c.match(/Cell:\s*'([^']+)'/)[1]);
+                    extractedRows.push(row);
+                }
+            }
+            if (extractedRows.length > 0) layoutRows = extractedRows;
+
+            const colorRegex = /'([^']+)'\+?:\s*\{\s*.*?normalColor:\s*'([^']+)'/g;
+            let cMatch;
+            while ((cMatch = colorRegex.exec(text)) !== null) {
+                originalLayoutColors[cMatch[1]] = cMatch[2];
+            }
+            
+            if (originalLayoutColors['alphabeticBackgroundStyle']) defaultBgMap['alphabeticBackgroundStyle'] = originalLayoutColors['alphabeticBackgroundStyle'];
+            if (originalLayoutColors['systemButtonBackgroundStyle']) defaultBgMap['systemButtonBackgroundStyle'] = originalLayoutColors['systemButtonBackgroundStyle'];
+            if (originalLayoutColors['searchButtonBackgroundStyle']) defaultBgMap['searchButtonBackgroundStyle'] = originalLayoutColors['searchButtonBackgroundStyle'];
+        }
+
+        function parseStep2Data(text) {
+            let cleanText = text.replace(/\/\/.*$/gm, '');
+            cleanText = cleanText.replace(/,\s*([}\]])/g, '$1');
+            return new Function("return (" + cleanText + ");")();
+        }
+
+        function renderKeyboard() {
+            const area = document.getElementById('keyboardArea');
+            area.innerHTML = '';
+
+            layoutRows.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'keyboard-row';
+                
+                row.forEach(cellName => {
+                    let keyChar = extractKeyName(cellName);
+                    if (!keyChar) return;
+
+                    const keyBtn = document.createElement('div');
+                    keyBtn.className = 'key';
+                    keyBtn.id = 'key-' + keyChar;
+                    
+                    let bgStyle = 'alphabeticBackgroundStyle';
+                    if (['backspace', 'enter', 'shift', 'numeric', 'space'].includes(keyChar)) bgStyle = 'systemButtonBackgroundStyle';
+                    if (keyChar === 'enter') bgStyle = 'searchButtonBackgroundStyle';
+
+                    keyBtn.style.backgroundColor = defaultBgMap[bgStyle];
+
+                    if (keyChar === 'space') {
+                        keyBtn.style.width = '159px';
+                        keyBtn.innerText = '空白鍵';
+                    } else if (keyChar === 'backspace') {
+                        keyBtn.style.width = '50px';
+                        keyBtn.innerText = '⌫';
+                    } else if (keyChar === 'shift') {
+                        keyBtn.style.width = '50px';
+                        keyBtn.innerText = '⇧';
+                    } else if (keyChar === 'numeric') {
+                        keyBtn.style.width = '55px';
+                        keyBtn.innerText = '123';
+                    } else if (keyChar === 'enter') {
+                        keyBtn.style.width = '70px';
+                        keyBtn.innerText = 'Enter';
+                        keyBtn.style.color = '#fff';
+                    } else {
+                        keyBtn.innerText = keyChar;
+                    }
+                    
+                    const upData = swipeData.swipe_up[keyChar];
+                    if (upData && upData.label) {
+                        const upSpan = document.createElement('span');
+                        upSpan.className = 'swipe-label swipe-up-label';
+                        upSpan.innerText = upData.label.text || '';
+                        if (upData.fontSize) upSpan.style.fontSize = upData.fontSize + 'px';
+                        let c = upData.normalColor || upData.label.color;
+                        if (c) upSpan.style.color = c;
+                        keyBtn.appendChild(upSpan);
+                    }
+
+                    const downData = swipeData.swipe_down[keyChar];
+                    if (downData && downData.label) {
+                        const downSpan = document.createElement('span');
+                        downSpan.className = 'swipe-label swipe-down-label';
+                        downSpan.innerText = downData.label.text || '';
+                        if (downData.fontSize) downSpan.style.fontSize = downData.fontSize + 'px';
+                        let c = downData.normalColor || downData.label.color;
+                        if (c) downSpan.style.color = c;
+                        keyBtn.appendChild(downSpan);
+                    }
+
+                    keyBtn.onclick = () => selectKey(keyChar);
+                    rowDiv.appendChild(keyBtn);
+                });
+                area.appendChild(rowDiv);
+            });
+
+            if (currentSelectedKey && document.getElementById('key-' + currentSelectedKey)) {
+                document.getElementById('key-' + currentSelectedKey).classList.add('selected');
+            }
+        }
+
+        function setupPanelData(prefix, data) {
+            let type = "character";
+            let val = "";
+            
+            if (data.action) {
+                if (data.action.character) { type = "character"; val = data.action.character; }
+                else if (data.action.symbol) { type = "symbol"; val = data.action.symbol; }
+                else if (data.action.sendKeys) { type = "sendKeys"; val = data.action.sendKeys; }
+                else if (data.action.shortcut) { type = "sendKeys"; val = data.action.shortcut; }
+                else if (typeof data.action === 'string') { val = data.action; }
+            }
+
+            document.getElementById(prefix + 'Type').value = type;
+            document.getElementById(prefix + 'Symbol').value = val;
+            document.getElementById(prefix + 'Label').value = data.label?.text || '';
+            
+            const sizeInput = document.getElementById(prefix + 'Size');
+            if (data.fontSize) {
+                sizeInput.value = data.fontSize;
+            } else {
+                sizeInput.value = '';
+                sizeInput.placeholder = '預設 (未指定)';
+            }
+            
+            // 更新右方面板顏色與左方色碼框
+            let colorVal = data.normalColor || data.label?.color || '#8e8e93';
+            document.getElementById(prefix + 'Color').value = colorVal;
+            document.getElementById(prefix + 'ColorText').value = colorVal.toUpperCase();
+        }
+
+        function silentSaveCurrentKey() {
+            if (!currentSelectedKey) return;
+            const k = currentSelectedKey;
+
+            const newUp = buildActionNode('up', swipeData.swipe_up[k]);
+            if (newUp) swipeData.swipe_up[k] = newUp; else delete swipeData.swipe_up[k];
+
+            const newDown = buildActionNode('down', swipeData.swipe_down[k]);
+            if (newDown) swipeData.swipe_down[k] = newDown; else delete swipeData.swipe_down[k];
+        }
+
+        function selectKey(keyChar) {
+            if (currentSelectedKey && currentSelectedKey !== keyChar) {
+                silentSaveCurrentKey();
+            }
+            
+            currentSelectedKey = keyChar;
+            renderKeyboard();
+            
+            document.getElementById('currentKeyDisplay').innerText = keyChar.toUpperCase();
+            document.getElementById('editorArea').style.opacity = '1';
+            document.getElementById('editorArea').style.pointerEvents = 'auto';
+
+            setupPanelData('up', swipeData.swipe_up[keyChar] || {});
+            setupPanelData('down', swipeData.swipe_down[keyChar] || {});
+        }
+
+        function buildActionNode(prefix, existingData) {
+            const type = document.getElementById(prefix + 'Type').value;
+            const val = document.getElementById(prefix + 'Symbol').value.trim();
+            const labelText = document.getElementById(prefix + 'Label').value;
+            const size = document.getElementById(prefix + 'Size').value;
+            
+            // 從 Color input 取值 (因為有做雙向綁定，所以 Color input 永遠是最準的)
+            const color = document.getElementById(prefix + 'Color').value;
+
+            if (!val && !labelText) return null;
+
+            let node = existingData ? JSON.parse(JSON.stringify(existingData)) : { action: {}, label: {} };
+            if (!node.action || typeof node.action === 'string') node.action = {};
+            if (!node.label) node.label = {};
+
+            delete node.action.character;
+            delete node.action.symbol;
+            delete node.action.sendKeys;
+            delete node.action.shortcut;
+
+            if (val) node.action[type] = val;
+            
+            if (labelText) node.label.text = labelText;
+            if (size) node.fontSize = parseInt(size); else delete node.fontSize;
+
+            if (color && color.toLowerCase() !== '#8e8e93') {
+                node.normalColor = color;
+                node.highlightColor = color;
+            } else {
+                delete node.normalColor;
+                delete node.highlightColor;
+                if (node.label && node.label.color) delete node.label.color;
+            }
+
+            return node;
+        }
+
+        function saveKeyData() {
+            if (!currentSelectedKey) return;
+            silentSaveCurrentKey();
+            
+            renderKeyboard();
+            updateCodeOutput();
+
+            const btn = document.getElementById('mainSaveBtn');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ 更新成功！請至下方複製或下載程式碼';
+            btn.style.backgroundColor = '#28a745';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = '';
+            }, 3000);
+        }
+
+        function updateCodeOutput() {
+            const text = "// ==========================================\n" +
+                         "// 本配置檔由 WHY 製作的按鍵上下滑編輯器產出\n" +
+                         "// ==========================================\n\n" +
+                         JSON.stringify(swipeData, null, 2);
+            document.getElementById('codeOutput').value = text;
+        }
+
+        function batchUpdate(direction) {
+            if (currentSelectedKey) silentSaveCurrentKey();
+            
+            const sizeStr = document.getElementById(direction === 'up' ? 'batchUpSize' : 'batchDownSize').value;
+            const color = document.getElementById(direction === 'up' ? 'batchUpColor' : 'batchDownColor').value;
+            const size = sizeStr ? parseInt(sizeStr) : null;
+            
+            const targetData = direction === 'up' ? swipeData.swipe_up : swipeData.swipe_down;
+            let updatedCount = 0;
+            
+            for (let key in targetData) {
+                if (targetData.hasOwnProperty(key)) {
+                    if (size !== null) targetData[key].fontSize = size;
+                    if (color.toLowerCase() !== '#8e8e93') {
+                        targetData[key].normalColor = color;
+                        targetData[key].highlightColor = color;
+                    }
+                    updatedCount++;
+                }
+            }
+            
+            if (updatedCount === 0) {
+                alert(`目前沒有任何${direction === 'up' ? '上滑' : '下滑'}的設定可更新！`);
+                return;
+            }
+
+            renderKeyboard();
+            updateCodeOutput();
+            if (currentSelectedKey) selectKey(currentSelectedKey);
+        }
+
+        function setupDropZone(dzId, inputId, textId, processFileCallback) {
+            const dz = document.getElementById(dzId);
+            const input = document.getElementById(inputId);
+            dz.onclick = () => input.click();
+            dz.ondragover = (e) => { e.preventDefault(); dz.classList.add('dragover'); };
+            dz.ondragleave = () => dz.classList.remove('dragover');
+            dz.ondrop = (e) => {
+                e.preventDefault(); dz.classList.remove('dragover');
+                if (e.dataTransfer.files.length) processFileCallback(e.dataTransfer.files[0], textId);
+            };
+            input.onchange = (e) => {
+                if (e.target.files.length) processFileCallback(e.target.files[0], textId);
+                input.value = '';
+            };
+        }
+
+        setupDropZone('dropZone1', 'fileInput1', 'dz1Text', (file, textId) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    parseStep1Safe(e.target.result);
+                    document.getElementById(textId).innerHTML = '✅ 佈局與顏色已載入: ' + file.name;
+                    renderKeyboard();
+                } catch (err) { alert("Step 1 佈局檔解析失敗: " + err.message); }
+            };
+            reader.readAsText(file);
+        });
+
+        setupDropZone('dropZone2', 'fileInput2', 'dz2Text', (file, textId) => {
+            step2FileName = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    swipeData = parseStep2Data(e.target.result);
+                    if (!swipeData.swipe_up) swipeData.swipe_up = {};
+                    if (!swipeData.swipe_down) swipeData.swipe_down = {};
+                    document.getElementById(textId).innerHTML = '✅ 滑動資料已載入: ' + file.name;
+                    renderKeyboard();
+                    updateCodeOutput();
+                } catch (err) { alert("Step 2 資料檔解析失敗，請確認檔案格式: \n" + err.message); }
+            };
+            reader.readAsText(file);
+        });
+
+        function showCopySuccess(btnId, defaultText, msg) {
+            const btn = document.getElementById(btnId);
+            btn.innerText = msg;
+            setTimeout(() => btn.innerText = defaultText, 2000);
+        }
+
+        const handleCopy = (btnId, defaultText) => {
+            const text = document.getElementById('codeOutput').value;
+            if (!text || text === "") return alert("目前沒有程式碼可複製！");
+            
+            internalClipboardText = text;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(btnId, defaultText, '✅ 複製成功！');
+                }).catch(err => {
+                    console.warn("系統剪貼簿寫入被拒絕，已啟用內部記憶體", err);
+                    showCopySuccess(btnId, defaultText, '✅ 已複製 (內部暫存)！');
+                });
+            } else {
+                showCopySuccess(btnId, defaultText, '✅ 已複製 (內部暫存)！');
+            }
+        };
+
+        document.getElementById('copyPanelBtn').addEventListener('click', () => handleCopy('copyPanelBtn', '📄 複製上下滑配置'));
+        
+        document.getElementById('pastePanelBtn').addEventListener('click', async () => {
+            let textToPaste = "";
+            
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    textToPaste = await navigator.clipboard.readText();
+                }
+            } catch (err) {
+                console.warn("系統剪貼簿讀取被拒絕，自動切換至內部暫存", err);
+            }
+
+            if (!textToPaste && internalClipboardText) {
+                textToPaste = internalClipboardText;
+            }
+
+            if (!textToPaste) {
+                return alert("找不到可貼上的內容！請先點擊「複製上下滑配置」。");
+            }
+
+            try {
+                swipeData = parseStep2Data(textToPaste);
+                if (!swipeData.swipe_up) swipeData.swipe_up = {};
+                if (!swipeData.swipe_down) swipeData.swipe_down = {};
+                
+                renderKeyboard();
+                updateCodeOutput();
+                
+                const btn = document.getElementById('pastePanelBtn');
+                btn.innerText = '✅ 貼上成功！';
+                document.getElementById('dz2Text').innerHTML = '✅ 已從暫存載入滑動資料';
+                setTimeout(() => btn.innerText = '📋 貼上上下滑配置', 2000);
+            } catch (err) {
+                alert("貼上失敗，請確定內容為正確的資料格式。\n錯誤訊息: " + err.message);
+            }
+        });
+
+        document.getElementById('copyFullBtn').addEventListener('click', () => {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            handleCopy('copyFullBtn', '📄 複製完整程式碼');
+        });
+        
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            const text = document.getElementById('codeOutput').value;
+            if (!text || text === "") return alert("目前沒有程式碼可下載！請先上傳或修改資料。");
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = step2FileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        renderKeyboard();
+    </script>
+</body>
+</html>
