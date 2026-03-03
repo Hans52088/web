@@ -3,154 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>元書輸入法安裝與大易方案說明</title>
+    <title>元書輸入法：iOS 大易方案安裝指南</title>
     <style>
         :root {
-            --primary-blue: #007AFF;
-            --bg-light: #F2F2F7;
-            --text-dark: #1C1C1E;
-            --card-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --apple-blue: #007AFF;
+            --apple-gray: #8E8E93;
+            --bg-color: #F2F2F7;
+            --card-bg: #FFFFFF;
         }
         body {
-            font-family: -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
+            font-family: -apple-system, "SF Pro TC", "Noto Sans TC", "PingFang TC", sans-serif;
+            background-color: var(--bg-color);
+            color: #1C1C1E;
             line-height: 1.6;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 850px;
+            max-width: 800px;
             margin: 0 auto;
-            background: #fff;
+            background: var(--card-bg);
             padding: 40px;
             border-radius: 20px;
-            box-shadow: var(--card-shadow);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: var(--primary-blue);
+        header {
             text-align: center;
-            border-bottom: 2px solid var(--bg-light);
-            padding-bottom: 15px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
         }
+        h1 { font-size: 1.6rem; color: var(--apple-blue); margin: 0; }
         h2 {
-            background: var(--primary-blue);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 1.25rem;
-            margin-top: 30px;
+            font-size: 1.2rem;
+            background: #F9F9FB;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border-left: 5px solid var(--apple-blue);
+            margin-top: 35px;
         }
-        .instruction-img {
-            display: block;
+        .step-desc { margin: 10px 0; font-weight: 500; }
+        .img-placeholder {
+            width: 100%;
+            background-color: #FAFAFA;
+            border: 2px dashed #D1D1D6;
+            border-radius: 15px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+        .img-placeholder img {
             max-width: 100%;
             height: auto;
-            margin: 20px auto;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            border: 1px solid #eee;
+            display: block;
         }
-        .step-list {
-            padding-left: 20px;
-        }
-        .step-list li {
-            margin-bottom: 10px;
-        }
-        .alert {
+        .info-box {
             background-color: #FFF9E6;
             border-left: 5px solid #FFCC00;
             padding: 15px;
             margin: 20px 0;
-            font-weight: 500;
+            border-radius: 0 10px 10px 0;
         }
-        table {
+        .link-table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
-        th, td {
+        .link-table th, .link-table td {
             border: 1px solid #E5E5EA;
             padding: 12px;
-            text-align: center;
+            text-align: left;
         }
-        th { background-color: #F9F9FB; color: #666; }
-        .download-link {
-            color: var(--primary-blue);
+        .link-table th { background-color: #F9F9FB; width: 30%; }
+        .btn {
+            color: var(--apple-blue);
             text-decoration: none;
             font-weight: bold;
         }
-        .download-link:hover { text-decoration: underline; }
-
-        /* PDF 最佳化樣式 */
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--apple-gray);
+            border-top: 1px solid #EEE;
+            padding-top: 20px;
+        }
         @media print {
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
-            h2 { background: #eee !important; color: black !important; border: 1px solid #ccc; }
-            .instruction-img { page-break-inside: avoid; }
+            body { background: #FFF; padding: 0; }
+            .container { box-shadow: none; border: none; width: 100%; }
+            .img-placeholder { border: 1px solid #EEE; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>元書輸入法：安裝與大易方案指南</h1>
+    <header>
+        <h1>元書輸入法安裝與大易方案說明</h1>
+        <p>(iOS 大易輸入法專用)</p>
+    </header>
 
-    <h2>一、 下載與基本安裝</h2>
-    <p>請進入 App Store 搜尋「元書」（請使用簡體字：元书），點擊下載並安裝。</p>
-    <img src="https://r.jina.ai/i/6ef647b0f0a44760a03006d95393a54d" alt="App Store 下載圖示" class="instruction-img">
-    
-    <ul class="step-list">
-        <li>安裝完成後，進入手機<strong>「設定」</strong> > <strong>「一般」</strong> > <strong>「鍵盤」</strong>。</li>
-        <li>選擇<strong>「新增鍵盤」</strong>，在第三方鍵盤中選擇<strong>「元書輸入法」</strong>。</li>
-        <li>點擊進去，開啟<strong>「允許完整取用」</strong>。</li>
+    <h2>一、 下載與啟用</h2>
+    <p class="step-desc">1. 進入 App Store 搜尋「元書」(請輸入簡體字：元书)，下載「元書輸入法」。</p>
+    <div class="img-placeholder">
+        <img src="" alt="App Store 搜尋與下載截圖">
+    </div>
+    <p><a href="https://apps.apple.com/us/app/%E5%85%83%E4%B9%A6%E8%BE%93%E5%85%A5%E6%B3%95/id6744464701?l=zh-Hant-TW" class="btn">點此開啟 App Store 下載連結</a></p>
+
+    <p class="step-desc">2. 啟用鍵盤權限：</p>
+    <ul>
+        <li>路徑：手機「設定」 > 「一般」 > 「鍵盤」 > 「新增鍵盤」。</li>
+        <li>選擇「第三方鍵盤」中的<strong>「元書輸入法」</strong>。</li>
+        <li>點擊進入「元書輸入法」，將<strong>「允許完整取用」</strong>打開。</li>
     </ul>
-    
-    <div class="alert">
-        💡 備註：若長按鍵盤地球符號沒出現選項，請重新啟動您的 iPhone。
+    <div class="info-box">
+        💡 備註：若長按鍵盤地球符號未出現元書輸入法，請嘗試重新開機。
     </div>
 
-    <h2>二、 匯入大易輸入方案</h2>
-    <p>開啟元書 App，依照畫面上的 Step 1 至 Step 4 指引操作，並在 <strong>Step 5</strong> 填入以下資訊：</p>
+    <h2>二、 匯入大易方案</h2>
+    <p class="step-desc">進入元書 App 介面，依步驟引導執行：</p>
     <ul>
-        <li><strong>方案名稱：</strong>Dayi</li>
-        <li><strong>下載地址：</strong><br><code>https://github.com/Hans52088/Dayi-Plan-iOS/raw/refs/heads/main/Dayi-Plan-iOS.zip</code></li>
+        <li><strong>Step 1 至 Step 4</strong>：遵循介面指引。</li>
+        <li><strong>Step 5 (關鍵設定)</strong>：
+            <ul>
+                <li><strong>方案名稱</strong>：輸入 <code style="background:#eee; padding:2px 5px;">Dayi</code></li>
+                <li><strong>下載地址</strong>：貼上 <code>https://github.com/Hans52088/Dayi-Plan-iOS/raw/refs/heads/main/Dayi-Plan-iOS.zip</code></li>
+            </ul>
+        </li>
+        <li><strong>Step 17</strong>：結束後系統會自動進行佈署。</li>
     </ul>
-    <p>完成後繼續執行至 Step 17 即可完成佈署。</p>
+    <div class="img-placeholder">
+        <img src="" alt="App 內設定步驟截圖">
+    </div>
 
-    <h2>三、 大易專屬鍵盤皮膚 (Skin)</h2>
-    <p>您可以挑選喜愛的皮膚配色，使用 Safari 下載並套用：</p>
-    
-    <img src="https://r.jina.ai/i/f30419208a6d4824b22c830953c847e9" alt="皮膚預覽圖" class="instruction-img">
-
-    <table>
-        <tr>
-            <th>配色名稱</th>
-            <th>下載網址</th>
-        </tr>
-        <tr>
-            <td>原色 (Default)</td>
-            <td><a class="download-link" href="https://drive.google.com/file/d/1CvKBSXTES9yZ0BUMWKT-pgZgMF2pbxWL/view?usp=drivesdk">點此下載</a></td>
-        </tr>
-        <tr>
-            <td>粉配色 (Pink)</td>
-            <td><a class="download-link" href="https://drive.google.com/file/d/12dtb4IP1wNNtnR7t2-GUTdCa868X9Q2h/view?usp=drivesdk">點此下載</a></td>
-        </tr>
-        <tr>
-            <td>黃配色 (Yellow)</td>
-            <td><a class="download-link" href="https://drive.google.com/file/d/1DY5p_1EvYIfQiyrrfW5oGeMWbbD5L4Xm/view?usp=drivesdk">點此下載</a></td>
-        </tr>
-        <tr>
-            <td>綠配色 (Green)</td>
-            <td><a class="download-link" href="https://drive.google.com/file/d/1eJzlfrq2veAbdN_bkDIIoHVHVjB2G8Tz/view?usp=drivesdk">點此下載</a></td>
-        </tr>
-        <tr>
-            <td>藍配色 (Blue)</td>
-            <td><a class="download-link" href="https://drive.google.com/file/d/1_6mopEpd9OzP7Gsa06q3HWEbhAc_Iq8r/view?usp=drivesdk">點此下載</a></td>
-        </tr>
+    <h2>三、 下載與安裝專屬皮膚</h2>
+    <p class="step-desc">1. 下載皮膚檔 (請使用 Safari 瀏覽器)：</p>
+    <table class="link-table">
+        <tr><th>原色皮膚</th><td><a href="https://drive.google.com/file/d/1CvKBSXTES9yZ0BUMWKT-pgZgMF2pbxWL/view?usp=drivesdk" class="btn">點此下載</a></td></tr>
+        <tr><th>粉色皮膚</th><td><a href="https://drive.google.com/file/d/12dtb4IP1wNNtnR7t2-GUTdCa868X9Q2h/view?usp=drivesdk" class="btn">點此下載</a></td></tr>
+        <tr><th>黃色皮膚</th><td><a href="https://drive.google.com/file/d/1DY5p_1EvYIfQiyrrfW5oGeMWbbD5L4Xm/view?usp=drivesdk" class="btn">點此下載</a></td></tr>
+        <tr><th>綠色皮膚</th><td><a href="https://drive.google.com/file/d/1eJzlfrq2veAbdN_bkDIIoHVHVjB2G8Tz/view?usp=drivesdk" class="btn">點此下載</a></td></tr>
+        <tr><th>藍色皮膚</th><td><a href="https://drive.google.com/file/d/1_6mopEpd9OzP7Gsa06q3HWEbhAc_Iq8r/view?usp=drivesdk" class="btn">點此下載</a></td></tr>
     </table>
+    <div class="img-placeholder">
+        <img src="" alt="皮膚配色預覽圖">
+    </div>
 
-    <div class="alert" style="border-left-color: #007AFF;">
-        🎨 <strong>換膚小技巧：</strong>在輸入狀態下長按「鍵盤圖示」即可進入皮膚選單。若長按直接跳轉 App，則代表該鍵為 App 捷徑。
+    <p class="step-desc">2. 套用步驟：</p>
+    <p>在輸入狀態下，<strong>長按「鍵盤圖示」</strong>即可進入皮膚選單進行換膚。</p>
+    <div class="info-box">
+        📌 備註：若圖示為元書 App 圖示，點選會直接跳轉回元書主介面。
+    </div>
+
+    <h2>四、 進階：增加字碼數 (可選)</h2>
+    <p>若想增加字碼數 (整合字碼數: 209,319)，請手動替換 <code>dayi4.dict.yaml</code> 檔案 [cite: 91, 102]：</p>
+    <ul>
+        <li><strong>下載地址</strong>：<a href="https://github.com/Hans52088/Dayi-Table/raw/refs/heads/main/dayi4.dict.yaml" class="btn">點此下載字碼檔</a> [cite: 92, 103]</li>
+        <li><strong>操作步驟</strong>：
+            <ol>
+                <li>使用 App 內的 「Wi-Fi 檔案傳輸」功能 [cite: 93, 104]。</li>
+                <li>進入路徑：<code>Rime/UserDate/Dayi/Dayi-Plan-iOS</code> [cite: 94, 105]。</li>
+                <li>建議先刪除原字碼檔，再放入新檔案進行替換 [cite: 95, 106]。</li>
+            </ol>
+        </li>
+    </ul>
+
+    <div class="info-box" style="background-color: #E8F2FF; border-left-color: #007AFF;">
+        <strong>歡迎加入討論：</strong><br>
+        Line 社群：「iOS 大易輸入法同學會」<br>
+        FB 粉絲專頁：搜尋「大易輸入法同學會」 [cite: 11, 13]
+    </div>
+
+    <div class="footer">
+        恭喜完成所有步驟！快體驗這款免費開源的輸入法吧 [cite: 89, 100]。<br>
+        = WHY 製作 = 2026.03.03 [cite: 96, 99]
     </div>
 </div>
 
