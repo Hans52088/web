@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元書輸入法安裝與大易方案說明</title>
+    <style>
+        :root {
+            --primary-blue: #007AFF;
+            --bg-light: #F2F2F7;
+            --text-dark: #1C1C1E;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        body {
+            font-family: -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        h1 {
+            color: var(--primary-blue);
+            text-align: center;
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 15px;
+        }
+        h2 {
+            background: var(--primary-blue);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            margin-top: 30px;
+        }
+        .instruction-img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 20px auto;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid #eee;
+        }
+        .step-list {
+            padding-left: 20px;
+        }
+        .step-list li {
+            margin-bottom: 10px;
+        }
+        .alert {
+            background-color: #FFF9E6;
+            border-left: 5px solid #FFCC00;
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #E5E5EA;
+            padding: 12px;
+            text-align: center;
+        }
+        th { background-color: #F9F9FB; color: #666; }
+        .download-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .download-link:hover { text-decoration: underline; }
+
+        /* PDF 最佳化樣式 */
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            h2 { background: #eee !important; color: black !important; border: 1px solid #ccc; }
+            .instruction-img { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>元書輸入法：安裝與大易方案指南</h1>
+
+    <h2>一、 下載與基本安裝</h2>
+    <p>請進入 App Store 搜尋「元書」（請使用簡體字：元书），點擊下載並安裝。</p>
+    <img src="https://r.jina.ai/i/6ef647b0f0a44760a03006d95393a54d" alt="App Store 下載圖示" class="instruction-img">
+    
+    <ul class="step-list">
+        <li>安裝完成後，進入手機<strong>「設定」</strong> > <strong>「一般」</strong> > <strong>「鍵盤」</strong>。</li>
+        <li>選擇<strong>「新增鍵盤」</strong>，在第三方鍵盤中選擇<strong>「元書輸入法」</strong>。</li>
+        <li>點擊進去，開啟<strong>「允許完整取用」</strong>。</li>
+    </ul>
+    
+    <div class="alert">
+        💡 備註：若長按鍵盤地球符號沒出現選項，請重新啟動您的 iPhone。
+    </div>
+
+    <h2>二、 匯入大易輸入方案</h2>
+    <p>開啟元書 App，依照畫面上的 Step 1 至 Step 4 指引操作，並在 <strong>Step 5</strong> 填入以下資訊：</p>
+    <ul>
+        <li><strong>方案名稱：</strong>Dayi</li>
+        <li><strong>下載地址：</strong><br><code>https://github.com/Hans52088/Dayi-Plan-iOS/raw/refs/heads/main/Dayi-Plan-iOS.zip</code></li>
+    </ul>
+    <p>完成後繼續執行至 Step 17 即可完成佈署。</p>
+
+    <h2>三、 大易專屬鍵盤皮膚 (Skin)</h2>
+    <p>您可以挑選喜愛的皮膚配色，使用 Safari 下載並套用：</p>
+    
+    <img src="https://r.jina.ai/i/f30419208a6d4824b22c830953c847e9" alt="皮膚預覽圖" class="instruction-img">
+
+    <table>
+        <tr>
+            <th>配色名稱</th>
+            <th>下載網址</th>
+        </tr>
+        <tr>
+            <td>原色 (Default)</td>
+            <td><a class="download-link" href="https://drive.google.com/file/d/1CvKBSXTES9yZ0BUMWKT-pgZgMF2pbxWL/view?usp=drivesdk">點此下載</a></td>
+        </tr>
+        <tr>
+            <td>粉配色 (Pink)</td>
+            <td><a class="download-link" href="https://drive.google.com/file/d/12dtb4IP1wNNtnR7t2-GUTdCa868X9Q2h/view?usp=drivesdk">點此下載</a></td>
+        </tr>
+        <tr>
+            <td>黃配色 (Yellow)</td>
+            <td><a class="download-link" href="https://drive.google.com/file/d/1DY5p_1EvYIfQiyrrfW5oGeMWbbD5L4Xm/view?usp=drivesdk">點此下載</a></td>
+        </tr>
+        <tr>
+            <td>綠配色 (Green)</td>
+            <td><a class="download-link" href="https://drive.google.com/file/d/1eJzlfrq2veAbdN_bkDIIoHVHVjB2G8Tz/view?usp=drivesdk">點此下載</a></td>
+        </tr>
+        <tr>
+            <td>藍配色 (Blue)</td>
+            <td><a class="download-link" href="https://drive.google.com/file/d/1_6mopEpd9OzP7Gsa06q3HWEbhAc_Iq8r/view?usp=drivesdk">點此下載</a></td>
+        </tr>
+    </table>
+
+    <div class="alert" style="border-left-color: #007AFF;">
+        🎨 <strong>換膚小技巧：</strong>在輸入狀態下長按「鍵盤圖示」即可進入皮膚選單。若長按直接跳轉 App，則代表該鍵為 App 捷徑。
+    </div>
+</div>
+
+</body>
+</html>
