@@ -230,13 +230,18 @@
             width: 140px;
             font-size: 13px;
         }
+        .input-row input:disabled {
+            background-color: #f0f0f5;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #e5e5ea;
+        }
         
         .input-row input[type="number"]::placeholder {
             color: #999;
             font-size: 12px;
         }
 
-        /* 顏色與色碼專用排版 */
         .color-wrapper {
             display: flex;
             align-items: center;
@@ -267,6 +272,12 @@
             cursor: pointer;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
+        
+        select { max-width: 158px; }
+        optgroup { font-weight: bold; color: #333; background: #eaf0f6; }
+        option { font-weight: normal; color: #1c1c1e; background: #fff; }
+        
+        .hint-text { font-size: 11px; color: #888; margin-top: -5px; margin-bottom: 8px; text-align: right; }
     </style>
 </head>
 <body>
@@ -314,10 +325,37 @@
                 <h3>⇧ 上滑 (Swipe Up)</h3>
                 <div class="input-row">
                     <label>輸出類型:</label>
-                    <select id="upType">
-                        <option value="character">character (單一字元)</option>
-                        <option value="symbol">symbol (符號)</option>
-                        <option value="sendKeys">sendKeys (組合/快捷鍵)</option>
+                    <select id="upType" onchange="handleTypeChange('up')">
+                        <optgroup label="常用快捷指令 (直接選取)">
+                            <option value="shortcut_undo">撤銷 (undo)</option>
+                            <option value="shortcut_deleteText">全刪除 (deleteText)</option>
+                            <option value="shortcut_copy">複製 (copy)</option>
+                            <option value="shortcut_paste">貼上 (paste)</option>
+                            <option value="shortcut_cut">剪下 (cut)</option>
+                            <option value="shortcut_selectText">全選 (selectText)</option>
+                            <option value="shortcut_home">移至行首 (home)</option>
+                            <option value="shortcut_end">移至行尾 (end)</option>
+                            <option value="shortcut_onehanded">單手模式切換</option>
+                            <option value="shortcut_rime2">次選上屏 (2nd)</option>
+                            <option value="shortcut_rime3">三選上屏 (3rd)</option>
+                        </optgroup>
+                        <optgroup label="無需設定值的獨立指令">
+                            <option value="backspace">退格 (backspace)</option>
+                            <option value="enter">回車 (enter)</option>
+                            <option value="shift">Shift (shift)</option>
+                            <option value="tab">縮進 (tab)</option>
+                            <option value="space">空格 (space)</option>
+                            <option value="nextKeyboard">地球 (nextKeyboard)</option>
+                            <option value="characterMargin">占位 (characterMargin)</option>
+                            <option value="none">無 (none)</option>
+                        </optgroup>
+                        <optgroup label="需要設定值的指令">
+                            <option value="character">字符 (character)</option>
+                            <option value="symbol">符號 (symbol)</option>
+                            <option value="sendKeys">組合鍵 (sendKeys)</option>
+                            <option value="shortcut">自訂命令 (shortcut)</option>
+                            <option value="keyboardType">鍵盤 (keyboardType)</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div class="input-row">
@@ -326,8 +364,9 @@
                 </div>
                 <div class="input-row">
                     <label>鍵盤顯示文字:</label>
-                    <input type="text" id="upLabel" placeholder="顯示的提示詞">
+                    <input type="text" id="upLabel" placeholder="支援 sf:globe 等圖示">
                 </div>
+                <div class="hint-text">💡 顯示系統圖示請加 sf: (如 sf:globe)</div>
                 <div class="input-row">
                     <label>字體大小:</label>
                     <input type="number" id="upSize" placeholder="預設 (未指定)">
@@ -345,10 +384,37 @@
                 <h3>⇩ 下滑 (Swipe Down)</h3>
                 <div class="input-row">
                     <label>輸出類型:</label>
-                    <select id="downType">
-                        <option value="character">character (單一字元)</option>
-                        <option value="symbol">symbol (符號)</option>
-                        <option value="sendKeys">sendKeys (組合/快捷鍵)</option>
+                    <select id="downType" onchange="handleTypeChange('down')">
+                        <optgroup label="常用快捷指令 (直接選取)">
+                            <option value="shortcut_undo">撤銷 (undo)</option>
+                            <option value="shortcut_deleteText">全刪除 (deleteText)</option>
+                            <option value="shortcut_copy">複製 (copy)</option>
+                            <option value="shortcut_paste">貼上 (paste)</option>
+                            <option value="shortcut_cut">剪下 (cut)</option>
+                            <option value="shortcut_selectText">全選 (selectText)</option>
+                            <option value="shortcut_home">移至行首 (home)</option>
+                            <option value="shortcut_end">移至行尾 (end)</option>
+                            <option value="shortcut_onehanded">單手模式切換</option>
+                            <option value="shortcut_rime2">次選上屏 (2nd)</option>
+                            <option value="shortcut_rime3">三選上屏 (3rd)</option>
+                        </optgroup>
+                        <optgroup label="無需設定值的獨立指令">
+                            <option value="backspace">退格 (backspace)</option>
+                            <option value="enter">回車 (enter)</option>
+                            <option value="shift">Shift (shift)</option>
+                            <option value="tab">縮進 (tab)</option>
+                            <option value="space">空格 (space)</option>
+                            <option value="nextKeyboard">地球 (nextKeyboard)</option>
+                            <option value="characterMargin">占位 (characterMargin)</option>
+                            <option value="none">無 (none)</option>
+                        </optgroup>
+                        <optgroup label="需要設定值的指令">
+                            <option value="character">字符 (character)</option>
+                            <option value="symbol">符號 (symbol)</option>
+                            <option value="sendKeys">組合鍵 (sendKeys)</option>
+                            <option value="shortcut">自訂命令 (shortcut)</option>
+                            <option value="keyboardType">鍵盤 (keyboardType)</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div class="input-row">
@@ -357,8 +423,9 @@
                 </div>
                 <div class="input-row">
                     <label>鍵盤顯示文字:</label>
-                    <input type="text" id="downLabel" placeholder="顯示的提示詞">
+                    <input type="text" id="downLabel" placeholder="支援 sf:globe 等圖示">
                 </div>
+                <div class="hint-text">💡 顯示系統圖示請加 sf: (如 sf:globe)</div>
                 <div class="input-row">
                     <label>字體大小:</label>
                     <input type="number" id="downSize" placeholder="預設 (未指定)">
@@ -420,12 +487,48 @@
             'searchButtonBackgroundStyle': '#007aff'
         };
         let step2FileName = 'swipeData.libsonnet';
-        
         let internalClipboardText = "";
+        
+        const noValueCommands = ['backspace', 'enter', 'shift', 'tab', 'space', 'nextKeyboard', 'characterMargin', 'none'];
 
-        // ==========================================
-        // 顏色雙向連動綁定函數
-        // ==========================================
+        // 快捷指令映射表 (供雙向轉換使用)
+        const presetShortcuts = {
+            'shortcut_undo': '#undo',
+            'shortcut_deleteText': '#deleteText',
+            'shortcut_copy': '#copy',
+            'shortcut_paste': '#paste',
+            'shortcut_cut': '#cut',
+            'shortcut_selectText': '#selectText',
+            'shortcut_home': '#行首',
+            'shortcut_end': '#行尾',
+            'shortcut_onehanded': '#左手模式',
+            'shortcut_rime2': '#次选上屏',
+            'shortcut_rime3': '#三选上屏'
+        };
+
+        // 建立反向映射表 (讀取 JSON 時能對應回選單)
+        const reverseShortcutMap = {};
+        for (let key in presetShortcuts) {
+            reverseShortcutMap[presetShortcuts[key]] = key;
+        }
+
+        const sfSymbolEmojiMap = {
+            'globe': '🌐',
+            'delete.left': '⌫',
+            'delete.left.fill': '⌫',
+            'shift': '⇧',
+            'shift.fill': '⇧',
+            'capslock.fill': '⇪',
+            'return': '⏎',
+            'keyboard.onehanded.left': '👈',
+            'keyboard.onehanded.right': '👉',
+            'text.cursor': 'I',
+            'space': '␣',
+            'trash': '🗑️',
+            'trash.fill': '🗑️',
+            'arrow.uturn.backward': '↩️'
+        };
+
         function bindColorInputs(colorId, textId) {
             const colorEl = document.getElementById(colorId);
             const textEl = document.getElementById(textId);
@@ -436,14 +539,12 @@
             
             textEl.addEventListener('input', (e) => {
                 let val = e.target.value.trim();
-                // 檢查是否為合法色碼
                 if (val.match(/^#[0-9A-Fa-f]{6}$/i)) {
                     colorEl.value = val.toLowerCase();
                 }
             });
         }
         
-        // 啟動顏色連動
         bindColorInputs('upColor', 'upColorText');
         bindColorInputs('downColor', 'downColorText');
         bindColorInputs('batchUpColor', 'batchUpColorText');
@@ -537,7 +638,13 @@
                     if (upData && upData.label) {
                         const upSpan = document.createElement('span');
                         upSpan.className = 'swipe-label swipe-up-label';
-                        upSpan.innerText = upData.label.text || '';
+                        
+                        if (upData.label.systemImageName) {
+                            upSpan.innerText = sfSymbolEmojiMap[upData.label.systemImageName] || '❖';
+                        } else {
+                            upSpan.innerText = upData.label.text || '';
+                        }
+                        
                         if (upData.fontSize) upSpan.style.fontSize = upData.fontSize + 'px';
                         let c = upData.normalColor || upData.label.color;
                         if (c) upSpan.style.color = c;
@@ -548,7 +655,13 @@
                     if (downData && downData.label) {
                         const downSpan = document.createElement('span');
                         downSpan.className = 'swipe-label swipe-down-label';
-                        downSpan.innerText = downData.label.text || '';
+                        
+                        if (downData.label.systemImageName) {
+                            downSpan.innerText = sfSymbolEmojiMap[downData.label.systemImageName] || '❖';
+                        } else {
+                            downSpan.innerText = downData.label.text || '';
+                        }
+                        
                         if (downData.fontSize) downSpan.style.fontSize = downData.fontSize + 'px';
                         let c = downData.normalColor || downData.label.color;
                         if (c) downSpan.style.color = c;
@@ -566,21 +679,62 @@
             }
         }
 
+        // 動態禁用/啟用輸入框 (支援常用快捷指令與無值獨立指令)
+        function handleTypeChange(prefix) {
+            const typeVal = document.getElementById(prefix + 'Type').value;
+            const symbolInput = document.getElementById(prefix + 'Symbol');
+            
+            if (noValueCommands.includes(typeVal) || typeVal.startsWith('shortcut_')) {
+                symbolInput.disabled = true;
+                symbolInput.value = '';
+            } else {
+                symbolInput.disabled = false;
+            }
+        }
+
         function setupPanelData(prefix, data) {
-            let type = "character";
+            let type = "none";
             let val = "";
+            let labelText = "";
             
             if (data.action) {
-                if (data.action.character) { type = "character"; val = data.action.character; }
-                else if (data.action.symbol) { type = "symbol"; val = data.action.symbol; }
-                else if (data.action.sendKeys) { type = "sendKeys"; val = data.action.sendKeys; }
-                else if (data.action.shortcut) { type = "sendKeys"; val = data.action.shortcut; }
-                else if (typeof data.action === 'string') { val = data.action; }
+                if (typeof data.action === 'string') {
+                    if (noValueCommands.includes(data.action)) {
+                        type = data.action;
+                    } else {
+                        type = "symbol";
+                        val = data.action;
+                    }
+                }
+                else if (typeof data.action === 'object') {
+                    if (data.action.shortcut) {
+                        // 檢查是否為預設的快捷指令
+                        if (reverseShortcutMap[data.action.shortcut]) {
+                            type = reverseShortcutMap[data.action.shortcut];
+                            val = ""; // 禁用輸入框不需要值
+                        } else {
+                            type = "shortcut";
+                            val = data.action.shortcut;
+                        }
+                    }
+                    else if (data.action.character) { type = "character"; val = data.action.character; }
+                    else if (data.action.symbol) { type = "symbol"; val = data.action.symbol; }
+                    else if (data.action.sendKeys) { type = "sendKeys"; val = data.action.sendKeys; }
+                    else if (data.action.keyboardType) { type = "keyboardType"; val = data.action.keyboardType; }
+                }
+            }
+
+            if (data.label) {
+                if (data.label.systemImageName) {
+                    labelText = "sf:" + data.label.systemImageName;
+                } else {
+                    labelText = data.label.text || '';
+                }
             }
 
             document.getElementById(prefix + 'Type').value = type;
             document.getElementById(prefix + 'Symbol').value = val;
-            document.getElementById(prefix + 'Label').value = data.label?.text || '';
+            document.getElementById(prefix + 'Label').value = labelText;
             
             const sizeInput = document.getElementById(prefix + 'Size');
             if (data.fontSize) {
@@ -590,10 +744,11 @@
                 sizeInput.placeholder = '預設 (未指定)';
             }
             
-            // 更新右方面板顏色與左方色碼框
             let colorVal = data.normalColor || data.label?.color || '#8e8e93';
             document.getElementById(prefix + 'Color').value = colorVal;
             document.getElementById(prefix + 'ColorText').value = colorVal.toUpperCase();
+            
+            handleTypeChange(prefix);
         }
 
         function silentSaveCurrentKey() {
@@ -626,26 +781,42 @@
         function buildActionNode(prefix, existingData) {
             const type = document.getElementById(prefix + 'Type').value;
             const val = document.getElementById(prefix + 'Symbol').value.trim();
-            const labelText = document.getElementById(prefix + 'Label').value;
+            const labelInputText = document.getElementById(prefix + 'Label').value.trim();
             const size = document.getElementById(prefix + 'Size').value;
-            
-            // 從 Color input 取值 (因為有做雙向綁定，所以 Color input 永遠是最準的)
             const color = document.getElementById(prefix + 'Color').value;
 
-            if (!val && !labelText) return null;
+            if (type === 'none' && !labelInputText) return null;
 
             let node = existingData ? JSON.parse(JSON.stringify(existingData)) : { action: {}, label: {} };
-            if (!node.action || typeof node.action === 'string') node.action = {};
             if (!node.label) node.label = {};
-
-            delete node.action.character;
-            delete node.action.symbol;
-            delete node.action.sendKeys;
-            delete node.action.shortcut;
-
-            if (val) node.action[type] = val;
             
-            if (labelText) node.label.text = labelText;
+            delete node.action;
+
+            if (type !== 'none') {
+                if (noValueCommands.includes(type)) {
+                    node.action = type;
+                } else if (type.startsWith('shortcut_')) {
+                    // 自動轉換為對應的快捷指令物件
+                    node.action = { "shortcut": presetShortcuts[type] };
+                } else if (val) {
+                    node.action = {};
+                    node.action[type] = val;
+                }
+            }
+            
+            if (labelInputText) {
+                if (labelInputText.toLowerCase().startsWith('sf:')) {
+                    node.label.systemImageName = labelInputText.substring(3).trim();
+                    if (node.label.text) delete node.label.text;
+                } else {
+                    node.label.text = labelInputText;
+                    if (node.label.systemImageName) delete node.label.systemImageName;
+                }
+            } else {
+                if (node.label.text) delete node.label.text;
+                if (node.label.systemImageName) delete node.label.systemImageName;
+            }
+
             if (size) node.fontSize = parseInt(size); else delete node.fontSize;
 
             if (color && color.toLowerCase() !== '#8e8e93') {
@@ -656,6 +827,10 @@
                 delete node.highlightColor;
                 if (node.label && node.label.color) delete node.label.color;
             }
+            
+            if (Object.keys(node.label).length === 0) delete node.label;
+            
+            if (!node.action && !node.label && !node.fontSize && !node.normalColor) return null;
 
             return node;
         }
