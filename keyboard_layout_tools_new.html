@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器</title>
+    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器Rev16</title>
     <style>
         :root{--primary-color:#007AFF;--bg-color:#f0f8ff;--panel-bg:#ffffff;--border-color:#e5e5ea}
         *{box-sizing:border-box}
@@ -11,7 +11,7 @@
         .header-title{font-size:24px;font-weight:bold;margin-bottom:10px;color:#1c1c1e}
         .author-badge{background:var(--primary-color);color:#fff;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:bold;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,122,255,0.3)}
         .main-container{display:flex;gap:20px;width:100%;max-width:1600px;height:calc(100vh - 120px);align-items:stretch}
-        .config-panel{flex:1;background:var(--panel-bg);padding:20px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;overflow-y:auto;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        .config-panel{flex:1;background:var(--panel-bg);padding:20px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;overflow-y:auto;overflow-x:auto;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
         .preview-panel{flex:1;background:transparent;display:flex;flex-direction:column;gap:12px;max-width:50%;overflow-y:auto;padding-right:5px}
         .drop-zone{border:2px dashed #5ac8fa;padding:15px;text-align:center;border-radius:10px;cursor:pointer;margin-bottom:12px;font-size:14px;color:#007aff;transition:0.2s}
         .drop-zone.dragover{background:#e6f7ff;border-color:#007aff}
@@ -20,13 +20,12 @@
         input[type="text"],input[type="number"],select{height:32px;padding:4px 8px;border:1px solid #ccc;border-radius:5px;font-size:13px;width:100%}
         .row-item{background:#fdfdfd;border:1px solid #ddd;margin-bottom:18px;padding:15px;border-radius:10px}
         
-        .key-grid-header,.key-input-row,.sum-header-row{display:grid;grid-template-columns:95px 50px 45px 75px 115px 55px 35px;gap:8px}
+        .key-grid-header,.key-input-row,.sum-header-row{display:grid;grid-template-columns:95px 65px 65px 45px 75px 115px 45px 35px;gap:8px}
         .key-grid-header{margin-bottom:8px;font-size:11px;color:#333;font-weight:bold;text-align:center}
         .key-input-row{margin-bottom:6px;align-items:center}
         .sum-header-row{margin-bottom:4px}
-        .sum-text{grid-column:4;text-align:center;font-size:12px;font-weight:bold;color:#ff3b30}
+        .sum-text{grid-column:5;text-align:center;font-size:12px;font-weight:bold;color:#ff3b30}
         
-        /* 顏色對齊專用樣式 */
         .color-cell{display:flex;align-items:center;gap:8px; white-space:nowrap; font-size:13px; font-weight:500;}
         .color-label{display:inline-block; width:70px; text-align:left; color:#333; font-weight:600;}
         .color-picker{width:32px!important;height:32px!important;padding:0!important;cursor:pointer;border:1px solid #d1d1d6!important;border-radius:6px;flex-shrink:0; overflow:hidden;}
@@ -52,7 +51,7 @@
 </head>
 <body>
 
-    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器</div>
+    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器 Rev16</div>
     <div class="author-badge">版權所有 ＆ 製作：WHY</div>
 
     <div class="main-container">
@@ -234,28 +233,30 @@
                         <button class="btn" style="background:#ff3b30; color:white; padding:4px 10px; font-size:12px;" onclick="removeRSync(${rIdx})">刪除排</button>
                     </div>
                     <div class="sum-header-row">
-                        <span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span>
                         <div class="sum-text">加總：<span id="sum-${rIdx}">0.00</span></div>
                         <span></span><span></span><span></span>
                     </div>
-                    <div class="key-grid-header"><span>類型選單</span><span>顯示內容</span><span>調整</span><span>寬度比例</span><span>日間顏色</span><span>尺寸</span><span>刪</span></div>
+                    <div class="key-grid-header"><span>類型選單</span><span>輸出內容</span><span>按鍵顯示</span><span>調整</span><span>寬度比例</span><span>日間顏色</span><span>尺寸</span><span>刪</span></div>
                     <div id="keys-${rIdx}"></div>`;
                 const kBox = div.querySelector(`#keys-${rIdx}`);
                 row.keys.forEach((key, kIdx) => {
                     const kRow = document.createElement('div');
                     kRow.className = 'key-input-row';
                     const safeCode = String(key.code || '').replace(/'/g, "&#39;");
-                    let optionsHTML = dropdownOptions.map(opt => `<option value="${opt.val}" ${safeCode.toUpperCase() === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('');
+                    const safeOutCode = String(key.outCode || '').replace(/'/g, "&#39;");
+                    let optionsHTML = dropdownOptions.map(opt => `<option value="${opt.val}" ${safeOutCode.toUpperCase() === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('');
                     kRow.innerHTML = `
-                        <select onchange="updateKey(${rIdx}, ${kIdx}, 'code', this.value); renderEditor();">${optionsHTML}</select>
-                        <input type="text" value="${safeCode}" oninput="updateKey(${rIdx}, ${kIdx}, 'code', this.value)">
+                        <select onchange="updateKey(${rIdx}, ${kIdx}, 'type', this.value, this); renderEditor();">${optionsHTML}</select>
+                        <input type="text" class="out-code-input" value="${safeOutCode}" placeholder="如:e" title="真實送出的按鍵訊號" oninput="updateKey(${rIdx}, ${kIdx}, 'outCode', this.value, this)">
+                        <input type="text" class="code-input" value="${safeCode}" placeholder="如:一" title="畫面上顯示的外觀文字" oninput="updateKey(${rIdx}, ${kIdx}, 'code', this.value, this)">
                         <button class="btn-auto" onclick="autoWidth(${rIdx}, ${kIdx})">Auto</button>
-                        <input type="number" step="0.01" value="${key.width}" oninput="updateKey(${rIdx}, ${kIdx}, 'width', this.value); updateSum(${rIdx});">
+                        <input type="number" step="0.01" value="${key.width}" oninput="updateKey(${rIdx}, ${kIdx}, 'width', this.value, this); updateSum(${rIdx});">
                         <div class="color-cell" style="padding:0; background:transparent; border:none;">
-                            <input type="color" class="color-picker" value="${key.color}" oninput="updateKey(${rIdx}, ${kIdx}, 'color', this.value); renderPreview();">
-                            <input type="text" class="hex-input" value="${(key.color || '#000000').toUpperCase()}" oninput="updateKey(${rIdx}, ${kIdx}, 'color', this.value); renderPreview();">
+                            <input type="color" class="color-picker" value="${key.color}" oninput="updateKey(${rIdx}, ${kIdx}, 'color', this.value, this);">
+                            <input type="text" class="hex-input" value="${(key.color || '#000000').toUpperCase()}" oninput="updateKey(${rIdx}, ${kIdx}, 'color', this.value, this);">
                         </div>
-                        <input type="number" value="${key.fontSize}" oninput="updateKey(${rIdx}, ${kIdx}, 'fontSize', this.value)">
+                        <input type="number" value="${key.fontSize}" oninput="updateKey(${rIdx}, ${kIdx}, 'fontSize', this.value, this)">
                         <button class="btn-del-sq" onclick="removeKSync(${rIdx}, ${kIdx})">×</button>`;
                     kBox.appendChild(kRow);
                 });
@@ -295,7 +296,7 @@
             const row = layouts[currentMode].rows[rIdx];
             let otherSum = 0;
             row.keys.forEach((k, idx) => { if(idx !== kIdx) otherSum += (parseFloat(k.width) || 0); });
-            updateKey(rIdx, kIdx, 'width', Math.max(0, (1 - otherSum)).toFixed(4));
+            updateKey(rIdx, kIdx, 'width', Math.max(0, (1 - otherSum)).toFixed(4), null);
             renderEditor();
         }
 
@@ -367,14 +368,14 @@
                 row.keys.forEach(key => {
                     const k = document.createElement('div');
                     k.className = 'preview-key';
-                    const safeCode = String(key.code || '').toUpperCase();
+                    const safeCode = String(key.code || key.outCode || '').toUpperCase();
                     k.innerText = symbolMap[safeCode] || safeCode;
                     k.style.width = (key.width * 100) + '%';
                     k.style.fontSize = key.fontSize + 'px';
                     k.style.borderRadius = document.getElementById('keyRadius').value + 'px';
                     
-                    const isEnter = ['ENTER', '↵', 'RETURN'].includes(safeCode);
-                    const isSys = systemKeys.includes(safeCode);
+                    const isEnter = ['ENTER', '↵', 'RETURN'].includes(String(key.outCode || key.code || '').toUpperCase());
+                    const isSys = systemKeys.includes(String(key.outCode || key.code || '').toUpperCase());
                     
                     let keyHex = (key.color || '').toUpperCase();
                     let displayColor;
@@ -401,9 +402,38 @@
             });
         }
 
-        function updateKey(r, k, f, v) {
+        function updateKey(r, k, f, v, el) {
             const val = (f === 'width' || f === 'fontSize') ? parseFloat(v) : v;
-            const applyOne = (m) => { if (layouts[m].rows[r] && layouts[m].rows[r].keys[k]) layouts[m].rows[r].keys[k][f] = val; };
+            const applyOne = (m) => {
+                if (layouts[m].rows[r] && layouts[m].rows[r].keys[k]) {
+                    let keyObj = layouts[m].rows[r].keys[k];
+                    
+                    if (f === 'type') {
+                        keyObj.outCode = val;
+                        keyObj.code = val;
+                    } else if (f === 'outCode') {
+                        if (!keyObj.code) {
+                            keyObj.code = val;
+                            if (el && currentMode === m) {
+                                let codeInput = el.parentElement.querySelector('.code-input');
+                                if (codeInput) codeInput.value = val;
+                            }
+                        }
+                        keyObj.outCode = val;
+                    } else if (f === 'code') {
+                        if (!keyObj.outCode) {
+                            keyObj.outCode = val;
+                            if (el && currentMode === m) {
+                                let outInput = el.parentElement.querySelector('.out-code-input');
+                                if (outInput) outInput.value = val;
+                            }
+                        }
+                        keyObj.code = val;
+                    } else {
+                        keyObj[f] = val;
+                    }
+                }
+            };
             if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyOne);
             else applyOne(currentMode);
             renderPreview();
@@ -415,7 +445,7 @@
             const applyKCount = (m) => {
                 const row = layouts[m].rows[r]; if (!row) return;
                 if (num > row.keys.length) {
-                    for (let i = row.keys.length; i < num; i++) row.keys.push({ code: '', width: (1 / num).toFixed(4), color: defC, fontSize: 18 });
+                    for (let i = row.keys.length; i < num; i++) row.keys.push({ code: '', outCode: '', width: (1 / num).toFixed(4), color: defC, fontSize: 18 });
                 } else {
                     row.keys = row.keys.slice(0, num);
                 }
@@ -431,6 +461,14 @@
         function pasteL() { if (clip) { layouts[currentMode].rows = JSON.parse(JSON.stringify(clip)); renderEditor(); renderPreview(); flashBtn('btnPasteL', '✅ 貼上成功'); } }
         function copyC() { const a = document.getElementById('outArea'); a.select(); document.execCommand('copy'); flashBtn('btnCopyC', '✅ 複製成功'); }
         
+        function getCellName(k) {
+            let outCode = k.outCode || k.code;
+            let outUiCode = String(outCode).toLowerCase();
+            let prefix = sysCodeMap[outUiCode] || outUiCode;
+            if (prefix === 'semicolon') prefix = 'semicolon';
+            return `${prefix}Button`;
+        }
+
         function gen() {
             const exportFormat = document.getElementById('exportFormat').value;
             const dmMode = document.getElementById('darkModeHandling').value;
@@ -453,31 +491,44 @@
                 let portMode = (currentFileName.includes('en') || currentFileName.includes('alphabetic')) ? 'portraitEn' : 'portraitPinyin';
                 let landMode = (currentFileName.includes('en') || currentFileName.includes('alphabetic')) ? 'landscapeEn' : 'landscapePinyin';
                 
-                let uniqueKeys = new Set();
-                layouts[portMode].rows.forEach(r => r.keys.forEach(k => uniqueKeys.add(k.code)));
-                layouts[landMode].rows.forEach(r => r.keys.forEach(k => uniqueKeys.add(k.code)));
+                let uniqueKeys = new Map();
+                const addKey = (k) => {
+                    let code = k.code || '';
+                    let outCode = k.outCode || code;
+                    if (!code && !outCode) return;
+                    let outUiCode = String(outCode).toLowerCase();
+                    let prefix = sysCodeMap[outUiCode] || outUiCode;
+                    if (prefix === 'semicolon') prefix = 'semicolon';
+                    let cellName = `${prefix}Button`;
+                    uniqueKeys.set(cellName, { code: code, outCode: outCode, prefix: prefix });
+                };
+                layouts[portMode].rows.forEach(r => r.keys.forEach(addKey));
+                layouts[landMode].rows.forEach(r => r.keys.forEach(addKey));
                 
                 let btnInjectStr = "";
                 let styleInjectStr = "";
                 
-                uniqueKeys.forEach(code => {
-                    let uiCode = String(code || '').toLowerCase();
-                    let prefix = sysCodeMap[uiCode] || uiCode;
-                    if (prefix === 'semicolon') prefix = 'semicolon';
-                    if (['enter', 'backspace', 'shift', 'space', 'numeric', 'tildedirect', 'perioddirect', 'comma', 'period', 'slash'].includes(prefix)) return;
+                uniqueKeys.forEach((data, cellName) => {
+                    let prefix = data.prefix;
+                    let isSystemKey = ['enter', 'backspace', 'shift', 'space', 'numeric', 'tildedirect', 'perioddirect', 'comma', 'period', 'slash', 'semicolon'].includes(prefix);
+                    let sameCode = String(data.code).toUpperCase() === String(data.outCode).toUpperCase() || (sysCodeMap[String(data.code).toLowerCase()] === prefix);
                     
-                    let safeRawCode = uiCode.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                    let safeOutCode = String(data.outCode || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
                     let safePrefix = prefix.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
                     
+                    // 只負責產生原代碼中不存在的新按鍵定義，絕對不碰已存在的按鍵，保護滑動結構
                     let btnDefRegex = new RegExp(`['"]?${safePrefix}Button['"]?\\s*:`, 'i');
                     if (!btnDefRegex.test(newCode)) {
+                        if (isSystemKey && sameCode) return;
                         let themeArg = isPinyinTemplate ? 'theme, ' : '';
-                        btnInjectStr += `    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeRawCode}', size: ButtonSize['普通键size'] }),\n`;
-                        styleInjectStr += `  + createHintStyle('${safeRawCode}')\n`;
+                        
+                        btnInjectStr += `    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ButtonSize['普通键size'] }),\n`;
+                        
+                        styleInjectStr += `  + createHintStyle('${safeOutCode}')\n`;
                         if (isPinyinTemplate) {
-                            styleInjectStr += `  + createSchemaStyles(theme, '${safeRawCode}')\n`;
+                            styleInjectStr += `  + createSchemaStyles(theme, '${safeOutCode}')\n`;
                         } else {
-                            styleInjectStr += `  + createExtraStyles(theme, '${safeRawCode}')\n`;
+                            styleInjectStr += `  + createExtraStyles(theme, '${safeOutCode}')\n`;
                         }
                     }
                 });
@@ -486,9 +537,9 @@
                 let layoutEndMarker = "// === EDITOR LAYOUT END ===";
                 
                 const layoutReplacement = layoutStartMarker + "\n" + btnInjectStr + "    keyboardLayout: if orientation == 'portrait' then [\n" +
-                    layouts[portMode].rows.map(r => `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getSysCode(k.code)}Button' }`).join(', ')} ] } }`).join(',\n') +
+                    layouts[portMode].rows.map(r => `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getCellName(k)}' }`).join(', ')} ] } }`).join(',\n') +
                     "\n    ] else [\n" +
-                    layouts[landMode].rows.map(r => `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getSysCode(k.code)}Button' }`).join(', ')} ] } }`).join(',\n') +
+                    layouts[landMode].rows.map(r => `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getCellName(k)}' }`).join(', ')} ] } }`).join(',\n') +
                     "\n    ],\n    " + layoutEndMarker;
 
                 let lSIdx = newCode.indexOf(layoutStartMarker);
@@ -529,7 +580,7 @@
                 let sysKeyBgD = document.getElementById('sysKeyHexD').value || '#2C2C2E';
                 let enterBgD = document.getElementById('enterBgHexD').value || '#0A60FE';
                 let enterTextD = document.getElementById('enterTextHexD').value || '#FFFFFF';
-
+                
                 const overrideStartMarker = "// === 編輯器強制顏色覆寫 ===";
                 const overrideEndMarker = "// === 覆寫結束 ===";
                 const sIdx = newCode.indexOf(overrideStartMarker);
@@ -564,56 +615,86 @@
 
                 let portWidths = {};
                 layouts[portMode].rows.forEach(r => r.keys.forEach(k => {
-                    let prefix = sysCodeMap[String(k.code).toLowerCase()] || String(k.code).toLowerCase();
-                    if (prefix === 'semicolon') prefix = 'semicolon';
-                    portWidths[`${prefix}Button`] = parseFloat(k.width).toFixed(4);
+                    portWidths[getCellName(k)] = parseFloat(k.width).toFixed(4);
                 }));
 
                 let landWidths = {};
                 layouts[landMode].rows.forEach(r => r.keys.forEach(k => {
-                    let prefix = sysCodeMap[String(k.code).toLowerCase()] || String(k.code).toLowerCase();
-                    if (prefix === 'semicolon') prefix = 'semicolon';
-                    landWidths[`${prefix}Button`] = parseFloat(k.width).toFixed(4);
+                    landWidths[getCellName(k)] = parseFloat(k.width).toFixed(4);
                 }));
 
                 let allCellNames = new Set([...Object.keys(portWidths), ...Object.keys(landWidths)]);
+                
+                // 【精準修復】：僅寫入尺寸與邊界。專門為獨立寫死的逗號與句號綁上 prune 結構，使上下滑動氣泡復活
                 allCellNames.forEach(cell => {
                     let pw = portWidths[cell] || "0.1";
                     let lw = landWidths[cell] || "0.1";
-                    overrideMap.set(cell, `{ size: { width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }, bounds: null }`);
+                    let swipeInject = '';
+                    
+                    if (cell === 'commaButton') {
+                        swipeInject = `, foregroundStyle: std.prune(['commaButtonForegroundStyle', if std.objectHas(swipe_up, ',') then ',ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, ',') then ',ButtonDownForegroundStyle' else null])`;
+                    } else if (cell === 'periodButton') {
+                        swipeInject = `, foregroundStyle: std.prune(['periodButtonForegroundStyle', if std.objectHas(swipe_up, '.') then '.ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '.') then '.ButtonDownForegroundStyle' else null])`;
+                    }
+                    
+                    overrideMap.set(cell, `{ size: { width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }, bounds: null${swipeInject} }`);
                 });
 
                 let allRows = layouts[portMode].rows.concat(layouts[landMode].rows);
                 allRows.forEach(r => {
                     r.keys.forEach(k => {
                         let color = (k.color || defTextC).toUpperCase();
-                        let rawCode = String(k.code).toLowerCase();
+                        let rawDisplay = String(k.code || '');
+                        let rawOutput = String(k.outCode || rawDisplay);
+                        
+                        let rawCode = rawOutput.toLowerCase();
                         let prefix = sysCodeMap[rawCode] || rawCode;
-                        let sym = symbolMap[String(k.code).toUpperCase()] || rawCode;
                         
                         let isDefaultColor = (color === defTextC.toUpperCase() || color === '');
-                        let colorStr;
+                        
+                        let textInject = '';
+                        if (rawDisplay !== rawOutput && rawDisplay !== '' && !['enter', 'backspace', 'shift', 'space', 'numeric'].includes(prefix.toLowerCase())) {
+                            let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                            textInject = `text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
+                        } else if (['~', '.', ',', ';', '/'].includes(rawDisplay)) {
+                            // 專門針對符號鍵的防護，確保不論使用者怎麼切換都能寫入 text 屬性
+                            let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                            textInject = `text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
+                        }
 
+                        let colorStr;
                         if (dmMode === 'unified') {
-                            colorStr = `{ normalColor: '${color}', highlightColor: '${color}' }`;
+                            colorStr = `{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
                         } else if (dmMode === 'system') {
                             if (isDefaultColor) {
-                                colorStr = `{ normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;
+                                colorStr = `{ ${textInject}normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;
                             } else {
-                                colorStr = `{ normalColor: '${color}', highlightColor: '${color}' }`;
+                                colorStr = `{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
                             }
                         } else if (dmMode === 'custom') {
                             if (isDefaultColor) {
-                                colorStr = `{ normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;
+                                colorStr = `{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;
                             } else {
-                                colorStr = `{ normalColor: '${color}', highlightColor: '${color}' }`;
+                                colorStr = `{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
                             }
                         }
 
-                        let permutations = new Set([
-                            rawCode, prefix, sym,
-                            rawCode.replace('direct', ''), prefix.replace('direct', '').replace('Direct', '')
-                        ]);
+                        // 【安全隔離修復 Rev16】：徹底隔離 perioddirect 不去干涉主鍵盤的 period(舟)
+                        let sym = symbolMap[rawOutput.toUpperCase()] || rawOutput;
+                        let permutations = new Set([ rawCode, prefix ]);
+                        
+                        // 【隔離防護】：如果是 direct 結尾的特定符號（如 perioddirect），不要把它的符號（.）加入，以免覆蓋掉大易字根（舟）
+                        if (!rawCode.includes('direct') || rawCode === 'tildedirect') {
+                            permutations.add(sym);
+                        }
+                        
+                        if (rawCode.includes('direct')) {
+                            // 【隔離防護】：絕不把 period 和 comma 混入 direct 的變數中，確保舟跟力永遠安全
+                            if (!rawCode.includes('period') && !rawCode.includes('comma')) {
+                                permutations.add(rawCode.replace('direct', ''));
+                                permutations.add(prefix.replace('Direct', ''));
+                            }
+                        }
 
                         permutations.forEach(p => {
                             if (!p) return;
@@ -631,6 +712,19 @@
 
                             if (/^[0-9]$/.test(p)) {
                                 overrideMap.set(`number${p}ButtonForegroundStyle`, colorStr);
+                                
+                                let textNum = sysCodeMap[p];
+                                if (textNum && textNum !== p) {
+                                    overrideMap.set(`${textNum}ButtonForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}ForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}SchemaLiurForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}SchemaEasyEnForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}ButtonUppercasedStateForegroundStyle`, colorStr);
+                                    
+                                    let upperTextNum = textNum.toUpperCase();
+                                    overrideMap.set(`${upperTextNum}ButtonForegroundStyle`, colorStr);
+                                    overrideMap.set(`${upperTextNum}ButtonUppercasedStateForegroundStyle`, colorStr);
+                                }
                             }
                         });
                         
@@ -693,7 +787,7 @@
             Object.entries(layouts).forEach(([m, d]) => {
                 out += `  '${ns[m]}': {\n    keyboardLayout: [\n`;
                 d.rows.forEach(r => {
-                    out += `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getSysCode(k.code)}Button' }`).join(', ')} ] } },\n`;
+                    out += `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getCellName(k)}' }`).join(', ')} ] } },\n`;
                 });
                 out += `    ],\n`;
                 out += `    keyboardStyle: { backgroundStyle: 'keyboardBackgroundStyle' },\n`;
@@ -707,7 +801,8 @@
                 modes.forEach(m => {
                     layouts[m].rows.forEach(r => {
                         r.keys.forEach(k => {
-                            let sysCode = getSysCode(k.code);
+                            let outCode = k.outCode || k.code;
+                            let sysCode = getSysCode(outCode);
                             let sizeName = sysCode === 'tildedirect' ? 'tilde' : sysCode;
                             if (sizeName) {
                                 sizeMap[sizeName] = k.width;
@@ -775,7 +870,7 @@
         function addNewRowSync() {
             try {
                 const defC = document.getElementById('defKeyColor').value;
-                const rowTpl = { keys: [{ code: '', width: 1.0, color: defC, fontSize: 18 }] };
+                const rowTpl = { keys: [{ code: '', outCode: '', width: 1.0, color: defC, fontSize: 18 }] };
                 if (document.getElementById('syncAllCheck').checked) {
                     Object.keys(layouts).forEach(m => layouts[m].rows.push(JSON.parse(JSON.stringify(rowTpl))));
                 } else {
@@ -848,6 +943,75 @@
                                         keyColor = '#FF0000';
                                     }
 
+                                    let finalDisplay = uiCode.toUpperCase();
+                                    let finalOutput = uiCode.toLowerCase();
+
+                                    let safeCForRegex = escapeRegExp(c);
+                                    let defRegex = new RegExp(`['"]?${safeCForRegex}['"]?\\s*:\\s*.*?createButton\\s*\\([^{]*\\{([^}]+)\\}`, 'i');
+                                    let defMatch = text.match(defRegex);
+                                    
+                                    if (defMatch) {
+                                        let propsStr = defMatch[1];
+                                        let kMatch = propsStr.match(/key\s*:\s*['"]([^'"]+)['"]/i);
+                                        let tMatch = propsStr.match(/text\s*:\s*['"]([^'"]+)['"]/i);
+                                        
+                                        if (kMatch) finalOutput = kMatch[1];
+                                        if (tMatch) finalDisplay = tMatch[1];
+                                        else if (kMatch) finalDisplay = kMatch[1].toUpperCase();
+                                    } else {
+                                        if (uiCode === 'COMMA') finalOutput = ',';
+                                        else if (uiCode === 'PERIOD') finalOutput = '.';
+                                        else if (uiCode === 'SLASH') finalOutput = '/';
+                                        else if (uiCode === ';') finalOutput = ';';
+                                        else if (uiCode === 'TILDEDIRECT') finalOutput = '~';
+                                        else if (uiCode === 'PERIODDIRECT') finalOutput = 'PERIODDIRECT';
+                                        else finalOutput = uiCode;
+                                    }
+
+                                    let outCodeToSave = finalOutput;
+                                    let codeToSave = finalDisplay;
+
+                                    const systemAndSpecialKeys = [...systemKeys, 'SEMICOLON', 'COMMA', 'PERIOD', 'SLASH', 'TILDEDIRECT', 'PERIODDIRECT'];
+                                    if (systemAndSpecialKeys.includes(uiCode.toUpperCase())) {
+                                        outCodeToSave = uiCode.toUpperCase();
+                                        codeToSave = uiCode.toUpperCase();
+                                        if (uiCode.toUpperCase() === 'PERIODDIRECT') codeToSave = '.';
+                                        if (uiCode.toUpperCase() === 'TILDEDIRECT') codeToSave = '~';
+                                        if (uiCode.toUpperCase() === 'SEMICOLON') codeToSave = ';';
+                                        if (uiCode.toUpperCase() === 'COMMA') codeToSave = ',';
+                                        if (uiCode.toUpperCase() === 'PERIOD') codeToSave = '.';
+                                        if (uiCode.toUpperCase() === 'SLASH') codeToSave = '/';
+                                    }
+                                    
+                                    let prefixToFind = sysCodeMap[outCodeToSave.toLowerCase()] || outCodeToSave.toLowerCase();
+                                    if (prefixToFind === 'semicolon') prefixToFind = 'semicolon';
+                                    
+                                    const pureSystemKeys = ['ENTER', 'BACKSPACE', 'SHIFT', 'SPACE', 'NUMERIC'];
+                                    if (!pureSystemKeys.includes(uiCode.toUpperCase())) {
+                                        let btnTextRegex = new RegExp(`['"]?${escapeRegExp(prefixToFind)}Button['"]?\\+?:\\s*\\{([^}]*?)text:\\s*['"]([^'"]+)['"]`, "i");
+                                        let textOverrideRegex = new RegExp(`['"]?${escapeRegExp(prefixToFind)}(?:Button|SchemaLiur|SchemaEasyEn)?ForegroundStyle['"]?\\+?:\\s*\\{([^}]*?)text:\\s*['"]([^'"]+)['"]`, "i");
+                                        
+                                        let btnTextMatch = text.match(btnTextRegex);
+                                        let textOverrideMatch = text.match(textOverrideRegex);
+                                        
+                                        if (btnTextMatch) {
+                                            codeToSave = btnTextMatch[2];
+                                        } else if (textOverrideMatch) {
+                                            codeToSave = textOverrideMatch[2];
+                                        } else if (['COMMA', 'PERIOD', 'SLASH', 'SEMICOLON', 'TILDEDIRECT', 'PERIODDIRECT'].includes(uiCode.toUpperCase())) {
+                                            if (uiCode === 'COMMA') codeToSave = ',';
+                                            else if (uiCode === 'PERIOD') codeToSave = '.';
+                                            else if (uiCode === 'SLASH') codeToSave = '/';
+                                            else if (uiCode === ';') codeToSave = ';';
+                                            else if (uiCode === 'TILDEDIRECT') codeToSave = '~';
+                                            else if (uiCode === 'PERIODDIRECT') codeToSave = '.';
+                                        }
+                                    }
+
+                                    if (codeToSave.toLowerCase() === outCodeToSave.toLowerCase()) {
+                                        outCodeToSave = codeToSave;
+                                    }
+
                                     let rawCode = uiCode.toLowerCase();
                                     let prefix = sysCodeMap[rawCode] || rawCode;
                                     let sym = symbolMap[uiCode.toUpperCase()] || rawCode;
@@ -873,7 +1037,7 @@
                                         else if (!isPortrait && wMatch[1]) w = parseFloat(wMatch[1]);
                                     }
 
-                                    return { code: uiCode.toUpperCase(), width: w, color: keyColor, fontSize: 18 };
+                                    return { code: codeToSave, outCode: outCodeToSave, width: w, color: keyColor, fontSize: 18 };
                                 }) });
                             }
                         }
@@ -958,6 +1122,45 @@
 
                         if (portRows.length > 0) {
                             parseSuccess = true;
+                            
+                            let isCorrupted = false;
+                            if (portRows.length >= 4) {
+                                let r1k2 = portRows[1].keys[2] ? portRows[1].keys[2].outCode : '';
+                                let r3k1 = portRows[3].keys[1] ? portRows[3].keys[1].outCode : '';
+                                if (r1k2 === '1' || r3k1 === '6') isCorrupted = true;
+                            }
+                            
+                            if (isCorrupted) {
+                                const fixes = [
+                                    {r:1, k:2, o:'e', c:'一'}, {r:1, k:3, o:'r', c:'工'}, {r:1, k:4, o:'t', c:'糸'}, {r:1, k:8, o:'o', c:'口'},
+                                    {r:3, k:1, o:'x', c:'水'}, {r:3, k:5, o:'n', c:'魚'}
+                                ];
+                                [portRows, landRows].forEach(rows => {
+                                    fixes.forEach(f => {
+                                        if (rows[f.r] && rows[f.r].keys[f.k]) {
+                                            rows[f.r].keys[f.k].outCode = f.o;
+                                            rows[f.r].keys[f.k].code = f.c;
+                                        }
+                                    });
+                                    if (rows[3] && rows[3].keys[7] && (rows[3].keys[7].outCode === ',' || rows[3].keys[7].outCode === 'COMMA') && (rows[3].keys[7].code === ',' || rows[3].keys[7].code === 'COMMA')) {
+                                        rows[3].keys[7].code = '力';
+                                        rows[3].keys[7].outCode = ',';
+                                    }
+                                    if (rows[3] && rows[3].keys[8] && (rows[3].keys[8].outCode === '.' || rows[3].keys[8].outCode === 'PERIOD') && (rows[3].keys[8].code === '.' || rows[3].keys[8].code === 'PERIOD')) {
+                                        rows[3].keys[8].code = '舟';
+                                        rows[3].keys[8].outCode = '.';
+                                    }
+                                    if (rows[3] && rows[3].keys[9] && (rows[3].keys[9].outCode === '/' || rows[3].keys[9].outCode === 'SLASH') && (rows[3].keys[9].code === '/' || rows[3].keys[9].code === 'SLASH')) {
+                                        rows[3].keys[9].code = '竹';
+                                        rows[3].keys[9].outCode = '/';
+                                    }
+                                    if (rows[2] && rows[2].keys[9] && (rows[2].keys[9].outCode === ';' || rows[2].keys[9].outCode === 'SEMICOLON') && (rows[2].keys[9].code === ';' || rows[2].keys[9].code === 'SEMICOLON')) {
+                                        rows[2].keys[9].code = '虫';
+                                        rows[2].keys[9].outCode = ';';
+                                    }
+                                });
+                            }
+                            
                             if (currentFileName.includes('pinyin')) {
                                 layouts['portraitPinyin'].rows = JSON.parse(JSON.stringify(portRows));
                                 layouts['landscapePinyin'].rows = JSON.parse(JSON.stringify(landRows));
