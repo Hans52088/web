@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器Rev17</title>
+    <style>
+        :root{--primary-color:#007AFF;--bg-color:#f0f8ff;--panel-bg:#ffffff;--border-color:#e5e5ea}
+        *{box-sizing:border-box}
+        body{background:var(--bg-color);font-family:-apple-system,sans-serif;margin:0;padding:15px;display:flex;flex-direction:column;align-items:center;height:100vh;overflow:hidden}
+        .header-title{font-size:24px;font-weight:bold;margin-bottom:10px;color:#1c1c1e}
+        .author-badge{background:var(--primary-color);color:#fff;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:bold;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,122,255,0.3)}
+        .main-container{display:flex;gap:20px;width:100%;max-width:1600px;height:calc(100vh - 120px);align-items:stretch}
+        .config-panel{flex:1;background:var(--panel-bg);padding:20px;border-radius:12px;border:1px solid var(--border-color);display:flex;flex-direction:column;overflow-y:auto;overflow-x:auto;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        .preview-panel{flex:1;background:transparent;display:flex;flex-direction:column;gap:12px;max-width:50%;overflow-y:auto;padding-right:5px}
+        .drop-zone{border:2px dashed #5ac8fa;padding:15px;text-align:center;border-radius:10px;cursor:pointer;margin-bottom:12px;font-size:14px;color:#007aff;transition:0.2s}
+        .drop-zone.dragover{background:#e6f7ff;border-color:#007aff}
+        .sync-box{background:#fff9e6;border:1px solid #ffe58f;padding:10px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:bold}
+        .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px}
+        input[type="text"],input[type="number"],select{height:32px;padding:4px 8px;border:1px solid #ccc;border-radius:5px;font-size:13px;width:100%}
+        .row-item{background:#fdfdfd;border:1px solid #ddd;margin-bottom:18px;padding:15px;border-radius:10px}
+        
+        .key-grid-header,.key-input-row,.sum-header-row{display:grid;grid-template-columns:95px 65px 65px 45px 75px 115px 45px 35px;gap:8px}
+        .key-grid-header{margin-bottom:8px;font-size:11px;color:#333;font-weight:bold;text-align:center}
+        .key-input-row{margin-bottom:6px;align-items:center}
+        .sum-header-row{margin-bottom:4px}
+        .sum-text{grid-column:5;text-align:center;font-size:12px;font-weight:bold;color:#ff3b30}
+        
+        .color-cell{display:flex;align-items:center;gap:8px; white-space:nowrap; font-size:13px; font-weight:500;}
+        .color-label{display:inline-block; width:70px; text-align:left; color:#333; font-weight:600;}
+        .color-picker{width:32px!important;height:32px!important;padding:0!important;cursor:pointer;border:1px solid #d1d1d6!important;border-radius:6px;flex-shrink:0; overflow:hidden;}
+        .color-picker::-webkit-color-swatch-wrapper{padding:0;}
+        .color-picker::-webkit-color-swatch{border:none; border-radius:5px;}
+        .hex-input{font-family:monospace;font-size:12px!important;text-transform:uppercase;width:80px!important;text-align:center;}
+        
+        .keyboard-preview{background:#d1d5db;padding:12px;border-radius:12px;display:flex;flex-direction:column;width:100%;align-items:stretch;border:1px solid #999;flex-shrink:0;transition:0.3s}
+        .keyboard-row{display:flex;width:100%}
+        .preview-key{background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,0.3);border-bottom:2px solid rgba(0,0,0,0.15);font-weight:500;overflow:hidden;white-space:nowrap;transition:0.3s}
+        .action-panel{display:flex;flex-direction:column;gap:8px;background:#fff;padding:15px;border-radius:12px;border:1px solid var(--border-color);flex-shrink:0}
+        .btn{padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px}
+        .btn-add{background:#34c759;color:#fff;width:100%;margin-top:5px;height:42px}
+        .btn-primary{background:var(--primary-color);color:#fff}
+        .btn-auto{background:#ff9500;color:#fff;border:none;padding:4px 2px;font-size:11px;border-radius:5px;cursor:pointer;font-weight:bold;height:32px;width:100%}
+        .btn-del-sq{background:#ff3b30;color:#fff;border:none;width:35px;height:35px;border-radius:6px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;padding:0}
+        textarea{width:100%;height:300px;font-family:monospace;font-size:12px;padding:10px;border:1px solid #ccc;border-radius:8px;resize:none;margin-top:5px}
+        .mode-tabs{display:flex;gap:5px;background:#e5e5ea;padding:5px;border-radius:10px;margin-bottom:0;flex-shrink:0;flex:1}
+        .tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:6px;font-weight:600;font-size:13px}
+        .tab.active{background:#fff;color:var(--primary-color);box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+        .export-select{width:100%;height:38px;border:2px solid var(--primary-color);border-radius:8px;font-size:14px;font-weight:bold;color:#333;padding:0 10px;cursor:pointer;background:#f0f8ff}
+    </style>
+</head>
+<body>
+
+    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器 Rev17</div>
+    <div class="author-badge">版權所有 ＆ 製作：WHY</div>
+
+    <div class="main-container">
+        <div class="config-panel">
+            <div id="dropZone" class="drop-zone">📂 點擊或拖放 <b>.libsonnet</b> 或 <b>.jsonnet</b> 載入</div>
+            <input type="file" id="fileInput" hidden accept=".libsonnet,.jsonnet">
+
+            <div class="sync-box">
+                <label style="cursor:pointer; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="syncAllCheck" checked> 🔄 同時編輯所有鍵盤 (同步更新按鍵數、內容、樣式)
+                </label>
+            </div>
+
+            <div class="style-grid">
+                <div>文字大小(px)<input type="number" id="globalFontSize" value="18" oninput="applyG()"></div>
+                <div>鍵盤寬度(%)<input type="number" id="kbWidthPerc" value="100" oninput="renderPreview()"></div>
+                <div>高度模式<select id="heightMode" onchange="renderPreview()"><option value="total">鍵盤總高度</option><option value="single">單行高度</option></select></div>
+                <div>高度(px)<input type="number" id="heightInput" value="250" oninput="renderPreview()"></div>
+                <div>間距(px)<input type="number" id="keyGap" value="5" oninput="renderPreview()"></div>
+                <div>圓角(px)<input type="number" id="keyRadius" value="8" oninput="renderPreview()"></div>
+            </div>
+
+            <div style="background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                
+                <div style="font-weight:bold; color:#4f46e5; font-size:13px; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">🌙 暗黑(夜間)模式配色選項</div>
+                <select id="darkModeHandling" style="width:100%; height:32px; padding:4px 8px; border-radius:5px; border:1px solid #ccc; font-weight:bold; font-size:13px; margin-bottom:15px;" onchange="toggleDarkPanel()">
+                    <option value="system" selected>智慧模式 (白天自訂，夜間還原 iOS 系統暗色)</option>
+                    <option value="unified">統一配色 (無分日夜配色相同)</option>
+                    <option value="custom">獨立配色 (分別設定白天與夜間的配色)</option>
+                </select>
+                
+                <div style="font-weight:bold; color:#d97706; font-size:13px; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">☀️ 日間模式 / 通用配色設定</div>
+                <div class="style-grid" style="margin-bottom:0; gap:12px 15px;">
+                    <div class="color-cell"><span class="color-label">鍵盤底色</span><input type="color" class="color-picker" id="kbBgColor" value="#d1d5db" oninput="syncC('kbBgColor','kbBgHex')"><input type="text" id="kbBgHex" class="hex-input" value="#D1D5DB" oninput="syncH('kbBgHex','kbBgColor')"></div>
+                    <div class="color-cell"><span class="color-label">預設字色</span><input type="color" class="color-picker" id="defKeyColor" value="#000000" oninput="syncGlobalDefColor(this.value)"><input type="text" id="defKeyHex" class="hex-input" value="#000000" oninput="syncGlobalDefHex(this.value)"></div>
+                    <div class="color-cell"><span class="color-label">一般鍵底</span><input type="color" class="color-picker" id="keyBgColor" value="#ffffff" oninput="syncC('keyBgColor','keyBgHex')"><input type="text" id="keyBgHex" class="hex-input" value="#FFFFFF" oninput="syncH('keyBgHex','keyBgColor')"></div>
+                    <div class="color-cell"><span class="color-label">系統鍵底</span><input type="color" class="color-picker" id="sysKeyBgColor" value="#b3bce2" oninput="syncC('sysKeyBgColor','sysKeyHex')"><input type="text" id="sysKeyHex" class="hex-input" value="#B3BCE2" oninput="syncH('sysKeyHex','sysKeyBgColor')"></div>
+                    <div class="color-cell"><span class="color-label">Enter底色</span><input type="color" class="color-picker" id="enterBgColor" value="#007aff" oninput="syncC('enterBgColor','enterBgHex')"><input type="text" id="enterBgHex" class="hex-input" value="#007AFF" oninput="syncH('enterBgHex','enterBgColor')"></div>
+                    <div class="color-cell"><span class="color-label">Enter字色</span><input type="color" class="color-picker" id="enterTextColor" value="#ffffff" oninput="syncC('enterTextColor','enterTextHex')"><input type="text" id="enterTextHex" class="hex-input" value="#FFFFFF" oninput="syncH('enterTextHex','enterTextColor')"></div>
+                </div>
+
+                <div id="darkPanelWrap" style="display:none; margin-top:15px; padding-top:10px;">
+                    <div style="font-weight:bold; color:#4f46e5; font-size:13px; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">🌙 暗黑模式 (夜間) 專屬配色設定</div>
+                    <div class="style-grid" style="margin-bottom:0; gap:12px 15px;">
+                        <div class="color-cell"><span class="color-label">鍵盤底色</span><input type="color" class="color-picker" id="kbBgColorD" value="#1c1c1e" oninput="syncCD('kbBgColorD','kbBgHexD')"><input type="text" id="kbBgHexD" class="hex-input" value="#1C1C1E" oninput="syncHD('kbBgHexD','kbBgColorD')"></div>
+                        <div class="color-cell"><span class="color-label">預設字色</span><input type="color" class="color-picker" id="defKeyColorD" value="#ffffff" oninput="syncCD('defKeyColorD','defKeyHexD')"><input type="text" id="defKeyHexD" class="hex-input" value="#FFFFFF" oninput="syncHD('defKeyHexD','defKeyColorD')"></div>
+                        <div class="color-cell"><span class="color-label">一般鍵底</span><input type="color" class="color-picker" id="keyBgColorD" value="#4a4a4c" oninput="syncCD('keyBgColorD','keyBgHexD')"><input type="text" id="keyBgHexD" class="hex-input" value="#4A4A4C" oninput="syncHD('keyBgHexD','keyBgColorD')"></div>
+                        <div class="color-cell"><span class="color-label">系統鍵底</span><input type="color" class="color-picker" id="sysKeyBgColorD" value="#2c2c2e" oninput="syncCD('sysKeyBgColorD','sysKeyHexD')"><input type="text" id="sysKeyHexD" class="hex-input" value="#2C2C2E" oninput="syncHD('sysKeyHexD','sysKeyBgColorD')"></div>
+                        <div class="color-cell"><span class="color-label">Enter底色</span><input type="color" class="color-picker" id="enterBgColorD" value="#0a60fe" oninput="syncCD('enterBgColorD','enterBgHexD')"><input type="text" id="enterBgHexD" class="hex-input" value="#0A60FE" oninput="syncHD('enterBgHexD','enterBgColorD')"></div>
+                        <div class="color-cell"><span class="color-label">Enter字色</span><input type="color" class="color-picker" id="enterTextColorD" value="#ffffff" oninput="syncCD('enterTextColorD','enterTextHexD')"><input type="text" id="enterTextHexD" class="hex-input" value="#FFFFFF" oninput="syncHD('enterTextHexD','enterTextColorD')"></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="width:100%; border:0; border-top:1px solid #eee; margin: 10px 0;">
+            <div id="rowsContainer"></div>
+            <button class="btn btn-add" onclick="addNewRowSync()">＋ 新增一排按鍵</button>
+        </div>
+
+        <div class="preview-panel">
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+                <div id="modeTabs" class="mode-tabs">
+                    <div class="tab active" data-mode="portraitPinyin">豎屏中文</div>
+                    <div class="tab" data-mode="landscapePinyin">橫屏中文</div>
+                    <div class="tab" data-mode="portraitEn">豎屏英文</div>
+                    <div class="tab" data-mode="landscapeEn">橫屏英文</div>
+                </div>
+                <select id="previewTheme" style="width:100%; height:36px; border-radius:8px; border:2px solid #ccc; font-weight:bold; font-size:14px; cursor:pointer; text-align:center;" onchange="renderPreview()">
+                    <option value="light">☀️ 預覽日間模式配色</option>
+                    <option value="dark">🌙 預覽夜間模式配色</option>
+                </select>
+            </div>
+            
+            <div class="keyboard-preview" id="kbPreview"></div>
+            
+            <div class="action-panel">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" style="flex:1; background:#f2f2f7;" id="btnCopyL" onclick="copyL()">📋 複製配置</button>
+                    <button class="btn" style="flex:1; background:#f2f2f7;" id="btnPasteL" onclick="pasteL()">📥 貼上配置</button>
+                </div>
+                
+                <select id="exportFormat" class="export-select">
+                    <option value="jsonnet" selected>產出格式：.jsonnet (單一佈局，支援完美雙模配色)</option>
+                    <option value="libsonnet">產出格式：.libsonnet (純多佈局代碼)</option>
+                </select>
+
+                <button class="btn btn-primary" id="btnGen" onclick="gen()">🚀 套用鍵盤配置並產出程式碼</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" style="flex:1; background:#f2f2f7;" id="btnCopyC" onclick="copyC()">📄 複製程式碼</button>
+                    <button class="btn" style="flex:1; background:#f2f2f7;" onclick="dl()">💾 下載檔案</button>
+                </div>
+                <textarea id="outArea" placeholder="產出的程式碼將顯示在此..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const symbolMap = {
+            'SEMICOLON': ';', 'COMMA': ',', 'PERIOD': '.', 'SLASH': '/',
+            'NUMERIC': '123', 'SHIFT': '⇧', 'BACKSPACE': '⌫', 'ENTER': '↵', 'SPACE': ' ',
+            'TILDEDIRECT': '~', 'PERIODDIRECT': '.'
+        };
+        
+        const sysCodeMap = {
+            '1':'one', '2':'two', '3':'three', '4':'four', '5':'five',
+            '6':'six', '7':'seven', '8':'eight', '9':'nine', '0':'zero',
+            '~':'tildeDirect', 'tildedirect':'tildeDirect',
+            ';':'semicolon', 'semicolon':'semicolon',
+            ',':'comma', 'comma':'comma',
+            '.':'period', 'period':'period',
+            '/':'slash', 'slash':'slash',
+            'perioddirect':'periodDirect'
+        };
+
+        const reverseKeyMap = {
+            '1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero',
+            'TILDEDIRECT':'tildeDirect', 'SEMICOLON':'semicolon', 'COMMA':'comma', 'PERIOD':'period', 'SLASH':'slash',
+            'PERIODDIRECT':'periodDirect', 'BACKSPACE':'backspace', 'ENTER':'enter', 'SHIFT':'shift', 'SPACE':'space', 'NUMERIC':'numeric'
+        };
+
+        const defaultWidths = {
+            'SPACE': 0.36, 'ENTER': 0.12, 'BACKSPACE': 0.12, 'SHIFT': 0.12, 'NUMERIC': 0.12,
+            'TILDEDIRECT': 0.08, 'PERIODDIRECT': 0.08, 'COMMA': 0.1, 'PERIOD': 0.1, 'SLASH': 0.1, 'SEMICOLON': 0.1
+        };
+        
+        const systemKeys = ['BACKSPACE', 'ENTER', 'SHIFT', 'SPACE', 'NUMERIC'];
+
+        const dropdownOptions = [
+            { label: '字元(char)', val: '' }, { label: '退格(back)', val: 'BACKSPACE' }, { label: '回車(ent)', val: 'ENTER' },
+            { label: 'Shift', val: 'SHIFT' }, { label: '數字(num)', val: 'NUMERIC' }, { label: '空格', val: 'SPACE' },
+            { label: '分號(;)', val: 'SEMICOLON' }, { label: '逗號(,)', val: 'COMMA' }, { label: '句號(.)', val: 'PERIOD' },
+            { label: '斜槓(/)', val: 'SLASH' }, { label: '波浪(~)', val: 'TILDEDIRECT' }, { label: '句號(底排)', val: 'PERIODDIRECT' }
+        ];
+
+        let currentMode = 'portraitPinyin';
+        let layouts = { portraitPinyin: {rows:[]}, landscapePinyin: {rows:[]}, portraitEn: {rows:[]}, landscapeEn: {rows:[]} };
+        let clip = null;
+        let currentDefaultColor = '#000000';
+        
+        let rawTemplateStr = '';
+        let currentFileName = '';
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function getSysCode(code) {
+            let str = String(code || '').toLowerCase();
+            let res = sysCodeMap[str] || str;
+            return res.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+        }
+        
+        function toggleDarkPanel() {
+            const mode = document.getElementById('darkModeHandling').value;
+            const darkPanel = document.getElementById('darkPanelWrap');
+            if (mode === 'custom') {
+                darkPanel.style.display = 'block';
+            } else {
+                darkPanel.style.display = 'none';
+            }
+            renderPreview();
+        }
+
+        function init() { renderEditor(); renderPreview(); }
+
+        function renderEditor() {
+            const container = document.getElementById('rowsContainer');
+            container.innerHTML = '';
+            layouts[currentMode].rows.forEach((row, rIdx) => {
+                const div = document.createElement('div');
+                div.className = 'row-item';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; margin-bottom:10px;">
+                        <b style="font-size:15px; margin-right:15px; color:#333;">第 ${rIdx+1} 排</b>
+                        <b style="font-size:15px; color:#333; display:flex; align-items:center;">按鍵數: 
+                            <input type="number" value="${row.keys.length}" style="width:50px; margin-left:8px; font-weight:normal;" onchange="setK(${rIdx}, this.value)">
+                        </b>
+                        <div style="flex-grow:1"></div>
+                        <button class="btn" style="background:#ff3b30; color:white; padding:4px 10px; font-size:12px;" onclick="removeRSync(${rIdx})">刪除排</button>
+                    </div>
+                    <div class="sum-header-row">
+                        <span></span><span></span><span></span><span></span>
+                        <div class="sum-text">加總：<span id="sum-${rIdx}">0.00</span></div>
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="key-grid-header"><span>類型選單</span><span>輸出內容</span><span>按鍵顯示</span><span>調整</span><span>寬度比例</span><span>日間顏色</span><span>尺寸</span><span>刪</span></div>
+                    <div id="keys-${rIdx}"></div>`;
+                const kBox = div.querySelector(`#keys-${rIdx}`);
+                row.keys.forEach((key, kIdx) => {
+                    const kRow = document.createElement('div');
+                    kRow.className = 'key-input-row';
+                    const safeCode = String(key.code || '').replace(/'/g, "&#39;");
+                    const safeOutCode = String(key.outCode || '').replace(/'/g, "&#39;");
+                    let optionsHTML = dropdownOptions.map(opt => `<option value="${opt.val}" ${safeOutCode.toUpperCase() === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('');
+                    kRow.innerHTML = `
+                        <select onchange="updateKey(${rIdx}, ${kIdx}, 'type', this.value, this); renderEditor();">${optionsHTML}</select>
+                        <input type="text" class="out-code-input" value="${safeOutCode}" placeholder="如:e" title="真實送出的按鍵訊號" oninput="updateKey(${rIdx}, ${kIdx}, 'outCode', this.value, this)">
+                        <input type="text" class="code-input" value="${safeCode}" placeholder="如:一" title="畫面上顯示的外觀文字" oninput="updateKey(${rIdx}, ${kIdx}, 'code', this.value, this)">
+                        <button class="btn-auto" onclick="autoWidth(${rIdx}, ${kIdx})">Auto</button>
+                        <input type="number" step="0.01" value="${key.width}" oninput="updateKey(${rIdx}, ${kIdx}, 'width', this.value, this); updateSum(${rIdx});">
+                        <div class="color-cell" style="padding:0; background:transparent; border:none;">
+                            <input type="color" class="color-picker" value="${key.color}" oninput="updateKey(${rIdx}, ${kIdx}, 'color', this.value, this);">
+                            <input type="text" class="hex-input" value="${(key.color || '#000000').toUpperCase()}" oninput="updateKey(${rIdx}, ${kIdx}, 'color', this.value, this);">
+                        </div>
+                        <input type="number" value="${key.fontSize}" oninput="updateKey(${rIdx}, ${kIdx}, 'fontSize', this.value, this)">
+                        <button class="btn-del-sq" onclick="removeKSync(${rIdx}, ${kIdx})">×</button>`;
+                    kBox.appendChild(kRow);
+                });
+                container.appendChild(div);
+                updateSum(rIdx);
+            });
+        }
+
+        function syncGlobalDefColor(val) {
+            const hexVal = val.toUpperCase();
+            document.getElementById('defKeyHex').value = hexVal;
+            const applyToLayout = (m) => {
+                layouts[m].rows.forEach(row => {
+                    row.keys.forEach(key => {
+                        const currentC = key.color ? key.color.toUpperCase() : '';
+                        if (currentC === currentDefaultColor || currentC === '' || currentC === '#000000') {
+                            key.color = hexVal;
+                        }
+                    });
+                });
+            };
+            if (document.getElementById('syncAllCheck').checked) { Object.keys(layouts).forEach(applyToLayout); }
+            else { applyToLayout(currentMode); }
+            currentDefaultColor = hexVal;
+            renderEditor(); renderPreview();
+        }
+
+        function syncGlobalDefHex(val) { if (/^#[0-9A-F]{6}$/i.test(val)) { document.getElementById('defKeyColor').value = val; syncGlobalDefColor(val); } }
+
+        function syncC(p, h) { document.getElementById(h).value = document.getElementById(p).value.toUpperCase(); renderPreview(); }
+        function syncH(h, p) { const v = document.getElementById(h).value; if (/^#[0-9A-F]{6}$/i.test(v)) { document.getElementById(p).value = v; renderPreview(); } }
+        
+        function syncCD(p, h) { document.getElementById(h).value = document.getElementById(p).value.toUpperCase(); renderPreview(); }
+        function syncHD(h, p) { const v = document.getElementById(h).value; if (/^#[0-9A-F]{6}$/i.test(v)) { document.getElementById(p).value = v; renderPreview(); } }
+
+        function autoWidth(rIdx, kIdx) {
+            const row = layouts[currentMode].rows[rIdx];
+            let otherSum = 0;
+            row.keys.forEach((k, idx) => { if(idx !== kIdx) otherSum += (parseFloat(k.width) || 0); });
+            updateKey(rIdx, kIdx, 'width', Math.max(0, (1 - otherSum)).toFixed(4), null);
+            renderEditor();
+        }
+
+        function updateSum(rIdx) {
+            const row = layouts[currentMode].rows[rIdx];
+            if (!row) return;
+            const sum = row.keys.reduce((a, b) => a + (parseFloat(b.width) || 0), 0);
+            const sumEl = document.getElementById(`sum-${rIdx}`);
+            if (sumEl) { sumEl.innerText = sum.toFixed(2); sumEl.style.color = Math.abs(sum - 1.0) < 0.001 ? "#34c759" : "#ff3b30"; }
+        }
+
+        function renderPreview() {
+            const preview = document.getElementById('kbPreview');
+            const data = layouts[currentMode];
+            const hMode = document.getElementById('heightMode').value;
+            const hIn = document.getElementById('heightInput').value;
+            const gap = parseInt(document.getElementById('keyGap').value);
+            
+            const pTheme = document.getElementById('previewTheme').value;
+            const dmMode = document.getElementById('darkModeHandling').value;
+            
+            let curKbBg, curDefC, curKeyBg, curSysBg, curEnterBg, curEnterText;
+
+            if (pTheme === 'dark') {
+                if (dmMode === 'custom') {
+                    curKbBg = document.getElementById('kbBgHexD').value || '#1C1C1E';
+                    curDefC = document.getElementById('defKeyHexD').value || '#FFFFFF';
+                    curKeyBg = document.getElementById('keyBgHexD').value || '#4A4A4C';
+                    curSysBg = document.getElementById('sysKeyHexD').value || '#2C2C2E';
+                    curEnterBg = document.getElementById('enterBgHexD').value || '#0A60FE';
+                    curEnterText = document.getElementById('enterTextHexD').value || '#FFFFFF';
+                } else if (dmMode === 'system') {
+                    curKbBg = '#1C1C1E';
+                    curDefC = '#FFFFFF';
+                    curKeyBg = '#4A4A4C';
+                    curSysBg = '#2C2C2E';
+                    curEnterBg = '#0A60FE';
+                    curEnterText = '#FFFFFF';
+                } else {
+                    curKbBg = document.getElementById('kbBgHex').value;
+                    curDefC = document.getElementById('defKeyHex').value;
+                    curKeyBg = document.getElementById('keyBgHex').value;
+                    curSysBg = document.getElementById('sysKeyHex').value;
+                    curEnterBg = document.getElementById('enterBgHex').value;
+                    curEnterText = document.getElementById('enterTextHex').value;
+                }
+            } else {
+                curKbBg = document.getElementById('kbBgHex').value;
+                curDefC = document.getElementById('defKeyHex').value;
+                curKeyBg = document.getElementById('keyBgHex').value;
+                curSysBg = document.getElementById('sysKeyHex').value;
+                curEnterBg = document.getElementById('enterBgHex').value;
+                curEnterText = document.getElementById('enterTextHex').value;
+            }
+
+            const lightDefC = document.getElementById('defKeyHex').value;
+            
+            preview.style.width = document.getElementById('kbWidthPerc').value + '%';
+            preview.style.backgroundColor = curKbBg;
+            preview.style.gap = gap + 'px';
+            preview.innerHTML = '';
+            
+            const rowC = data.rows.length;
+            let h = hMode === 'total' ? (hIn - (gap * (rowC - 1))) / rowC : hIn;
+            
+            data.rows.forEach(row => {
+                const rDiv = document.createElement('div');
+                rDiv.className = 'keyboard-row'; rDiv.style.height = h + 'px'; rDiv.style.gap = gap + 'px';
+                row.keys.forEach(key => {
+                    const k = document.createElement('div');
+                    k.className = 'preview-key';
+                    const safeCode = String(key.code || key.outCode || '').toUpperCase();
+                    k.innerText = symbolMap[safeCode] || safeCode;
+                    k.style.width = (key.width * 100) + '%';
+                    k.style.fontSize = key.fontSize + 'px';
+                    k.style.borderRadius = document.getElementById('keyRadius').value + 'px';
+                    
+                    const isEnter = ['ENTER', '↵', 'RETURN'].includes(String(key.outCode || key.code || '').toUpperCase());
+                    const isSys = systemKeys.includes(String(key.outCode || key.code || '').toUpperCase());
+                    
+                    let keyHex = (key.color || '').toUpperCase();
+                    let displayColor;
+                    if (keyHex === lightDefC || keyHex === '' || keyHex === '#000000') {
+                        displayColor = curDefC;
+                    } else {
+                        displayColor = key.color;
+                    }
+
+                    if (isEnter) {
+                        k.style.backgroundColor = curEnterBg;
+                        k.style.color = curEnterText;
+                    } else if (isSys) {
+                        k.style.backgroundColor = curSysBg;
+                        k.style.color = displayColor;
+                    } else {
+                        k.style.backgroundColor = curKeyBg;
+                        k.style.color = displayColor;
+                    }
+                    
+                    rDiv.appendChild(k);
+                });
+                preview.appendChild(rDiv);
+            });
+        }
+
+        function updateKey(r, k, f, v, el) {
+            const val = (f === 'width' || f === 'fontSize') ? parseFloat(v) : v;
+            const applyOne = (m) => {
+                if (layouts[m].rows[r] && layouts[m].rows[r].keys[k]) {
+                    let keyObj = layouts[m].rows[r].keys[k];
+                    
+                    if (f === 'type') {
+                        keyObj.outCode = val;
+                        keyObj.code = val;
+                    } else if (f === 'outCode') {
+                        if (!keyObj.code) {
+                            keyObj.code = val;
+                            if (el && currentMode === m) {
+                                let codeInput = el.parentElement.querySelector('.code-input');
+                                if (codeInput) codeInput.value = val;
+                            }
+                        }
+                        keyObj.outCode = val;
+                    } else if (f === 'code') {
+                        if (!keyObj.outCode) {
+                            keyObj.outCode = val;
+                            if (el && currentMode === m) {
+                                let outInput = el.parentElement.querySelector('.out-code-input');
+                                if (outInput) outInput.value = val;
+                            }
+                        }
+                        keyObj.code = val;
+                    } else {
+                        keyObj[f] = val;
+                    }
+                }
+            };
+            if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyOne);
+            else applyOne(currentMode);
+            renderPreview();
+        }
+
+        function setK(r, c) {
+            const num = Math.max(1, parseInt(c));
+            const defC = document.getElementById('defKeyColor').value;
+            const applyKCount = (m) => {
+                const row = layouts[m].rows[r]; if (!row) return;
+                if (num > row.keys.length) {
+                    for (let i = row.keys.length; i < num; i++) row.keys.push({ code: '', outCode: '', width: (1 / num).toFixed(4), color: defC, fontSize: 18 });
+                } else {
+                    row.keys = row.keys.slice(0, num);
+                }
+                row.keys.forEach(k => k.width = (1 / num).toFixed(4));
+            };
+            if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyKCount);
+            else applyKCount(currentMode);
+            renderEditor(); renderPreview();
+        }
+
+        function flashBtn(id, text) { const btn = document.getElementById(id); if(!btn) return; const old = btn.innerText; btn.innerText = text; setTimeout(() => btn.innerText = old, 2000); }
+        function copyL() { clip = JSON.parse(JSON.stringify(layouts[currentMode].rows)); flashBtn('btnCopyL', '✅ 複製成功'); }
+        function pasteL() { if (clip) { layouts[currentMode].rows = JSON.parse(JSON.stringify(clip)); renderEditor(); renderPreview(); flashBtn('btnPasteL', '✅ 貼上成功'); } }
+        function copyC() { const a = document.getElementById('outArea'); a.select(); document.execCommand('copy'); flashBtn('btnCopyC', '✅ 複製成功'); }
+        
+        function getCellName(k) {
+            let outCode = k.outCode || k.code;
+            let outUiCode = String(outCode).toLowerCase();
+            let prefix = sysCodeMap[outUiCode] || outUiCode;
+            if (prefix === 'semicolon') prefix = 'semicolon';
+            return `${prefix}Button`;
+        }
+
+        function gen() {
+            const exportFormat = document.getElementById('exportFormat').value;
+            const dmMode = document.getElementById('darkModeHandling').value;
+
+            if (exportFormat === 'jsonnet') {
+                if (!rawTemplateStr) {
+                    alert('⚠️ 請先上傳 .jsonnet 檔案作為模板，或將產出格式改為 .libsonnet！');
+                    return;
+                }
+                let newCode = rawTemplateStr;
+                let isPinyinTemplate = newCode.includes('createSchemaStyles');
+                
+                const newComment = "// ==========================================\n// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出\n// ==========================================\n";
+                if (newCode.includes('// 本配置檔由 WHY 製作的編輯器產出')) {
+                    newCode = newCode.replace('// 本配置檔由 WHY 製作的編輯器產出', '// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出');
+                } else if (!newCode.includes('// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出')) {
+                    newCode = newComment + "\n" + newCode;
+                }
+
+                let portMode = (currentFileName.includes('en') || currentFileName.includes('alphabetic')) ? 'portraitEn' : 'portraitPinyin';
+                let landMode = (currentFileName.includes('en') || currentFileName.includes('alphabetic')) ? 'landscapeEn' : 'landscapePinyin';
+                
+                let uniqueKeys = new Map();
+                const addKey = (k) => {
+                    let code = k.code || '';
+                    let outCode = k.outCode || code;
+                    if (!code && !outCode) return;
+                    let outUiCode = String(outCode).toLowerCase();
+                    let prefix = sysCodeMap[outUiCode] || outUiCode;
+                    if (prefix === 'semicolon') prefix = 'semicolon';
+                    let cellName = `${prefix}Button`;
+                    uniqueKeys.set(cellName, { code: code, outCode: outCode, prefix: prefix });
+                };
+                layouts[portMode].rows.forEach(r => r.keys.forEach(addKey));
+                layouts[landMode].rows.forEach(r => r.keys.forEach(addKey));
+                
+                let btnInjectStr = "";
+                let styleInjectStr = "";
+                
+                uniqueKeys.forEach((data, cellName) => {
+                    let prefix = data.prefix;
+                    let isSystemKey = ['enter', 'backspace', 'shift', 'space', 'numeric', 'tildedirect', 'perioddirect', 'comma', 'period', 'slash', 'semicolon'].includes(prefix);
+                    let sameCode = String(data.code).toUpperCase() === String(data.outCode).toUpperCase() || (sysCodeMap[String(data.code).toLowerCase()] === prefix);
+                    
+                    let safeOutCode = String(data.outCode || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                    let safePrefix = prefix.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                    
+                    // 只負責產生原代碼中不存在的新按鍵定義，絕對不碰已存在的按鍵，保護滑動結構
+                    let btnDefRegex = new RegExp(`['"]?${safePrefix}Button['"]?\\s*:`, 'i');
+                    if (!btnDefRegex.test(newCode)) {
+                        if (isSystemKey && sameCode) return;
+                        let themeArg = isPinyinTemplate ? 'theme, ' : '';
+                        
+                        btnInjectStr += `    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ButtonSize['普通键size'] }),\n`;
+                        
+                        styleInjectStr += `  + createHintStyle('${safeOutCode}')\n`;
+                        if (isPinyinTemplate) {
+                            styleInjectStr += `  + createSchemaStyles(theme, '${safeOutCode}')\n`;
+                        } else {
+                            styleInjectStr += `  + createExtraStyles(theme, '${safeOutCode}')\n`;
+                        }
+                    }
+                });
+
+                let layoutStartMarker = "// === EDITOR LAYOUT START ===";
+                let layoutEndMarker = "// === EDITOR LAYOUT END ===";
+                
+                const layoutReplacement = layoutStartMarker + "\n" + btnInjectStr + "    keyboardLayout: if orientation == 'portrait' then [\n" +
+                    layouts[portMode].rows.map(r => `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getCellName(k)}' }`).join(', ')} ] } }`).join(',\n') +
+                    "\n    ] else [\n" +
+                    layouts[landMode].rows.map(r => `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getCellName(k)}' }`).join(', ')} ] } }`).join(',\n') +
+                    "\n    ],\n    " + layoutEndMarker;
+
+                let lSIdx = newCode.indexOf(layoutStartMarker);
+                let lEIdx = newCode.indexOf(layoutEndMarker);
+
+                if (lSIdx !== -1 && lEIdx !== -1) {
+                    newCode = newCode.substring(0, lSIdx) + layoutReplacement + newCode.substring(lEIdx + layoutEndMarker.length);
+                } else {
+                    const startMarker = "keyboardLayout: [";
+                    const startIndex = newCode.indexOf(startMarker);
+                    if (startIndex !== -1) {
+                        let bracketCount = 0;
+                        let endIndex = -1;
+                        for (let i = startIndex + startMarker.length - 1; i < newCode.length; i++) {
+                            if (newCode[i] === '[') bracketCount++;
+                            if (newCode[i] === ']') bracketCount--;
+                            if (bracketCount === 0) {
+                                endIndex = i;
+                                break;
+                            }
+                        }
+                        if (endIndex !== -1) {
+                            newCode = newCode.substring(0, startIndex) + layoutReplacement + newCode.substring(endIndex + 1);
+                        }
+                    }
+                }
+                
+                let kbBg = document.getElementById('kbBgHex').value || '#D1D5DB';
+                let defTextC = document.getElementById('defKeyHex').value || '#000000';
+                let generalKeyBg = document.getElementById('keyBgHex').value || '#FFFFFF';
+                let sysKeyBg = document.getElementById('sysKeyHex').value || '#B3BCE2';
+                let enterBg = document.getElementById('enterBgHex').value || '#007AFF';
+                let enterText = document.getElementById('enterTextHex').value || '#FFFFFF';
+
+                let kbBgD = document.getElementById('kbBgHexD').value || '#1C1C1E';
+                let defTextCD = document.getElementById('defKeyHexD').value || '#FFFFFF';
+                let generalKeyBgD = document.getElementById('keyBgHexD').value || '#4A4A4C';
+                let sysKeyBgD = document.getElementById('sysKeyHexD').value || '#2C2C2E';
+                let enterBgD = document.getElementById('enterBgHexD').value || '#0A60FE';
+                let enterTextD = document.getElementById('enterTextHexD').value || '#FFFFFF';
+                
+                const overrideStartMarker = "// === 編輯器強制顏色覆寫 ===";
+                const overrideEndMarker = "// === 覆寫結束 ===";
+                const sIdx = newCode.indexOf(overrideStartMarker);
+                const eIdx = newCode.indexOf(overrideEndMarker);
+                
+                let overrideMap = new Map();
+
+                const wrapBg = (sysKey, lightHex, darkHex) => {
+                    if (dmMode === 'unified') return `'${lightHex}'`;
+                    if (dmMode === 'system') return `if theme == 'dark' then color['dark']['${sysKey}'] else '${lightHex}'`;
+                    if (dmMode === 'custom') return `if theme == 'dark' then '${darkHex}' else '${lightHex}'`;
+                };
+
+                overrideMap.set('keyboardBackgroundStyle', `{ normalColor: ${wrapBg('键盘背景颜色', kbBg, kbBgD)} }`);
+                overrideMap.set('alphabeticBackgroundStyle', `{ normalColor: ${wrapBg('字母键背景颜色-普通', generalKeyBg, generalKeyBgD)}, highlightColor: ${wrapBg('字母键背景颜色-高亮', generalKeyBg, generalKeyBgD)} }`);
+                overrideMap.set('systemButtonBackgroundStyle', `{ normalColor: ${wrapBg('功能键背景颜色-普通', sysKeyBg, sysKeyBgD)}, highlightColor: ${wrapBg('功能键背景颜色-高亮', sysKeyBg, sysKeyBgD)} }`);
+                overrideMap.set('numberButtonBackgroundStyle', `{ normalColor: ${wrapBg('字母键背景颜色-普通', generalKeyBg, generalKeyBgD)}, highlightColor: ${wrapBg('字母键背景颜色-高亮', generalKeyBg, generalKeyBgD)} }`);
+                
+                let eBgLogic, eBgLowerLogic;
+                if (dmMode === 'unified') {
+                    eBgLogic = `'${enterBg}'`;
+                    eBgLowerLogic = `'${enterBg}'`;
+                } else if (dmMode === 'system') {
+                    eBgLogic = `if theme == 'dark' then '#0A60FE' else '${enterBg}'`;
+                    eBgLowerLogic = `if theme == 'dark' then '#0040A8' else '${enterBg}'`;
+                } else {
+                    eBgLogic = `if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;
+                    eBgLowerLogic = `if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;
+                }
+                overrideMap.set('searchButtonBackgroundStyle', `{ normalColor: ${eBgLogic}, highlightColor: ${eBgLogic}, normalLowerEdgeColor: ${eBgLowerLogic}, highlightLowerEdgeColor: ${eBgLowerLogic} }`);
+                overrideMap.set('returnKeyTypeChangedNotification', `{ backgroundStyle: 'searchButtonBackgroundStyle', foregroundStyle: 'enterButtonForegroundStyle' }`);
+
+                let portWidths = {};
+                layouts[portMode].rows.forEach(r => r.keys.forEach(k => {
+                    portWidths[getCellName(k)] = parseFloat(k.width).toFixed(4);
+                }));
+
+                let landWidths = {};
+                layouts[landMode].rows.forEach(r => r.keys.forEach(k => {
+                    landWidths[getCellName(k)] = parseFloat(k.width).toFixed(4);
+                }));
+
+                let allCellNames = new Set([...Object.keys(portWidths), ...Object.keys(landWidths)]);
+                
+                // 【精準修復】：僅寫入尺寸與邊界。專門為獨立寫死的逗號與句號綁上 prune 結構，使上下滑動氣泡復活
+                allCellNames.forEach(cell => {
+                    let pw = portWidths[cell] || "0.1";
+                    let lw = landWidths[cell] || "0.1";
+                    let swipeInject = '';
+                    
+                    if (cell === 'commaButton') {
+                        swipeInject = `, foregroundStyle: std.prune(['commaButtonForegroundStyle', if std.objectHas(swipe_up, ',') then ',ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, ',') then ',ButtonDownForegroundStyle' else null])`;
+                    } else if (cell === 'periodButton') {
+                        swipeInject = `, foregroundStyle: std.prune(['periodButtonForegroundStyle', if std.objectHas(swipe_up, '.') then '.ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '.') then '.ButtonDownForegroundStyle' else null])`;
+                    }
+                    
+                    overrideMap.set(cell, `{ size: { width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }, bounds: null${swipeInject} }`);
+                });
+
+                let allRows = layouts[portMode].rows.concat(layouts[landMode].rows);
+                allRows.forEach(r => {
+                    r.keys.forEach(k => {
+                        let color = (k.color || defTextC).toUpperCase();
+                        let rawDisplay = String(k.code || '');
+                        let rawOutput = String(k.outCode || rawDisplay);
+                        
+                        let rawCode = rawOutput.toLowerCase();
+                        let prefix = sysCodeMap[rawCode] || rawCode;
+                        
+                        let isDefaultColor = (color === defTextC.toUpperCase() || color === '');
+                        
+                        let textInject = '';
+                        if (rawDisplay !== rawOutput && rawDisplay !== '' && !['enter', 'backspace', 'shift', 'space', 'numeric'].includes(prefix.toLowerCase())) {
+                            let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                            textInject = `text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
+                        } else if (['~', '.', ',', ';', '/'].includes(rawDisplay)) {
+                            // 專門針對符號鍵的防護，確保不論使用者怎麼切換都能寫入 text 屬性
+                            let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                            textInject = `text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
+                        }
+
+                        let colorStr;
+                        if (dmMode === 'unified') {
+                            colorStr = `{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
+                        } else if (dmMode === 'system') {
+                            if (isDefaultColor) {
+                                colorStr = `{ ${textInject}normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;
+                            } else {
+                                colorStr = `{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
+                            }
+                        } else if (dmMode === 'custom') {
+                            if (isDefaultColor) {
+                                colorStr = `{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;
+                            } else {
+                                colorStr = `{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
+                            }
+                        }
+
+                        // 【安全隔離修復 Rev16】：徹底隔離 perioddirect 不去干涉主鍵盤的 period(舟)
+                        let sym = symbolMap[rawOutput.toUpperCase()] || rawOutput;
+                        let permutations = new Set([ rawCode, prefix ]);
+                        
+                        // 【隔離防護】：如果是 direct 結尾的特定符號（如 perioddirect），不要把它的符號（.）加入，以免覆蓋掉大易字根（舟）
+                        if (!rawCode.includes('direct') || rawCode === 'tildedirect') {
+                            permutations.add(sym);
+                        }
+                        
+                        if (rawCode.includes('direct')) {
+                            // 【隔離防護】：絕不把 period 和 comma 混入 direct 的變數中，確保舟跟力永遠安全
+                            if (!rawCode.includes('period') && !rawCode.includes('comma')) {
+                                permutations.add(rawCode.replace('direct', ''));
+                                permutations.add(prefix.replace('Direct', ''));
+                            }
+                        }
+
+                        permutations.forEach(p => {
+                            if (!p) return;
+                            overrideMap.set(`${p}ButtonForegroundStyle`, colorStr);
+                            overrideMap.set(`${p}ForegroundStyle`, colorStr);
+                            overrideMap.set(`${p}SchemaLiurForegroundStyle`, colorStr);
+                            overrideMap.set(`${p}SchemaEasyEnForegroundStyle`, colorStr);
+                            overrideMap.set(`${p}ButtonUppercasedStateForegroundStyle`, colorStr);
+                            
+                            let upperP = p.toUpperCase();
+                            if (upperP !== p) {
+                                overrideMap.set(`${upperP}ButtonForegroundStyle`, colorStr);
+                                overrideMap.set(`${upperP}ButtonUppercasedStateForegroundStyle`, colorStr);
+                            }
+
+                            if (/^[0-9]$/.test(p)) {
+                                overrideMap.set(`number${p}ButtonForegroundStyle`, colorStr);
+                                
+                                let textNum = sysCodeMap[p];
+                                if (textNum && textNum !== p) {
+                                    overrideMap.set(`${textNum}ButtonForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}ForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}SchemaLiurForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}SchemaEasyEnForegroundStyle`, colorStr);
+                                    overrideMap.set(`${textNum}ButtonUppercasedStateForegroundStyle`, colorStr);
+                                    
+                                    let upperTextNum = textNum.toUpperCase();
+                                    overrideMap.set(`${upperTextNum}ButtonForegroundStyle`, colorStr);
+                                    overrideMap.set(`${upperTextNum}ButtonUppercasedStateForegroundStyle`, colorStr);
+                                }
+                            }
+                        });
+                        
+                        if (prefix === 'space') {
+                            overrideMap.set(`spaceButtonLiurForegroundStyle`, colorStr);
+                            overrideMap.set(`spaceButtonEasyEnForegroundStyle`, colorStr);
+                        }
+                    });
+                });
+                
+                let eTextLogic;
+                if (dmMode === 'unified') { eTextLogic = `'${enterText}'`; }
+                else if (dmMode === 'system') { eTextLogic = `if theme == 'dark' then '#FFFFFF' else '${enterText}'`; }
+                else if (dmMode === 'custom') { eTextLogic = `if theme == 'dark' then '${enterTextD}' else '${enterText}'`; }
+                let enterColorStr = `{ normalColor: ${eTextLogic}, highlightColor: ${eTextLogic} }`;
+
+                let enterPermutations = ['enter', 'return', '↵', 'ENTER', 'RETURN'];
+                enterPermutations.forEach(p => {
+                    overrideMap.set(`${p}ButtonForegroundStyle`, enterColorStr);
+                    overrideMap.set(`${p}ForegroundStyle`, enterColorStr);
+                    overrideMap.set(`${p}SchemaLiurForegroundStyle`, enterColorStr);
+                    overrideMap.set(`${p}SchemaEasyEnForegroundStyle`, enterColorStr);
+                    overrideMap.set(`${p}ButtonUppercasedStateForegroundStyle`, enterColorStr);
+                });
+
+                let overrides = `\n    ${overrideStartMarker}\n    + {\n`;
+                overrideMap.forEach((val, key) => {
+                    let safeKey = key.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                    overrides += `      '${safeKey}'+: ${val},\n`;
+                });
+                overrides += `    } ${overrideEndMarker}\n`;
+
+                if (sIdx !== -1 && eIdx !== -1) {
+                    let beforeStr = newCode.substring(0, sIdx);
+                    beforeStr = beforeStr.replace(/,\s*$/, '\n    ');
+                    newCode = beforeStr + styleInjectStr + overrides + newCode.substring(eIdx + overrideEndMarker.length);
+                } else {
+                    let lastBraceIdx = newCode.lastIndexOf('}');
+                    if (lastBraceIdx !== -1) {
+                        let beforeStr = newCode.substring(0, lastBraceIdx);
+                        beforeStr = beforeStr.replace(/,\s*$/, '\n    ');
+                        newCode = beforeStr + "    " + styleInjectStr + overrides + newCode.substring(lastBraceIdx);
+                    }
+                }
+                
+                document.getElementById('outArea').value = newCode;
+                flashBtn('btnGen', '✅ jsonnet 產出成功');
+                return;
+            }
+
+            // === 產出 LIBSONNET ===
+            let out = "// ==========================================\n";
+            out += "// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出\n";
+            out += "// ==========================================\n\n";
+            out += "// 鍵盤佈局定義\n";
+            out += "local color = import 'color.libsonnet';\n\n";
+            out += "local keyboardLayout(theme='light') = {\n";
+            const ns = { portraitPinyin: '竖屏中文26键', landscapePinyin: '横屏中文26键', portraitEn: '竖屏英文26键', landscapeEn: '横屏英文26键' };
+            
+            Object.entries(layouts).forEach(([m, d]) => {
+                out += `  '${ns[m]}': {\n    keyboardLayout: [\n`;
+                d.rows.forEach(r => {
+                    out += `      { HStack: { subviews: [ ${r.keys.map(k => `{ Cell: '${getCellName(k)}' }`).join(', ')} ] } },\n`;
+                });
+                out += `    ],\n`;
+                out += `    keyboardStyle: { backgroundStyle: 'keyboardBackgroundStyle' },\n`;
+                out += `    keyboardBackgroundStyle: { buttonStyleType: 'geometry', normalColor: color[theme]['键盘背景颜色'] },\n`;
+                out += `  },\n\n`;
+            });
+
+            const getSizesBlock = (modes) => {
+                let sizeMap = {};
+                let commonWidths = {};
+                modes.forEach(m => {
+                    layouts[m].rows.forEach(r => {
+                        r.keys.forEach(k => {
+                            let outCode = k.outCode || k.code;
+                            let sysCode = getSysCode(outCode);
+                            let sizeName = sysCode === 'tildedirect' ? 'tilde' : sysCode;
+                            if (sizeName) {
+                                sizeMap[sizeName] = k.width;
+                                if (sizeName.length === 1 && sizeName !== ' ') {
+                                    commonWidths[k.width] = (commonWidths[k.width] || 0) + 1;
+                                }
+                            }
+                        });
+                    });
+                });
+                
+                let defaultW = 0.1;
+                let maxCount = 0;
+                Object.keys(commonWidths).forEach(w => { if (commonWidths[w] > maxCount) { maxCount = commonWidths[w]; defaultW = w; }});
+
+                let block = `    '普通键size': { width: { percentage: ${defaultW} } },\n`;
+                
+                Object.keys(sizeMap).forEach(c => {
+                    let safeC = c.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                    block += `    '${safeC}键size': { width: { percentage: ${sizeMap[c]} } },\n`;
+                    if (c === 't' || c === 'y') {
+                        block += `    '${safeC}键bounds': null,\n`;
+                    } else if (c === 'a') {
+                        block += `    '${safeC}键bounds': { width: '111/168.75', alignment: 'right' },\n`;
+                    } else if (c === 'l') {
+                        block += `    '${safeC}键bounds': { width: '111/168.75', alignment: 'left' },\n`;
+                    } else if (c === 'shift') {
+                        block += `    '${safeC}键bounds': null,\n`;
+                    } else if (c === 'backspace') {
+                        block += `    '${safeC}键bounds': null,\n`;
+                    }
+                });
+                return block;
+            };
+
+            out += `  '竖屏按键尺寸': {\n${getSizesBlock(['portraitPinyin', 'portraitEn'])}  },\n\n`;
+            out += `  '横屏按键尺寸': {\n${getSizesBlock(['landscapePinyin', 'landscapeEn'])}  },\n`;
+            out += "};\n\n";
+
+            out += "{\n";
+            out += "  getPinyinLayout(theme, orientation):\n";
+            out += "    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n";
+            out += "    else keyboardLayout(theme)['横屏中文26键'],\n\n";
+            out += "  getEnLayout(theme, orientation):\n";
+            out += "    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n";
+            out += "    else keyboardLayout(theme)['横屏英文26键'],\n\n";
+            out += "  getButtonSize(theme, orientation):\n";
+            out += "    if orientation == 'portrait' then keyboardLayout(theme)['竖屏按键尺寸']\n";
+            out += "    else keyboardLayout(theme)['横屏按键尺寸'],\n";
+            out += "}\n";
+
+            document.getElementById('outArea').value = out;
+            flashBtn('btnGen', '✅ libsonnet 產出成功');
+        }
+
+        function dl() {
+            const exportFmt = document.getElementById('exportFormat').value;
+            const b = new Blob([document.getElementById('outArea').value], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = (exportFmt === 'jsonnet' && currentFileName) ? currentFileName : "keyboardLayout.libsonnet";
+            a.click();
+        }
+
+        function addNewRowSync() {
+            try {
+                const defC = document.getElementById('defKeyColor').value;
+                const rowTpl = { keys: [{ code: '', outCode: '', width: 1.0, color: defC, fontSize: 18 }] };
+                if (document.getElementById('syncAllCheck').checked) {
+                    Object.keys(layouts).forEach(m => layouts[m].rows.push(JSON.parse(JSON.stringify(rowTpl))));
+                } else {
+                    layouts[currentMode].rows.push(JSON.parse(JSON.stringify(rowTpl)));
+                }
+                renderEditor(); renderPreview();
+            } catch (e) { console.error("Add Row Error: ", e); }
+        }
+
+        function removeRSync(i) {
+            if (document.getElementById('syncAllCheck').checked) { Object.keys(layouts).forEach(m => layouts[m].rows.splice(i, 1)); }
+            else { layouts[currentMode].rows.splice(i, 1); }
+            renderEditor(); renderPreview();
+        }
+
+        function removeKSync(r, k) {
+            const applyRem = (m) => {
+                if (!layouts[m].rows[r]) return;
+                layouts[m].rows[r].keys.splice(k, 1);
+                const len = layouts[m].rows[r].keys.length;
+                if (len > 0) { const avg = (1/len).toFixed(4); layouts[m].rows[r].keys.forEach(i => i.width = parseFloat(avg)); }
+            };
+            if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyRem);
+            else applyRem(currentMode);
+            renderEditor(); renderPreview();
+        }
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        dropZone.onclick = () => fileInput.click();
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); if(e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); };
+        fileInput.onchange = (e) => { if(e.target.files.length > 0) handleFile(e.target.files[0]); };
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const text = ev.target.result;
+                    const defC = document.getElementById('defKeyColor').value;
+                    currentFileName = file.name.toLowerCase();
+                    let parseSuccess = false;
+
+                    const parseRows = (chunk, isPortrait = true) => {
+                        const rows = [];
+                        const hstackRegex = /HStack\s*:\s*\{\s*subviews\s*:\s*\[([\s\S]*?)\]\s*\}/g;
+                        let hmatch;
+                        while ((hmatch = hstackRegex.exec(chunk)) !== null) {
+                            const cellsStr = hmatch[1];
+                            const cellRegex = /Cell\s*:\s*(['"])((?:(?!\1)[^\\]|\\.)*)\1/g;
+                            const cells = [];
+                            let cmatch;
+                            while ((cmatch = cellRegex.exec(cellsStr)) !== null) {
+                                let safeString = cmatch[2].replace(/\\'/g, "'").replace(/\\\\/g, "\\");
+                                cells.push(safeString);
+                            }
+                            if (cells.length > 0) {
+                                rows.push({ keys: cells.map(c => {
+                                    let code = c.replace(/Button$/i, '');
+                                    let uiCode = code;
+                                    for (let [k1, v1] of Object.entries(reverseKeyMap)) {
+                                        if (v1.toLowerCase() === code.toLowerCase()) uiCode = k1;
+                                    }
+                                    if (uiCode.toLowerCase() === 'semicolon') uiCode = ';';
+                                    let w = defaultWidths[uiCode.toUpperCase()] || parseFloat((1 / cells.length).toFixed(4));
+                                    
+                                    let keyColor = defC;
+                                    if (uiCode.toLowerCase() === 'f' || uiCode.toLowerCase() === 'j') {
+                                        keyColor = '#FF0000';
+                                    }
+
+                                    let finalDisplay = uiCode.toUpperCase();
+                                    let finalOutput = uiCode.toLowerCase();
+
+                                    let safeCForRegex = escapeRegExp(c);
+                                    let defRegex = new RegExp(`['"]?${safeCForRegex}['"]?\\s*:\\s*.*?createButton\\s*\\([^{]*\\{([^}]+)\\}`, 'i');
+                                    let defMatch = text.match(defRegex);
+                                    
+                                    if (defMatch) {
+                                        let propsStr = defMatch[1];
+                                        let kMatch = propsStr.match(/key\s*:\s*['"]([^'"]+)['"]/i);
+                                        let tMatch = propsStr.match(/text\s*:\s*['"]([^'"]+)['"]/i);
+                                        
+                                        if (kMatch) finalOutput = kMatch[1];
+                                        if (tMatch) finalDisplay = tMatch[1];
+                                        else if (kMatch) finalDisplay = kMatch[1].toUpperCase();
+                                    } else {
+                                        if (uiCode === 'COMMA') finalOutput = ',';
+                                        else if (uiCode === 'PERIOD') finalOutput = '.';
+                                        else if (uiCode === 'SLASH') finalOutput = '/';
+                                        else if (uiCode === ';') finalOutput = ';';
+                                        else if (uiCode === 'TILDEDIRECT') finalOutput = '~';
+                                        else if (uiCode === 'PERIODDIRECT') finalOutput = 'PERIODDIRECT';
+                                        else finalOutput = uiCode;
+                                    }
+
+                                    let outCodeToSave = finalOutput;
+                                    let codeToSave = finalDisplay;
+
+                                    const systemAndSpecialKeys = [...systemKeys, 'SEMICOLON', 'COMMA', 'PERIOD', 'SLASH', 'TILDEDIRECT', 'PERIODDIRECT'];
+                                    if (systemAndSpecialKeys.includes(uiCode.toUpperCase())) {
+                                        outCodeToSave = uiCode.toUpperCase();
+                                        codeToSave = uiCode.toUpperCase();
+                                        if (uiCode.toUpperCase() === 'PERIODDIRECT') codeToSave = '.';
+                                        if (uiCode.toUpperCase() === 'TILDEDIRECT') codeToSave = '~';
+                                        if (uiCode.toUpperCase() === 'SEMICOLON') codeToSave = ';';
+                                        if (uiCode.toUpperCase() === 'COMMA') codeToSave = ',';
+                                        if (uiCode.toUpperCase() === 'PERIOD') codeToSave = '.';
+                                        if (uiCode.toUpperCase() === 'SLASH') codeToSave = '/';
+                                    }
+                                    
+                                    let prefixToFind = sysCodeMap[outCodeToSave.toLowerCase()] || outCodeToSave.toLowerCase();
+                                    if (prefixToFind === 'semicolon') prefixToFind = 'semicolon';
+                                    
+                                    const pureSystemKeys = ['ENTER', 'BACKSPACE', 'SHIFT', 'SPACE', 'NUMERIC'];
+                                    if (!pureSystemKeys.includes(uiCode.toUpperCase())) {
+                                        let btnTextRegex = new RegExp(`['"]?${escapeRegExp(prefixToFind)}Button['"]?\\+?:\\s*\\{([^}]*?)text:\\s*['"]([^'"]+)['"]`, "i");
+                                        let textOverrideRegex = new RegExp(`['"]?${escapeRegExp(prefixToFind)}(?:Button|SchemaLiur|SchemaEasyEn)?ForegroundStyle['"]?\\+?:\\s*\\{([^}]*?)text:\\s*['"]([^'"]+)['"]`, "i");
+                                        
+                                        let btnTextMatch = text.match(btnTextRegex);
+                                        let textOverrideMatch = text.match(textOverrideRegex);
+                                        
+                                        if (btnTextMatch) {
+                                            codeToSave = btnTextMatch[2];
+                                        } else if (textOverrideMatch) {
+                                            codeToSave = textOverrideMatch[2];
+                                        } else if (['COMMA', 'PERIOD', 'SLASH', 'SEMICOLON', 'TILDEDIRECT', 'PERIODDIRECT'].includes(uiCode.toUpperCase())) {
+                                            if (uiCode === 'COMMA') codeToSave = ',';
+                                            else if (uiCode === 'PERIOD') codeToSave = '.';
+                                            else if (uiCode === 'SLASH') codeToSave = '/';
+                                            else if (uiCode === ';') codeToSave = ';';
+                                            else if (uiCode === 'TILDEDIRECT') codeToSave = '~';
+                                            else if (uiCode === 'PERIODDIRECT') codeToSave = '.';
+                                        }
+                                    }
+
+                                    if (codeToSave.toLowerCase() === outCodeToSave.toLowerCase()) {
+                                        outCodeToSave = codeToSave;
+                                    }
+
+                                    let rawCode = uiCode.toLowerCase();
+                                    let prefix = sysCodeMap[rawCode] || rawCode;
+                                    let sym = symbolMap[uiCode.toUpperCase()] || rawCode;
+                                    let permutations = [rawCode, prefix, sym, rawCode.replace('direct',''), prefix.replace('Direct','')];
+                                    
+                                    for (let p of permutations) {
+                                        if (!p) continue;
+                                        let safeP = escapeRegExp(p);
+                                        let cRegex = new RegExp(`(?:^|[^a-zA-Z0-9_])(?:${safeP}ButtonForegroundStyle|${safeP}ForegroundStyle|${safeP}SchemaLiurForegroundStyle|${safeP}SchemaEasyEnForegroundStyle|number${safeP}ButtonForegroundStyle|${safeP}ButtonLiurForegroundStyle|${safeP}ButtonEasyEnForegroundStyle)['"]?\\+?:\\s*\\{[\\s\\S]{0,120}?normalColor:\\s*(?:if[\\s\\S]+?else\\s*)?'([^']+)'`, "i");
+                                        let colorMatch = text.match(cRegex);
+                                        if(colorMatch && colorMatch[1] && !colorMatch[1].includes('color')) {
+                                            keyColor = colorMatch[1];
+                                            break;
+                                        }
+                                    }
+
+                                    let safePForW = escapeRegExp(prefix);
+                                    let wRegex = new RegExp(`['"]?${safePForW}Button['"]?\\+?:\\s*\\{[\\s\\S]{0,150}?percentage:\\s*(?:if\\s+orientation\\s*==\\s*'portrait'\\s*then\\s*)?([0-9.]+)(?:\\s*else\\s*([0-9.]+))?`, "i");
+                                    let wMatch = text.match(wRegex);
+                                    if (wMatch) {
+                                        if (isPortrait && wMatch[1]) w = parseFloat(wMatch[1]);
+                                        else if (!isPortrait && wMatch[2]) w = parseFloat(wMatch[2]);
+                                        else if (!isPortrait && wMatch[1]) w = parseFloat(wMatch[1]);
+                                    }
+
+                                    return { code: codeToSave, outCode: outCodeToSave, width: w, color: keyColor, fontSize: 18 };
+                                }) });
+                            }
+                        }
+                        return rows;
+                    };
+
+                    if (currentFileName.endsWith('.jsonnet')) {
+                        rawTemplateStr = text;
+                        document.getElementById('exportFormat').value = 'jsonnet';
+                        
+                        let isUnified = !text.includes("theme == 'dark'");
+                        let isSystem = text.includes("color['dark']");
+
+                        if (isUnified) {
+                            document.getElementById('darkModeHandling').value = 'unified';
+                        } else if (isSystem) {
+                            document.getElementById('darkModeHandling').value = 'system';
+                        } else {
+                            document.getElementById('darkModeHandling').value = 'custom';
+                        }
+                        toggleDarkPanel();
+                        
+                        let keyBgRegex = /'alphabeticBackgroundStyle'\+:\s*\{\s*normalColor:\s*(?:if[\s\S]+?else\s*)?'([^']+)'/i;
+                        let keyBgMatch = text.match(keyBgRegex);
+                        if (keyBgMatch && !keyBgMatch[1].includes('color')) {
+                            document.getElementById('keyBgColor').value = keyBgMatch[1];
+                            document.getElementById('keyBgHex').value = keyBgMatch[1].toUpperCase();
+                        }
+                        
+                        let sysBgRegex = /'systemButtonBackgroundStyle'\+:\s*\{\s*normalColor:\s*(?:if[\s\S]+?else\s*)?'([^']+)'/i;
+                        let sysBgMatch = text.match(sysBgRegex);
+                        if (sysBgMatch && !sysBgMatch[1].includes('color')) {
+                            document.getElementById('sysKeyBgColor').value = sysBgMatch[1];
+                            document.getElementById('sysKeyHex').value = sysBgMatch[1].toUpperCase();
+                        }
+                        
+                        let enterBgRegex = /'searchButtonBackgroundStyle'\+:\s*\{\s*normalColor:\s*(?:if[\s\S]+?else\s*)?'([^']+)'/i;
+                        let enterBgMatch = text.match(enterBgRegex);
+                        if (enterBgMatch && !enterBgMatch[1].includes('color') && !enterBgMatch[1].includes('#0A60FE')) {
+                            document.getElementById('enterBgColor').value = enterBgMatch[1];
+                            document.getElementById('enterBgHex').value = enterBgMatch[1].toUpperCase();
+                        }
+
+                        let enterTextRegex = /'enterButtonForegroundStyle'\+:\s*\{\s*normalColor:\s*(?:if[\s\S]+?else\s*)?'([^']+)'/i;
+                        let enterTextMatch = text.match(enterTextRegex);
+                        if (enterTextMatch && !enterTextMatch[1].includes('color')) {
+                            document.getElementById('enterTextColor').value = enterTextMatch[1];
+                            document.getElementById('enterTextHex').value = enterTextMatch[1].toUpperCase();
+                        }
+                        
+                        if (document.getElementById('darkModeHandling').value === 'custom') {
+                            let darkRegex = (keyStr) => new RegExp(`'${keyStr}'\\+:\\s*\\{\\s*normalColor:\\s*if theme == 'dark' then\\s*'([^']+)'`, "i");
+                            
+                            let kBgD = text.match(darkRegex('alphabeticBackgroundStyle'));
+                            if (kBgD && !kBgD[1].includes('color')) { document.getElementById('keyBgColorD').value = kBgD[1]; document.getElementById('keyBgHexD').value = kBgD[1].toUpperCase(); }
+                            
+                            let sysBgD = text.match(darkRegex('systemButtonBackgroundStyle'));
+                            if (sysBgD && !sysBgD[1].includes('color')) { document.getElementById('sysKeyBgColorD').value = sysBgD[1]; document.getElementById('sysKeyHexD').value = sysBgD[1].toUpperCase(); }
+                            
+                            let eBgD = text.match(darkRegex('searchButtonBackgroundStyle'));
+                            if (eBgD && !eBgD[1].includes('color')) { document.getElementById('enterBgColorD').value = eBgD[1]; document.getElementById('enterBgHexD').value = eBgD[1].toUpperCase(); }
+                            
+                            let eTextD = text.match(darkRegex('enterButtonForegroundStyle'));
+                            if (eTextD && !eTextD[1].includes('color')) { document.getElementById('enterTextColorD').value = eTextD[1]; document.getElementById('enterTextHexD').value = eTextD[1].toUpperCase(); }
+                        }
+                        
+                        let portRows = [];
+                        let landRows = [];
+
+                        let sIdx = text.indexOf("// === EDITOR LAYOUT START ===");
+                        let eIdx = text.indexOf("// === EDITOR LAYOUT END ===");
+                        if (sIdx !== -1 && eIdx !== -1) {
+                            let layoutChunk = text.substring(sIdx, eIdx);
+                            let portMatch = layoutChunk.match(/if orientation == 'portrait' then \[([\s\S]*?)\] else \[/);
+                            if (portMatch) portRows = parseRows(portMatch[1], true);
+                            let landMatch = layoutChunk.match(/\] else \[([\s\S]*?)\]/);
+                            if (landMatch) landRows = parseRows(landMatch[1], false);
+                        } else {
+                            portRows = parseRows(text, true);
+                            landRows = JSON.parse(JSON.stringify(portRows));
+                        }
+
+                        if (portRows.length > 0) {
+                            parseSuccess = true;
+                            
+                            let isCorrupted = false;
+                            if (portRows.length >= 4) {
+                                let r1k2 = portRows[1].keys[2] ? portRows[1].keys[2].outCode : '';
+                                let r3k1 = portRows[3].keys[1] ? portRows[3].keys[1].outCode : '';
+                                if (r1k2 === '1' || r3k1 === '6') isCorrupted = true;
+                            }
+                            
+                            if (isCorrupted) {
+                                const fixes = [
+                                    {r:1, k:2, o:'e', c:'一'}, {r:1, k:3, o:'r', c:'工'}, {r:1, k:4, o:'t', c:'糸'}, {r:1, k:8, o:'o', c:'口'},
+                                    {r:3, k:1, o:'x', c:'水'}, {r:3, k:5, o:'n', c:'魚'}
+                                ];
+                                [portRows, landRows].forEach(rows => {
+                                    fixes.forEach(f => {
+                                        if (rows[f.r] && rows[f.r].keys[f.k]) {
+                                            rows[f.r].keys[f.k].outCode = f.o;
+                                            rows[f.r].keys[f.k].code = f.c;
+                                        }
+                                    });
+                                    if (rows[3] && rows[3].keys[7] && (rows[3].keys[7].outCode === ',' || rows[3].keys[7].outCode === 'COMMA') && (rows[3].keys[7].code === ',' || rows[3].keys[7].code === 'COMMA')) {
+                                        rows[3].keys[7].code = '力';
+                                        rows[3].keys[7].outCode = ',';
+                                    }
+                                    if (rows[3] && rows[3].keys[8] && (rows[3].keys[8].outCode === '.' || rows[3].keys[8].outCode === 'PERIOD') && (rows[3].keys[8].code === '.' || rows[3].keys[8].code === 'PERIOD')) {
+                                        rows[3].keys[8].code = '舟';
+                                        rows[3].keys[8].outCode = '.';
+                                    }
+                                    if (rows[3] && rows[3].keys[9] && (rows[3].keys[9].outCode === '/' || rows[3].keys[9].outCode === 'SLASH') && (rows[3].keys[9].code === '/' || rows[3].keys[9].code === 'SLASH')) {
+                                        rows[3].keys[9].code = '竹';
+                                        rows[3].keys[9].outCode = '/';
+                                    }
+                                    if (rows[2] && rows[2].keys[9] && (rows[2].keys[9].outCode === ';' || rows[2].keys[9].outCode === 'SEMICOLON') && (rows[2].keys[9].code === ';' || rows[2].keys[9].code === 'SEMICOLON')) {
+                                        rows[2].keys[9].code = '虫';
+                                        rows[2].keys[9].outCode = ';';
+                                    }
+                                });
+                            }
+                            
+                            if (currentFileName.includes('pinyin')) {
+                                layouts['portraitPinyin'].rows = JSON.parse(JSON.stringify(portRows));
+                                layouts['landscapePinyin'].rows = JSON.parse(JSON.stringify(landRows));
+                                currentMode = 'portraitPinyin';
+                            } else if (currentFileName.includes('alphabetic') || currentFileName.includes('en')) {
+                                layouts['portraitEn'].rows = JSON.parse(JSON.stringify(portRows));
+                                layouts['landscapeEn'].rows = JSON.parse(JSON.stringify(landRows));
+                                currentMode = 'portraitEn';
+                            } else {
+                                layouts[currentMode].rows = JSON.parse(JSON.stringify(portRows));
+                            }
+                        }
+                    } else {
+                        document.getElementById('exportFormat').value = 'libsonnet';
+                        
+                        const modeMap = {
+                            'portraitPinyin': /['"]?(竖屏|豎屏)中文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
+                            'landscapePinyin': /['"]?(横屏|横屏)中文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
+                            'portraitEn': /['"]?(竖屏|豎屏)英文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
+                            'landscapeEn': /['"]?(横屏|横屏)英文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i
+                        };
+                        
+                        Object.entries(modeMap).forEach(([mode, regex]) => {
+                            const match = regex.exec(text);
+                            if (match && match[3]) {
+                                const rows = parseRows(match[3], true);
+                                if (rows.length > 0) {
+                                    parseSuccess = true;
+                                    layouts[mode].rows = rows;
+                                }
+                            }
+                        });
+                    }
+                    
+                    if (parseSuccess) {
+                        alert(`檔案 ${file.name} 載入成功！\n\n📌 提示：如果取消勾選「同步更新」，您現在匯出的 .jsonnet 將會正確分離直向與橫向鍵盤佈局喔！`);
+                        document.querySelectorAll('.tab').forEach(t => {
+                            if (t.dataset.mode === currentMode) t.classList.add('active');
+                            else t.classList.remove('active');
+                        });
+                        renderEditor();
+                        renderPreview();
+                    } else {
+                        alert("⚠️ 無法解析檔案內容，請確認檔案格式是否正確。");
+                    }
+                } catch (err) {
+                    console.error("Parse Error: ", err);
+                    alert("載入發生錯誤：" + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function applyG() { const s = document.getElementById('globalFontSize').value; Object.values(layouts).forEach(l => l.rows.forEach(r => r.keys.forEach(k => k.fontSize = s))); renderEditor(); renderPreview(); }
+
+        document.getElementById('modeTabs').onclick = (e) => {
+            if (e.target.dataset.mode) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); e.target.classList.add('active'); currentMode = e.target.dataset.mode; renderEditor(); renderPreview(); }
+        };
+        init();
+    </script>
+</body>
+</html>
