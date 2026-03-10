@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器Rev17</title>
+    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器Rev20</title>
     <style>
         :root{--primary-color:#007AFF;--bg-color:#f0f8ff;--panel-bg:#ffffff;--border-color:#e5e5ea}
         *{box-sizing:border-box}
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器 Rev17</div>
+    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器Rev20</div>
     <div class="author-badge">版權所有 ＆ 製作：WHY</div>
 
     <div class="main-container">
@@ -61,7 +61,7 @@
 
             <div class="sync-box">
                 <label style="cursor:pointer; display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="syncAllCheck" checked> 🔄 同時編輯所有鍵盤 (同步更新按鍵數、內容、樣式)
+                    <input type="checkbox" id="syncAllCheck" checked> 🔄 同時編輯對應語系的豎屏與橫屏 (同步按鍵數、內容、樣式)
                 </label>
             </div>
 
@@ -204,6 +204,14 @@
             return res.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
         }
         
+        // 核心更新：精準取得當前需要同步的語系，中文不干擾英文，英文不干擾中文
+        function getSyncTargets(mode) {
+            if (!document.getElementById('syncAllCheck').checked) return [mode];
+            if (mode.includes('Pinyin')) return ['portraitPinyin', 'landscapePinyin'];
+            if (mode.includes('En')) return ['portraitEn', 'landscapeEn'];
+            return [mode];
+        }
+
         function toggleDarkPanel() {
             const mode = document.getElementById('darkModeHandling').value;
             const darkPanel = document.getElementById('darkPanelWrap');
@@ -249,7 +257,7 @@
                     kRow.innerHTML = `
                         <select onchange="updateKey(${rIdx}, ${kIdx}, 'type', this.value, this); renderEditor();">${optionsHTML}</select>
                         <input type="text" class="out-code-input" value="${safeOutCode}" placeholder="如:e" title="真實送出的按鍵訊號" oninput="updateKey(${rIdx}, ${kIdx}, 'outCode', this.value, this)">
-                        <input type="text" class="code-input" value="${safeCode}" placeholder="如:一" title="畫面上顯示的外觀文字" oninput="updateKey(${rIdx}, ${kIdx}, 'code', this.value, this)">
+                        <input type="text" class="code-input" value="${safeCode}" placeholder="如:E" title="畫面上顯示的外觀文字" oninput="updateKey(${rIdx}, ${kIdx}, 'code', this.value, this)">
                         <button class="btn-auto" onclick="autoWidth(${rIdx}, ${kIdx})">Auto</button>
                         <input type="number" step="0.01" value="${key.width}" oninput="updateKey(${rIdx}, ${kIdx}, 'width', this.value, this); updateSum(${rIdx});">
                         <div class="color-cell" style="padding:0; background:transparent; border:none;">
@@ -268,7 +276,8 @@
         function syncGlobalDefColor(val) {
             const hexVal = val.toUpperCase();
             document.getElementById('defKeyHex').value = hexVal;
-            const applyToLayout = (m) => {
+            const targets = getSyncTargets(currentMode);
+            targets.forEach(m => {
                 layouts[m].rows.forEach(row => {
                     row.keys.forEach(key => {
                         const currentC = key.color ? key.color.toUpperCase() : '';
@@ -277,9 +286,7 @@
                         }
                     });
                 });
-            };
-            if (document.getElementById('syncAllCheck').checked) { Object.keys(layouts).forEach(applyToLayout); }
-            else { applyToLayout(currentMode); }
+            });
             currentDefaultColor = hexVal;
             renderEditor(); renderPreview();
         }
@@ -368,8 +375,13 @@
                 row.keys.forEach(key => {
                     const k = document.createElement('div');
                     k.className = 'preview-key';
-                    const safeCode = String(key.code || key.outCode || '').toUpperCase();
-                    k.innerText = symbolMap[safeCode] || safeCode;
+                    
+                    // 【精準顯示修正】：取消強制將英文轉大寫的限制，還原最真實的顯示結果！
+                    const rawCode = String(key.code || key.outCode || '');
+                    const upperCode = rawCode.toUpperCase();
+                    // 只有在 systemKeys (如 SPACE, ENTER) 時才進行 symbolMap 對應轉換
+                    k.innerText = symbolMap[upperCode] !== undefined ? symbolMap[upperCode] : rawCode;
+                    
                     k.style.width = (key.width * 100) + '%';
                     k.style.fontSize = key.fontSize + 'px';
                     k.style.borderRadius = document.getElementById('keyRadius').value + 'px';
@@ -404,7 +416,8 @@
 
         function updateKey(r, k, f, v, el) {
             const val = (f === 'width' || f === 'fontSize') ? parseFloat(v) : v;
-            const applyOne = (m) => {
+            const targets = getSyncTargets(currentMode);
+            targets.forEach(m => {
                 if (layouts[m].rows[r] && layouts[m].rows[r].keys[k]) {
                     let keyObj = layouts[m].rows[r].keys[k];
                     
@@ -433,16 +446,15 @@
                         keyObj[f] = val;
                     }
                 }
-            };
-            if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyOne);
-            else applyOne(currentMode);
+            });
             renderPreview();
         }
 
         function setK(r, c) {
             const num = Math.max(1, parseInt(c));
             const defC = document.getElementById('defKeyColor').value;
-            const applyKCount = (m) => {
+            const targets = getSyncTargets(currentMode);
+            targets.forEach(m => {
                 const row = layouts[m].rows[r]; if (!row) return;
                 if (num > row.keys.length) {
                     for (let i = row.keys.length; i < num; i++) row.keys.push({ code: '', outCode: '', width: (1 / num).toFixed(4), color: defC, fontSize: 18 });
@@ -450,9 +462,7 @@
                     row.keys = row.keys.slice(0, num);
                 }
                 row.keys.forEach(k => k.width = (1 / num).toFixed(4));
-            };
-            if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyKCount);
-            else applyKCount(currentMode);
+            });
             renderEditor(); renderPreview();
         }
 
@@ -517,7 +527,8 @@
                     let safePrefix = prefix.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
                     
                     // 只負責產生原代碼中不存在的新按鍵定義，絕對不碰已存在的按鍵，保護滑動結構
-                    let btnDefRegex = new RegExp(`['"]?${safePrefix}Button['"]?\\s*:`, 'i');
+                    // 【字首邊界修復】：確保精準比對單詞
+                    let btnDefRegex = new RegExp(`(?:^|[^a-zA-Z0-9_])['"]?${safePrefix}Button['"]?\\s*:`, 'i');
                     if (!btnDefRegex.test(newCode)) {
                         if (isSystemKey && sameCode) return;
                         let themeArg = isPinyinTemplate ? 'theme, ' : '';
@@ -580,7 +591,7 @@
                 let sysKeyBgD = document.getElementById('sysKeyHexD').value || '#2C2C2E';
                 let enterBgD = document.getElementById('enterBgHexD').value || '#0A60FE';
                 let enterTextD = document.getElementById('enterTextHexD').value || '#FFFFFF';
-                
+
                 const overrideStartMarker = "// === 編輯器強制顏色覆寫 ===";
                 const overrideEndMarker = "// === 覆寫結束 ===";
                 const sIdx = newCode.indexOf(overrideStartMarker);
@@ -625,16 +636,17 @@
 
                 let allCellNames = new Set([...Object.keys(portWidths), ...Object.keys(landWidths)]);
                 
-                // 【精準修復】：僅寫入尺寸與邊界。專門為獨立寫死的逗號與句號綁上 prune 結構，使上下滑動氣泡復活
+                // 【精準修復】：僅寫入尺寸與邊界。絕不在按鍵本體覆寫 text 或 swipeStyle，防止引擎語法解析崩潰！
                 allCellNames.forEach(cell => {
                     let pw = portWidths[cell] || "0.1";
                     let lw = landWidths[cell] || "0.1";
                     let swipeInject = '';
                     
-                    if (cell === 'commaButton') {
-                        swipeInject = `, foregroundStyle: std.prune(['commaButtonForegroundStyle', if std.objectHas(swipe_up, ',') then ',ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, ',') then ',ButtonDownForegroundStyle' else null])`;
-                    } else if (cell === 'periodButton') {
-                        swipeInject = `, foregroundStyle: std.prune(['periodButtonForegroundStyle', if std.objectHas(swipe_up, '.') then '.ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '.') then '.ButtonDownForegroundStyle' else null])`;
+                    // 只有逗號和句號這兩個寫死的孤兒按鍵需要手動補上 prune，保證氣泡正常運作
+                    if (cell === 'commaButton' || cell === 'periodButton') {
+                        let outC = (cell === 'commaButton') ? ',' : '.';
+                        let safeOut = String(outC).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
+                        swipeInject = `, foregroundStyle: std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${safeOut}') then '${safeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${safeOut}') then '${safeOut}ButtonDownForegroundStyle' else null])`;
                     }
                     
                     overrideMap.set(cell, `{ size: { width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }, bounds: null${swipeInject} }`);
@@ -652,12 +664,11 @@
                         
                         let isDefaultColor = (color === defTextC.toUpperCase() || color === '');
                         
+                        // 【終極強勢修復】：將自訂字根直接疊加到 ForegroundStyle 的源頭！
+                        // 加入 uppercaseText 確保引擎任何狀態下都會讀取到設定的字。
+                        // 並且保證純英文鍵盤如果不設定不同字，就不會強迫大寫覆蓋小寫。
                         let textInject = '';
-                        if (rawDisplay !== rawOutput && rawDisplay !== '' && !['enter', 'backspace', 'shift', 'space', 'numeric'].includes(prefix.toLowerCase())) {
-                            let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
-                            textInject = `text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
-                        } else if (['~', '.', ',', ';', '/'].includes(rawDisplay)) {
-                            // 專門針對符號鍵的防護，確保不論使用者怎麼切換都能寫入 text 屬性
+                        if (rawDisplay !== rawOutput && rawDisplay.toLowerCase() !== rawOutput.toLowerCase() && rawDisplay !== '' && !['enter', 'backspace', 'shift', 'space', 'numeric'].includes(prefix.toLowerCase())) {
                             let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
                             textInject = `text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
                         }
@@ -679,22 +690,8 @@
                             }
                         }
 
-                        // 【安全隔離修復 Rev16】：徹底隔離 perioddirect 不去干涉主鍵盤的 period(舟)
-                        let sym = symbolMap[rawOutput.toUpperCase()] || rawOutput;
+                        // 【安全隔離修復】：嚴格隔離 period 和 perioddirect 的樣式疊加，防止互相覆寫干擾
                         let permutations = new Set([ rawCode, prefix ]);
-                        
-                        // 【隔離防護】：如果是 direct 結尾的特定符號（如 perioddirect），不要把它的符號（.）加入，以免覆蓋掉大易字根（舟）
-                        if (!rawCode.includes('direct') || rawCode === 'tildedirect') {
-                            permutations.add(sym);
-                        }
-                        
-                        if (rawCode.includes('direct')) {
-                            // 【隔離防護】：絕不把 period 和 comma 混入 direct 的變數中，確保舟跟力永遠安全
-                            if (!rawCode.includes('period') && !rawCode.includes('comma')) {
-                                permutations.add(rawCode.replace('direct', ''));
-                                permutations.add(prefix.replace('Direct', ''));
-                            }
-                        }
 
                         permutations.forEach(p => {
                             if (!p) return;
@@ -712,19 +709,6 @@
 
                             if (/^[0-9]$/.test(p)) {
                                 overrideMap.set(`number${p}ButtonForegroundStyle`, colorStr);
-                                
-                                let textNum = sysCodeMap[p];
-                                if (textNum && textNum !== p) {
-                                    overrideMap.set(`${textNum}ButtonForegroundStyle`, colorStr);
-                                    overrideMap.set(`${textNum}ForegroundStyle`, colorStr);
-                                    overrideMap.set(`${textNum}SchemaLiurForegroundStyle`, colorStr);
-                                    overrideMap.set(`${textNum}SchemaEasyEnForegroundStyle`, colorStr);
-                                    overrideMap.set(`${textNum}ButtonUppercasedStateForegroundStyle`, colorStr);
-                                    
-                                    let upperTextNum = textNum.toUpperCase();
-                                    overrideMap.set(`${upperTextNum}ButtonForegroundStyle`, colorStr);
-                                    overrideMap.set(`${upperTextNum}ButtonUppercasedStateForegroundStyle`, colorStr);
-                                }
                             }
                         });
                         
@@ -871,30 +855,27 @@
             try {
                 const defC = document.getElementById('defKeyColor').value;
                 const rowTpl = { keys: [{ code: '', outCode: '', width: 1.0, color: defC, fontSize: 18 }] };
-                if (document.getElementById('syncAllCheck').checked) {
-                    Object.keys(layouts).forEach(m => layouts[m].rows.push(JSON.parse(JSON.stringify(rowTpl))));
-                } else {
-                    layouts[currentMode].rows.push(JSON.parse(JSON.stringify(rowTpl)));
-                }
+                getSyncTargets(currentMode).forEach(m => {
+                    layouts[m].rows.push(JSON.parse(JSON.stringify(rowTpl)));
+                });
                 renderEditor(); renderPreview();
             } catch (e) { console.error("Add Row Error: ", e); }
         }
 
         function removeRSync(i) {
-            if (document.getElementById('syncAllCheck').checked) { Object.keys(layouts).forEach(m => layouts[m].rows.splice(i, 1)); }
-            else { layouts[currentMode].rows.splice(i, 1); }
+            getSyncTargets(currentMode).forEach(m => {
+                layouts[m].rows.splice(i, 1);
+            });
             renderEditor(); renderPreview();
         }
 
         function removeKSync(r, k) {
-            const applyRem = (m) => {
+            getSyncTargets(currentMode).forEach(m => {
                 if (!layouts[m].rows[r]) return;
                 layouts[m].rows[r].keys.splice(k, 1);
                 const len = layouts[m].rows[r].keys.length;
                 if (len > 0) { const avg = (1/len).toFixed(4); layouts[m].rows[r].keys.forEach(i => i.width = parseFloat(avg)); }
-            };
-            if (document.getElementById('syncAllCheck').checked) Object.keys(layouts).forEach(applyRem);
-            else applyRem(currentMode);
+            });
             renderEditor(); renderPreview();
         }
 
@@ -947,7 +928,9 @@
                                     let finalOutput = uiCode.toLowerCase();
 
                                     let safeCForRegex = escapeRegExp(c);
-                                    let defRegex = new RegExp(`['"]?${safeCForRegex}['"]?\\s*:\\s*.*?createButton\\s*\\([^{]*\\{([^}]+)\\}`, 'i');
+                                    // 【核心修復一】：嚴格邊界防護，防止 eButton 匹配到 oneButton，xButton 匹配到 sixButton 等子字串問題！
+                                    const bnd = `(?:^|[^a-zA-Z0-9_])`;
+                                    let defRegex = new RegExp(`${bnd}['"]?${safeCForRegex}['"]?\\s*:\\s*.*?createButton\\s*\\([^{]*\\{([\\s\\S]*?)\\}\\s*\\)`, 'i');
                                     let defMatch = text.match(defRegex);
                                     
                                     if (defMatch) {
@@ -957,7 +940,6 @@
                                         
                                         if (kMatch) finalOutput = kMatch[1];
                                         if (tMatch) finalDisplay = tMatch[1];
-                                        else if (kMatch) finalDisplay = kMatch[1].toUpperCase();
                                     } else {
                                         if (uiCode === 'COMMA') finalOutput = ',';
                                         else if (uiCode === 'PERIOD') finalOutput = '.';
@@ -965,51 +947,60 @@
                                         else if (uiCode === ';') finalOutput = ';';
                                         else if (uiCode === 'TILDEDIRECT') finalOutput = '~';
                                         else if (uiCode === 'PERIODDIRECT') finalOutput = 'PERIODDIRECT';
-                                        else finalOutput = uiCode;
+                                        else finalOutput = uiCode.toLowerCase(); // 確保無法匹配時預設也是小寫
                                     }
 
                                     let outCodeToSave = finalOutput;
                                     let codeToSave = finalDisplay;
 
-                                    const systemAndSpecialKeys = [...systemKeys, 'SEMICOLON', 'COMMA', 'PERIOD', 'SLASH', 'TILDEDIRECT', 'PERIODDIRECT'];
-                                    if (systemAndSpecialKeys.includes(uiCode.toUpperCase())) {
+                                    const pureSystemKeys = ['ENTER', 'BACKSPACE', 'SHIFT', 'SPACE', 'NUMERIC'];
+                                    
+                                    if (pureSystemKeys.includes(uiCode.toUpperCase())) {
                                         outCodeToSave = uiCode.toUpperCase();
                                         codeToSave = uiCode.toUpperCase();
-                                        if (uiCode.toUpperCase() === 'PERIODDIRECT') codeToSave = '.';
-                                        if (uiCode.toUpperCase() === 'TILDEDIRECT') codeToSave = '~';
-                                        if (uiCode.toUpperCase() === 'SEMICOLON') codeToSave = ';';
-                                        if (uiCode.toUpperCase() === 'COMMA') codeToSave = ',';
-                                        if (uiCode.toUpperCase() === 'PERIOD') codeToSave = '.';
-                                        if (uiCode.toUpperCase() === 'SLASH') codeToSave = '/';
-                                    }
-                                    
-                                    let prefixToFind = sysCodeMap[outCodeToSave.toLowerCase()] || outCodeToSave.toLowerCase();
-                                    if (prefixToFind === 'semicolon') prefixToFind = 'semicolon';
-                                    
-                                    const pureSystemKeys = ['ENTER', 'BACKSPACE', 'SHIFT', 'SPACE', 'NUMERIC'];
-                                    if (!pureSystemKeys.includes(uiCode.toUpperCase())) {
-                                        let btnTextRegex = new RegExp(`['"]?${escapeRegExp(prefixToFind)}Button['"]?\\+?:\\s*\\{([^}]*?)text:\\s*['"]([^'"]+)['"]`, "i");
-                                        let textOverrideRegex = new RegExp(`['"]?${escapeRegExp(prefixToFind)}(?:Button|SchemaLiur|SchemaEasyEn)?ForegroundStyle['"]?\\+?:\\s*\\{([^}]*?)text:\\s*['"]([^'"]+)['"]`, "i");
+                                    } else {
+                                        if (uiCode.toUpperCase() === 'COMMA' || uiCode === ',') { outCodeToSave = ','; codeToSave = ','; }
+                                        else if (uiCode.toUpperCase() === 'PERIOD' || uiCode === '.') { outCodeToSave = '.'; codeToSave = '.'; }
+                                        else if (uiCode.toUpperCase() === 'SLASH' || uiCode === '/') { outCodeToSave = '/'; codeToSave = '/'; }
+                                        else if (uiCode.toUpperCase() === 'SEMICOLON' || uiCode === ';') { outCodeToSave = ';'; codeToSave = ';'; }
+                                        else if (uiCode.toUpperCase() === 'TILDEDIRECT' || uiCode === '~') { outCodeToSave = '~'; codeToSave = '~'; }
+                                        else if (uiCode.toUpperCase() === 'PERIODDIRECT') { outCodeToSave = 'PERIODDIRECT'; codeToSave = '.'; }
                                         
-                                        let btnTextMatch = text.match(btnTextRegex);
-                                        let textOverrideMatch = text.match(textOverrideRegex);
+                                        let prefixToFind = sysCodeMap[outCodeToSave.toLowerCase()] || outCodeToSave.toLowerCase();
+                                        if (prefixToFind === 'semicolon') prefixToFind = 'semicolon';
+                                        if (prefixToFind === 'perioddirect') prefixToFind = 'periodDirect';
                                         
-                                        if (btnTextMatch) {
-                                            codeToSave = btnTextMatch[2];
-                                        } else if (textOverrideMatch) {
-                                            codeToSave = textOverrideMatch[2];
-                                        } else if (['COMMA', 'PERIOD', 'SLASH', 'SEMICOLON', 'TILDEDIRECT', 'PERIODDIRECT'].includes(uiCode.toUpperCase())) {
-                                            if (uiCode === 'COMMA') codeToSave = ',';
-                                            else if (uiCode === 'PERIOD') codeToSave = '.';
-                                            else if (uiCode === 'SLASH') codeToSave = '/';
-                                            else if (uiCode === ';') codeToSave = ';';
-                                            else if (uiCode === 'TILDEDIRECT') codeToSave = '~';
-                                            else if (uiCode === 'PERIODDIRECT') codeToSave = '.';
+                                        let extractedText = null;
+                                        
+                                        if (defMatch) {
+                                            let tm = defMatch[1].match(/text\s*:\s*['"]([^'"]+)['"]/i);
+                                            if (tm) extractedText = tm[1];
+                                        }
+                                        
+                                        if (!extractedText) {
+                                            // 【核心修復二】：同樣補上邊界防禦
+                                            let declRegex = new RegExp(`${bnd}['"]?${escapeRegExp(prefixToFind)}(?:Button)?(?:Schema[a-zA-Z]+)?(?:ForegroundStyle)?['"]?\\+?:\\s*\\{([^{}]+)\\}`, 'ig');
+                                            let matches = [...text.matchAll(declRegex)];
+                                            for (let match of matches) {
+                                                let tm = match[1].match(/text\s*:\s*['"]([^'"]+)['"]/i);
+                                                if (tm) { extractedText = tm[1]; break; }
+                                            }
+                                        }
+                                        
+                                        if (extractedText) {
+                                            codeToSave = extractedText;
+                                        } else if (uiCode.toUpperCase() !== 'PERIODDIRECT' && !['COMMA', 'PERIOD', 'SLASH', 'SEMICOLON', 'TILDEDIRECT'].includes(uiCode.toUpperCase())) {
+                                            codeToSave = finalDisplay;
                                         }
                                     }
 
+                                    // 【核心修復三】：取消強制把英文 Output 變成大寫的錯誤邏輯！確保如 z, e, r 等字元保持小寫輸出。
                                     if (codeToSave.toLowerCase() === outCodeToSave.toLowerCase()) {
-                                        outCodeToSave = codeToSave;
+                                        if (/^[a-z]$/i.test(outCodeToSave)) {
+                                            outCodeToSave = outCodeToSave.toLowerCase();
+                                        } else {
+                                            outCodeToSave = codeToSave;
+                                        }
                                     }
 
                                     let rawCode = uiCode.toLowerCase();
@@ -1020,7 +1011,8 @@
                                     for (let p of permutations) {
                                         if (!p) continue;
                                         let safeP = escapeRegExp(p);
-                                        let cRegex = new RegExp(`(?:^|[^a-zA-Z0-9_])(?:${safeP}ButtonForegroundStyle|${safeP}ForegroundStyle|${safeP}SchemaLiurForegroundStyle|${safeP}SchemaEasyEnForegroundStyle|number${safeP}ButtonForegroundStyle|${safeP}ButtonLiurForegroundStyle|${safeP}ButtonEasyEnForegroundStyle)['"]?\\+?:\\s*\\{[\\s\\S]{0,120}?normalColor:\\s*(?:if[\\s\\S]+?else\\s*)?'([^']+)'`, "i");
+                                        // 邊界防禦套用於顏色抓取
+                                        let cRegex = new RegExp(`${bnd}['"]?(?:${safeP}ButtonForegroundStyle|${safeP}ForegroundStyle|${safeP}SchemaLiurForegroundStyle|${safeP}SchemaEasyEnForegroundStyle|number${safeP}ButtonForegroundStyle|${safeP}ButtonLiurForegroundStyle|${safeP}ButtonEasyEnForegroundStyle)['"]?\\+?:\\s*\\{[\\s\\S]{0,120}?normalColor:\\s*(?:if[\\s\\S]+?else\\s*)?'([^']+)'`, "i");
                                         let colorMatch = text.match(cRegex);
                                         if(colorMatch && colorMatch[1] && !colorMatch[1].includes('color')) {
                                             keyColor = colorMatch[1];
@@ -1029,7 +1021,8 @@
                                     }
 
                                     let safePForW = escapeRegExp(prefix);
-                                    let wRegex = new RegExp(`['"]?${safePForW}Button['"]?\\+?:\\s*\\{[\\s\\S]{0,150}?percentage:\\s*(?:if\\s+orientation\\s*==\\s*'portrait'\\s*then\\s*)?([0-9.]+)(?:\\s*else\\s*([0-9.]+))?`, "i");
+                                    // 邊界防禦套用於寬度抓取
+                                    let wRegex = new RegExp(`${bnd}['"]?${safePForW}Button['"]?\\+?:\\s*\\{[\\s\\S]{0,150}?percentage:\\s*(?:if\\s+orientation\\s*==\\s*'portrait'\\s*then\\s*)?([0-9.]+)(?:\\s*else\\s*([0-9.]+))?`, "i");
                                     let wMatch = text.match(wRegex);
                                     if (wMatch) {
                                         if (isPortrait && wMatch[1]) w = parseFloat(wMatch[1]);
@@ -1111,10 +1104,14 @@
                         let eIdx = text.indexOf("// === EDITOR LAYOUT END ===");
                         if (sIdx !== -1 && eIdx !== -1) {
                             let layoutChunk = text.substring(sIdx, eIdx);
-                            let portMatch = layoutChunk.match(/if orientation == 'portrait' then \[([\s\S]*?)\] else \[/);
-                            if (portMatch) portRows = parseRows(portMatch[1], true);
-                            let landMatch = layoutChunk.match(/\] else \[([\s\S]*?)\]/);
-                            if (landMatch) landRows = parseRows(landMatch[1], false);
+                            let parts = layoutChunk.split(/\]\s*else\s*\[/);
+                            if (parts.length >= 2) {
+                                portRows = parseRows(parts[0], true);
+                                landRows = parseRows(parts[1], false);
+                            } else {
+                                portRows = parseRows(layoutChunk, true);
+                                landRows = JSON.parse(JSON.stringify(portRows));
+                            }
                         } else {
                             portRows = parseRows(text, true);
                             landRows = JSON.parse(JSON.stringify(portRows));
@@ -1122,44 +1119,6 @@
 
                         if (portRows.length > 0) {
                             parseSuccess = true;
-                            
-                            let isCorrupted = false;
-                            if (portRows.length >= 4) {
-                                let r1k2 = portRows[1].keys[2] ? portRows[1].keys[2].outCode : '';
-                                let r3k1 = portRows[3].keys[1] ? portRows[3].keys[1].outCode : '';
-                                if (r1k2 === '1' || r3k1 === '6') isCorrupted = true;
-                            }
-                            
-                            if (isCorrupted) {
-                                const fixes = [
-                                    {r:1, k:2, o:'e', c:'一'}, {r:1, k:3, o:'r', c:'工'}, {r:1, k:4, o:'t', c:'糸'}, {r:1, k:8, o:'o', c:'口'},
-                                    {r:3, k:1, o:'x', c:'水'}, {r:3, k:5, o:'n', c:'魚'}
-                                ];
-                                [portRows, landRows].forEach(rows => {
-                                    fixes.forEach(f => {
-                                        if (rows[f.r] && rows[f.r].keys[f.k]) {
-                                            rows[f.r].keys[f.k].outCode = f.o;
-                                            rows[f.r].keys[f.k].code = f.c;
-                                        }
-                                    });
-                                    if (rows[3] && rows[3].keys[7] && (rows[3].keys[7].outCode === ',' || rows[3].keys[7].outCode === 'COMMA') && (rows[3].keys[7].code === ',' || rows[3].keys[7].code === 'COMMA')) {
-                                        rows[3].keys[7].code = '力';
-                                        rows[3].keys[7].outCode = ',';
-                                    }
-                                    if (rows[3] && rows[3].keys[8] && (rows[3].keys[8].outCode === '.' || rows[3].keys[8].outCode === 'PERIOD') && (rows[3].keys[8].code === '.' || rows[3].keys[8].code === 'PERIOD')) {
-                                        rows[3].keys[8].code = '舟';
-                                        rows[3].keys[8].outCode = '.';
-                                    }
-                                    if (rows[3] && rows[3].keys[9] && (rows[3].keys[9].outCode === '/' || rows[3].keys[9].outCode === 'SLASH') && (rows[3].keys[9].code === '/' || rows[3].keys[9].code === 'SLASH')) {
-                                        rows[3].keys[9].code = '竹';
-                                        rows[3].keys[9].outCode = '/';
-                                    }
-                                    if (rows[2] && rows[2].keys[9] && (rows[2].keys[9].outCode === ';' || rows[2].keys[9].outCode === 'SEMICOLON') && (rows[2].keys[9].code === ';' || rows[2].keys[9].code === 'SEMICOLON')) {
-                                        rows[2].keys[9].code = '虫';
-                                        rows[2].keys[9].outCode = ';';
-                                    }
-                                });
-                            }
                             
                             if (currentFileName.includes('pinyin')) {
                                 layouts['portraitPinyin'].rows = JSON.parse(JSON.stringify(portRows));
@@ -1177,9 +1136,9 @@
                         document.getElementById('exportFormat').value = 'libsonnet';
                         
                         const modeMap = {
-                            'portraitPinyin': /['"]?(竖屏|豎屏)中文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
+                            'portraitPinyin': /['"]?(竖屏|竖屏)中文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
                             'landscapePinyin': /['"]?(横屏|横屏)中文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
-                            'portraitEn': /['"]?(竖屏|豎屏)英文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
+                            'portraitEn': /['"]?(竖屏|竖屏)英文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i,
                             'landscapeEn': /['"]?(横屏|横屏)英文26(键|鍵)['"]?\s*:\s*\{[\s\S]*?keyboardLayout\s*:\s*\[([\s\S]*?)\]\s*,/i
                         };
                         
@@ -1196,7 +1155,7 @@
                     }
                     
                     if (parseSuccess) {
-                        alert(`檔案 ${file.name} 載入成功！\n\n📌 提示：如果取消勾選「同步更新」，您現在匯出的 .jsonnet 將會正確分離直向與橫向鍵盤佈局喔！`);
+                        alert(`檔案 ${file.name} 載入成功！`);
                         document.querySelectorAll('.tab').forEach(t => {
                             if (t.dataset.mode === currentMode) t.classList.add('active');
                             else t.classList.remove('active');
