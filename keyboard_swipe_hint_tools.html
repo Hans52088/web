@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鍵盤上下滑與長按配置視覺化編輯器 Rev07</title>
+    <style>
+        body {
+            background-color: #f0f8ff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header-title { margin-bottom: 10px; color: #1c1c1e; }
+        
+        .author-badge {
+            display: inline-block;
+            background: #007AFF;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .steps-container {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 1300px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed #5ac8fa;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            color: #5ac8fa;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background-color: #e6f7ff;
+            border-color: #007aff;
+            color: #007aff;
+        }
+
+        .btn {
+            background-color: #5ac8fa;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        .btn:hover { background-color: #47b5e8; }
+        .btn.success { background-color: #34c759; }
+        .btn.success:hover { background-color: #2eb350; }
+        .btn.warning { background-color: #ff9500; }
+        .btn.warning:hover { background-color: #e08300; }
+        .btn.danger { background-color: #ff3b30; }
+        .btn.danger:hover { background-color: #d73128; }
+        .btn.outline { background-color: transparent; border: 1px solid #5ac8fa; color: #007aff; box-shadow: none; }
+        .btn.outline:hover { background-color: #e6f7ff; }
+        .btn.active { background-color: #007aff; color: white; border-color: #007aff; }
+
+        .workspace {
+            display: flex;
+            gap: 25px;
+            width: 100%;
+            max-width: 1300px;
+            align-items: stretch;
+            flex: 1;
+        }
+
+        .left-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 0;
+        }
+
+        .keyboard-area {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5ea;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            min-height: 280px;
+            flex-shrink: 0;
+        }
+
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .code-area {
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5ea;
+            box-sizing: border-box;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .code-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e5e5ea;
+            padding-bottom: 10px;
+        }
+        
+        .code-tabs .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            flex-wrap: nowrap;
+        }
+        .code-header-btns { display: flex; gap: 10px; flex-wrap: nowrap; }
+
+        textarea {
+            width: 100%;
+            flex: 1;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            background: #f4f5f7;
+            color: #333;
+            box-sizing: border-box;
+            resize: none;
+            white-space: pre;
+            min-height: 200px;
+        }
+
+        .editor-area {
+            flex: 1.2;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e5e5ea;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: opacity 0.3s;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .key {
+            position: relative;
+            flex: 1;
+            max-width: 50px;
+            height: 60px;
+            background: #ffffff;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 18px;
+            font-weight: 500;
+            color: #1c1c1e;
+            transition: all 0.1s;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        .key:hover { filter: brightness(0.95); }
+        .key.selected {
+            border: 3px solid #007aff;
+            box-shadow: 0 0 8px rgba(0,122,255,0.5);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .swipe-label {
+            position: absolute;
+            font-size: 11px;
+            color: #8e8e93;
+            font-weight: 500;
+            pointer-events: none;
+        }
+        .swipe-up-label { top: 4px; }
+        .swipe-down-label { bottom: 4px; }
+        
+        .key.has-hint::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background-color: #007aff;
+            border-radius: 50%;
+        }
+
+        .editor-group {
+            background: #f9f9f9;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e5ea;
+        }
+        .editor-group h3 { margin: 0 0 10px 0; font-size: 15px; color: #1c1c1e; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .input-row label { font-size: 13px; color: #444; font-weight: 500; }
+        
+        .input-row input[type="text"]:not(.hex-input):not(.sf-label-input),
+        .input-row input[type="number"],
+        .input-row select {
+            padding: 0 8px; height: 32px; border: 1px solid #d1d1d6; border-radius: 6px; width: 145px; font-size: 13px; box-sizing: border-box;
+        }
+        .input-row input:disabled { background-color: #f0f0f5; color: #999; cursor: not-allowed; border-color: #e5e5ea; }
+        
+        .color-wrapper { display: flex; align-items: center; gap: 5px; }
+        .hex-input {
+            font-family: monospace; font-size: 13px; color: #333; background: #fff; padding: 0 6px; height: 32px;
+            border-radius: 4px; border: 1px solid #c7c7cc; width: 60px !important; text-align: center; box-sizing: border-box; text-transform: uppercase;
+        }
+        .hex-input:focus { outline: none; border-color: #007AFF; box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+        .input-row input[type="color"] {
+            padding: 0; width: 35px; height: 32px; border: 1px solid #d1d1d6; border-radius: 4px; cursor: pointer; box-sizing: border-box;
+        }
+        
+        select { max-width: 145px; }
+        optgroup { font-weight: bold; color: #333; background: #eaf0f6; }
+        option { font-weight: normal; color: #1c1c1e; background: #fff; }
+        
+        .sf-input-container { display: flex; gap: 6px; align-items: center; width: 145px; }
+        .sf-preview-box {
+            width: 32px; height: 32px; border: 1px solid #d1d1d6; border-radius: 6px; display: flex; justify-content: center;
+            align-items: center; font-size: 16px; background: #fdfdfd; flex-shrink: 0; box-sizing: border-box; color: #333;
+        }
+        .sf-label-input {
+            flex: 1; width: 100% !important; height: 32px; border: 1px solid #d1d1d6 !important; border-radius: 6px;
+            padding: 0 8px; font-size: 13px; box-sizing: border-box; outline: none;
+        }
+        .hint-text { font-size: 11px; color: #888; margin-top: -5px; margin-bottom: 8px; text-align: right; }
+
+        /* Hints Specific Styles */
+        .hint-items-container { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .hint-item {
+            background: #fff; padding: 12px 15px; border-radius: 8px; border: 1px solid #d1d1d6; display: flex; flex-direction: column; gap: 4px; position: relative;
+        }
+        
+        .hint-index-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e6f7ff;
+            color: #007aff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+        }
+
+        .index-control { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+        .index-control label { font-size: 13px; font-weight: 500; color: #333; }
+        .index-control input { padding: 4px 8px; border: 1px solid #d1d1d6; border-radius: 6px; width: 60px; font-size: 13px; }
+
+        /* Icon Modal */
+        .icon-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(3px);
+        }
+        .icon-modal-content {
+            background: #fff; width: 95%; max-width: 800px; border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; max-height: 85vh;
+        }
+        .icon-modal-header {
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5ea; padding-bottom: 12px; margin-bottom: 12px;
+        }
+        .icon-modal-header h3 { margin: 0; font-size: 18px; color: #1c1c1e; }
+        .icon-close-btn { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; overflow-y: auto; padding-right: 5px; }
+        .icon-cell {
+            background: #f4f5f7; border: 1px solid #e5e5ea; border-radius: 8px; padding: 12px 6px; text-align: center; cursor: pointer;
+            transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+        }
+        .icon-cell:hover { background: #e6f7ff; border-color: #007aff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,122,255,0.15); }
+        .icon-visual { font-size: 24px; }
+        .icon-desc { font-size: 13px; font-weight: 600; color: #333; line-height: 1.2; }
+    </style>
+</head>
+<body>
+
+    <h2 class="header-title">⌨️ 鍵盤上下滑與長按配置視覺化編輯器 (Rev07)</h2>
+    <div class="author-badge">版權所有 ＆ 製作：WHY</div>
+
+    <div class="steps-container">
+        <div class="drop-zone" id="dropZone1">
+            <div style="font-size: 12px; margin-bottom: 5px; color: #888;">Step 1</div>
+            <span id="dz1Text">拖放「配置與顏色檔 (pinyin_26.jsonnet)」<br>還原原始鍵盤佈局</span>
+            <input type="file" id="fileInput1" accept=".libsonnet,.json,.jsonnet" style="display: none;">
+        </div>
+
+        <div class="drop-zone" id="dropZone2">
+            <div style="font-size: 12px; margin-bottom: 5px; color: #888;">Step 2</div>
+            <span id="dz2Text">拖放「swipeData.libsonnet」<br>載入上下滑資料</span>
+            <input type="file" id="fileInput2" accept=".libsonnet,.json,.jsonnet" style="display: none;">
+        </div>
+
+        <div class="drop-zone" id="dropZone3">
+            <div style="font-size: 12px; margin-bottom: 5px; color: #888;">Step 3</div>
+            <span id="dz3Text">拖放「hintSymbolsData.libsonnet」<br>載入長按資料</span>
+            <input type="file" id="fileInput3" accept=".libsonnet,.json,.jsonnet" style="display: none;">
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="left-panel">
+            <div class="keyboard-area" id="keyboardArea">
+                <!-- 長按功能群組選項 (預設隱藏，切換模式時才顯示) -->
+                <div class="category-tabs" id="categoryTabs" style="display: none;">
+                    <span style="font-size: 13px; color: #555; align-self: center; margin-right: 5px;">長按功能預覽群組:</span>
+                    <button class="btn active" id="btn-both" onclick="switchCategory('both')">中文與英文</button>
+                    <button class="btn outline" id="btn-pinyin" onclick="switchCategory('pinyin')">中文 (pinyin)</button>
+                    <button class="btn outline" id="btn-alphabetic" onclick="switchCategory('alphabetic')">英文 (alphabetic)</button>
+                </div>
+                <div id="keyboardRenderContainer" style="width: 100%; display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                    <p style="color: #8e8e93; margin-top: 50px;">請先完成上方檔案上傳</p>
+                </div>
+            </div>
+
+            <div class="code-area">
+                <div class="code-tabs">
+                    <button class="btn active" id="tabBtnSwipe" onclick="switchCodeTab('swipe')">上下滑 (swipeData)</button>
+                    <button class="btn outline" id="tabBtnHint" onclick="switchCodeTab('hint')">長按 (hintSymbolsData)</button>
+                </div>
+                <div class="code-header">
+                    <h3 id="codeTitle" style="margin: 0; color: #1c1c1e; font-size: 15px;">程式碼預覽 (swipeData)</h3>
+                    <div class="code-header-btns">
+                        <button class="btn outline" id="copyFullBtn">📄 複製代碼</button>
+                        <button class="btn success" id="downloadBtn">💾 下載檔案</button>
+                    </div>
+                </div>
+                <textarea id="codeOutput" readonly placeholder="// 當您套用更新後，程式碼將會顯示於此..."></textarea>
+            </div>
+        </div>
+
+        <div class="editor-area" id="editorArea" style="opacity: 0.5; pointer-events: none;">
+            <!-- 標題與頁籤切換 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e5ea; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; font-size: 18px; color: #007aff;">
+                    Step 4: 編輯按鍵 <span id="currentKeyDisplay" style="color:#1c1c1e;">-</span>
+                </h2>
+                <div class="editor-mode-tabs" style="display: flex; gap: 8px;">
+                    <button class="btn active" id="editorModeSwipe" onclick="switchEditorMode('swipe')" style="padding: 6px 12px; font-size: 13px;">上下滑配置</button>
+                    <button class="btn outline" id="editorModeHint" onclick="switchEditorMode('hint')" style="padding: 6px 12px; font-size: 13px;">長按配置</button>
+                </div>
+            </div>
+            
+            <!-- 上下滑編輯區塊 -->
+            <div id="swipeEditorSection">
+                <div class="editor-group">
+                    <h3>⇧ 上滑 (Swipe Up)</h3>
+                    <div class="input-row">
+                        <label>輸出類型:</label>
+                        <select id="upType" onchange="handleTypeChange('up'); autoFillSf('up');">
+                            <optgroup label="常用快捷指令 (直接選取)">
+                                <option value="shortcut_undo">撤銷 (undo)</option>
+                                <option value="shortcut_deleteText">全刪除 (deleteText)</option>
+                                <option value="shortcut_copy">複製 (copy)</option>
+                                <option value="shortcut_paste">貼上 (paste)</option>
+                                <option value="shortcut_cut">剪下 (cut)</option>
+                                <option value="shortcut_selectText">全選 (selectText)</option>
+                                <option value="shortcut_home">移至行首 (home)</option>
+                                <option value="shortcut_end">移至行尾 (end)</option>
+                                <option value="shortcut_onehanded">單手模式切換</option>
+                                <option value="shortcut_rime2">次選上屏 (2nd)</option>
+                                <option value="shortcut_rime3">三選上屏 (3rd)</option>
+                            </optgroup>
+                            <optgroup label="無需設定值的獨立指令">
+                                <option value="backspace">退格 (backspace)</option>
+                                <option value="enter">回車 (enter)</option>
+                                <option value="shift">Shift (shift)</option>
+                                <option value="tab">縮進 (tab)</option>
+                                <option value="space">空格 (space)</option>
+                                <option value="nextKeyboard">地球 (nextKeyboard)</option>
+                                <option value="characterMargin">占位 (characterMargin)</option>
+                                <option value="none">無 (none)</option>
+                            </optgroup>
+                            <optgroup label="需要設定值的指令">
+                                <option value="character">字符 (character)</option>
+                                <option value="symbol">符號 (symbol)</option>
+                                <option value="sendKeys">組合鍵 (sendKeys)</option>
+                                <option value="shortcut">自訂命令 (shortcut)</option>
+                                <option value="keyboardType">鍵盤 (keyboardType)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="input-row">
+                        <label>輸出內容:</label>
+                        <input type="text" id="upSymbol" placeholder="例如: 1, @, Control+,">
+                    </div>
+                    <div class="input-row">
+                        <label>鍵盤顯示:</label>
+                        <div class="sf-input-container">
+                            <div id="upSfPreview" class="sf-preview-box"></div>
+                            <input type="text" id="upLabel" class="sf-label-input" placeholder="支援 sf:globe" oninput="updateSfPreview('up')">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <label>字體大小/顏色:</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="number" id="upSize" placeholder="尺寸" style="width: 60px;">
+                            <div class="color-wrapper">
+                                <input type="text" id="upColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                                <input type="color" id="upColor" value="#8e8e93">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-group">
+                    <h3>⇩ 下滑 (Swipe Down)</h3>
+                    <div class="input-row">
+                        <label>輸出類型:</label>
+                        <select id="downType" onchange="handleTypeChange('down'); autoFillSf('down');">
+                            <optgroup label="常用快捷指令 (直接選取)">
+                                <option value="shortcut_undo">撤銷 (undo)</option>
+                                <option value="shortcut_deleteText">全刪除 (deleteText)</option>
+                                <option value="shortcut_copy">複製 (copy)</option>
+                                <option value="shortcut_paste">貼上 (paste)</option>
+                                <option value="shortcut_cut">剪下 (cut)</option>
+                                <option value="shortcut_selectText">全選 (selectText)</option>
+                                <option value="shortcut_home">移至行首 (home)</option>
+                                <option value="shortcut_end">移至行尾 (end)</option>
+                                <option value="shortcut_onehanded">單手模式切換</option>
+                                <option value="shortcut_rime2">次选上屏 (2nd)</option>
+                                <option value="shortcut_rime3">三选上屏 (3rd)</option>
+                            </optgroup>
+                            <optgroup label="無需設定值的獨立指令">
+                                <option value="backspace">退格 (backspace)</option>
+                                <option value="enter">回車 (enter)</option>
+                                <option value="shift">Shift (shift)</option>
+                                <option value="tab">縮進 (tab)</option>
+                                <option value="space">空格 (space)</option>
+                                <option value="nextKeyboard">地球 (nextKeyboard)</option>
+                                <option value="characterMargin">占位 (characterMargin)</option>
+                                <option value="none">無 (none)</option>
+                            </optgroup>
+                            <optgroup label="需要設定值的指令">
+                                <option value="character">字符 (character)</option>
+                                <option value="symbol">符號 (symbol)</option>
+                                <option value="sendKeys">組合鍵 (sendKeys)</option>
+                                <option value="shortcut">自訂命令 (shortcut)</option>
+                                <option value="keyboardType">鍵盤 (keyboardType)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="input-row">
+                        <label>輸出內容:</label>
+                        <input type="text" id="downSymbol" placeholder="例如: 1, @, Control+,">
+                    </div>
+                    <div class="input-row">
+                        <label>鍵盤顯示:</label>
+                        <div class="sf-input-container">
+                            <div id="downSfPreview" class="sf-preview-box"></div>
+                            <input type="text" id="downLabel" class="sf-label-input" placeholder="支援 sf:globe" oninput="updateSfPreview('down')">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <label>字體大小/顏色:</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="number" id="downSize" placeholder="尺寸" style="width: 60px;">
+                            <div class="color-wrapper">
+                                <input type="text" id="downColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                                <input type="color" id="downColor" value="#8e8e93">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-group" style="background: #e6f7ff; border-color: #5ac8fa; padding: 10px 15px;">
+                    <h3 style="color: #007aff; border-bottom: 1px solid #b3e5fc; font-size: 13px;">🎨 一鍵批次修改上下滑設定</h3>
+                    <div class="input-row" style="justify-content: flex-start; gap: 6px; margin-bottom: 4px;">
+                        <label style="width: 45px;">上滑:</label>
+                        <input type="number" id="batchUpSize" placeholder="尺寸" style="width: 50px !important;">
+                        <input type="text" id="batchUpColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                        <input type="color" id="batchUpColor" value="#8e8e93">
+                        <button class="btn" style="flex: 1; padding: 0; height: 32px;" onclick="batchUpdate('up')">套用上滑</button>
+                    </div>
+                    <div class="input-row" style="justify-content: flex-start; gap: 6px; margin-bottom: 0;">
+                        <label style="width: 45px;">下滑:</label>
+                        <input type="number" id="batchDownSize" placeholder="尺寸" style="width: 50px !important;">
+                        <input type="text" id="batchDownColorText" class="hex-input" value="#8E8E93" maxlength="7">
+                        <input type="color" id="batchDownColor" value="#8e8e93">
+                        <button class="btn" style="flex: 1; padding: 0; height: 32px;" onclick="batchUpdate('down')">套用下滑</button>
+                    </div>
+                </div>
+            </div> <!-- 結束上下滑區塊 -->
+
+            <!-- 長按編輯區塊 -->
+            <div id="hintEditorSection" style="display: none;">
+                <div class="editor-group">
+                    <h3 style="color: #ff9500; border-bottom-color: #ffe0b2;">🔘 長按選項 (Hint / Long Press)</h3>
+                    <div class="index-control">
+                        <label>預設選中索引 (0開始):</label>
+                        <input type="number" id="selectedIndexInput" min="0" value="0" onchange="updateSelectedIndex(this.value)">
+                    </div>
+                    <div class="hint-items-container" id="hintItemsContainer">
+                        <!-- Hint 項目動態生成 -->
+                    </div>
+                    <button class="btn outline" style="width: 100%; margin-top: 10px; border-color: #ff9500; color: #ff9500;" onclick="addHintItem()">+ 新增長按選項</button>
+                </div>
+            </div> <!-- 結束長按區塊 -->
+
+            <button class="btn success" id="mainSaveBtn" style="width: 100%; font-size: 16px; margin-top: 15px; padding: 12px;" onclick="saveKeyData()">套用全部變更並產出程式碼</button>
+
+            <!-- 複製貼上配置面板 -->
+            <div id="copyPastePanelSwipe" style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn outline" style="flex: 1; font-size: 14px;" id="copySwipeBtn" onclick="handlePanelCopy('swipe')">📄 複製上下滑配置</button>
+                <button class="btn warning" style="flex: 1; font-size: 14px;" id="pasteSwipeBtn" onclick="handlePanelPaste('swipe')">📋 貼上上下滑配置</button>
+            </div>
+            <div id="copyPastePanelHint" style="display: none; gap: 10px; margin-top: 10px;">
+                <button class="btn outline" style="flex: 1; font-size: 14px;" id="copyHintBtn" onclick="handlePanelCopy('hint')">📄 複製長按配置</button>
+                <button class="btn warning" style="flex: 1; font-size: 14px;" id="pasteHintBtn" onclick="handlePanelPaste('hint')">📋 貼上長按配置</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SF Symbol 選擇浮窗 -->
+    <div class="icon-modal-overlay" id="iconModalOverlay">
+        <div class="icon-modal-content">
+            <div class="icon-modal-header">
+                <h3>選擇系統圖標 (SF Symbols)</h3>
+                <button class="icon-close-btn" onclick="closeIconModal()">&times;</button>
+            </div>
+            <div class="icon-grid" id="iconGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        /* 共用變數與資料庫 */
+        let layoutRows = [
+            ['1','2','3','4','5','6','7','8','9','0'],
+            ['q','w','e','r','t','y','u','i','o','p'],
+            ['a','s','d','f','g','h','j','k','l'],
+            ['shift','z','x','c','v','b','n','m','comma','period','slash'],
+            ['numeric','tildedirect','space','perioddirect','backspace','enter']
+        ];
+        
+        let swipeData = { swipe_up: {}, swipe_down: {} };
+        let hintSymbolsData = { alphabetic: {}, pinyin: {} };
+        
+        let currentSelectedKey = null;
+        let currentCategory = 'both';
+        let activeCodeTab = 'swipe'; // 'swipe' 或 'hint'
+        let currentEditorMode = 'swipe'; // 控制目前右側面板顯示 'swipe' 或 'hint'
+        
+        let step2Loaded = false;
+        let step3Loaded = false;
+        let internalClipboard = { swipe: "", hint: "" };
+        
+        let defaultBgMap = {
+            'alphabeticBackgroundStyle': '#ffffff',
+            'systemButtonBackgroundStyle': '#e5e5ea',
+            'searchButtonBackgroundStyle': '#007aff'
+        };
+        
+        // 統一名稱為 noValueCommands
+        const noValueCommands = ['backspace', 'enter', 'shift', 'tab', 'space', 'nextKeyboard', 'characterMargin', 'none'];
+
+        /* Swipe 專用快捷對映 */
+        const presetShortcuts = {
+            'shortcut_undo': '#undo', 'shortcut_deleteText': '#deleteText', 'shortcut_copy': '#copy',
+            'shortcut_paste': '#paste', 'shortcut_cut': '#cut', 'shortcut_selectText': '#selectText',
+            'shortcut_home': '#行首', 'shortcut_end': '#行尾', 'shortcut_onehanded': '#左手模式',
+            'shortcut_rime2': '#次选上屏', 'shortcut_rime3': '#三选上屏'
+        };
+        const reverseShortcutMap = {};
+        for (let key in presetShortcuts) reverseShortcutMap[presetShortcuts[key]] = key;
+
+        /* Hint 專用指令與鍵盤 */
+        const shortCommandsGroups = [
+            { group: '輸入法控制', options: [{value:'#中英切换',label:'中英切換'}, {value:'#方案切换',label:'方案切換'}, {value:'#重输',label:'重輸'}, {value:'#清空',label:'清空'}] },
+            { group: '編輯選取', options: [{value:'#撤销',label:'撤銷'}, {value:'#剪切',label:'剪切'}, {value:'#复制',label:'複製'}, {value:'#粘贴',label:'貼上'}, {value:'#全选',label:'全選'}] },
+            { group: '游標移動', options: [{value:'#左移',label:'左移'}, {value:'#右移',label:'右移'}, {value:'#行首',label:'行首'}, {value:'#行尾',label:'行尾'}] },
+            { group: '系統功能', options: [{value:'#隐藏键盘',label:'隱藏鍵盤'}, {value:'#左手键盘',label:'左手鍵盤'}, {value:'#语音输入',label:'語音輸入'}] }
+        ];
+        const keyboardTypesList = [
+            { value: 'alphabetic', label: '英文鍵盤 (alphabetic)' },
+            { value: 'pinyin', label: '中文鍵盤 (pinyin)' },
+            { value: 'numeric', label: '數字 (numeric)' },
+            { value: 'symbolic', label: '符號 (symbolic)' }
+        ];
+
+        /* SF Symbols 對照與模態框 */
+        const sfSymbolEmojiMap = {
+            'globe': '🌐', 'delete.left': '⌫', 'trash': '🗑️', 'shift': '⇧', 'return': '⏎',
+            'keyboard.onehanded.left': '👈', 'keyboard.onehanded.right': '👉', 'space': '␣',
+            'arrow.uturn.backward': '↩️', 'doc.on.doc': '📄', 'doc.on.clipboard': '📋',
+            'scissors': '✂️', 'arrow.left.to.line': '⇤', 'arrow.right.to.line': '⇥',
+            'square.dashed': '⬚', '2.circle': '②', '3.circle': '③'
+        };
+        const sfSymbolsList = [
+            { name: 'keyboard', visual: '⌨️', desc: '鍵盤' }, { name: 'return', visual: '⏎', desc: '換行' },
+            { name: 'delete.left', visual: '⌫', desc: '刪除' }, { name: 'shift', visual: '⇧', desc: 'Shift' },
+            { name: 'space', visual: '␣', desc: '空白鍵' }, { name: 'globe', visual: '🌐', desc: '地球' },
+            { name: 'gear', visual: '⚙️', desc: '設定' }, { name: 'arrow.left.to.line', visual: '⇤', desc: '行首' },
+            { name: 'arrow.right.to.line', visual: '⇥', desc: '行尾' }, { name: 'scissors', visual: '✂️', desc: '剪切' },
+            { name: 'doc.on.clipboard', visual: '📋', desc: '貼上' }, { name: 'doc.on.doc', visual: '📄', desc: '複製' }
+        ];
+        
+        const commandToSfMap = {
+            'shortcut_undo': 'sf:arrow.uturn.backward', 'shortcut_deleteText': 'sf:delete.left',
+            'shortcut_copy': 'sf:doc.on.doc', 'shortcut_paste': 'sf:doc.on.clipboard', 'shortcut_cut': 'sf:scissors',
+            'shortcut_selectText': 'sf:square.dashed', 'shortcut_home': 'sf:arrow.left.to.line',
+            'shortcut_end': 'sf:arrow.right.to.line', 'shortcut_onehanded': 'sf:keyboard.onehanded.left',
+            'shortcut_rime2': 'sf:2.circle', 'shortcut_rime3': 'sf:3.circle',
+            'backspace': 'sf:delete.left', 'enter': 'sf:return', 'shift': 'sf:shift', 'space': 'sf:space', 'nextKeyboard': 'sf:globe'
+        };
+
+        let currentIconTargetIndex = null;
+        function renderIconGrid() {
+            const grid = document.getElementById('iconGrid');
+            grid.innerHTML = '';
+            sfSymbolsList.forEach(icon => {
+                const div = document.createElement('div');
+                div.className = 'icon-cell';
+                div.onclick = () => selectIcon(icon.name);
+                div.innerHTML = `<div class="icon-visual">${icon.visual}</div><div class="icon-desc">${icon.desc}</div>`;
+                grid.appendChild(div);
+            });
+        }
+        renderIconGrid();
+
+        function openIconModal(index) { currentIconTargetIndex = index; document.getElementById('iconModalOverlay').style.display = 'flex'; }
+        function closeIconModal() { document.getElementById('iconModalOverlay').style.display = 'none'; currentIconTargetIndex = null; }
+        function selectIcon(iconName) {
+            if (currentIconTargetIndex !== null) {
+                // 如果是長按選項(hint)，透過統一函式更新
+                if (currentEditorMode === 'hint') {
+                    updateHintItemLabel(currentIconTargetIndex, 'sf:' + iconName);
+                } else {
+                    // 原有上下滑若開啟 modal 的處理 (如果之後需要)
+                }
+            }
+            closeIconModal();
+        }
+
+        /* 工具與解析函式 */
+        function bindColorInputs(colorId, textId) {
+            const colorEl = document.getElementById(colorId);
+            const textEl = document.getElementById(textId);
+            colorEl.addEventListener('input', (e) => textEl.value = e.target.value.toUpperCase());
+            textEl.addEventListener('input', (e) => {
+                let val = e.target.value.trim();
+                if (val.match(/^#[0-9A-Fa-f]{6}$/i)) colorEl.value = val.toLowerCase();
+            });
+        }
+        ['upColor','downColor','batchUpColor','batchDownColor'].forEach(id => bindColorInputs(id, id+'Text'));
+
+        function extractKeyName(cellName) {
+            if (!cellName) return null;
+            let name = cellName.replace(/Button/i, '').trim().toLowerCase();
+            const map = {
+                'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'zero': '0',
+                'semicolon': ';', 'slash': '/', 'comma': ',', 'period': '.',
+                'tildedirect': 'tildedirect', 'perioddirect': 'perioddirect',
+                'spacedirect': 'space', 'backspacedirect': 'backspace', 'shiftdirect': 'shift',
+                'numericdirect': 'numeric', 'enterdirect': 'enter'
+            };
+            return map[name] || name;
+        }
+
+        function parseStep1Safe(text) {
+            let extractedRows = [];
+            const hstackRegex = /HStack:\s*\{\s*subviews:\s*\[([\s\S]*?)\]\s*\}/g;
+            let match;
+            while ((match = hstackRegex.exec(text)) !== null) {
+                const cellsMatch = match[1].match(/Cell:\s*['"]([^'"]+)['"]/g);
+                if (cellsMatch) extractedRows.push(cellsMatch.map(c => c.match(/Cell:\s*['"]([^'"]+)['"]/)[1]));
+            }
+            if (extractedRows.length > 0) layoutRows = extractedRows;
+            const colorRegex = /['"]([^'"]+)['"]\+?:\s*\{\s*[\s\S]*?normalColor:\s*['"]([^'"]+)['"]/g;
+            let cMatch;
+            while ((cMatch = colorRegex.exec(text)) !== null) {
+                if(cMatch[1].includes('BackgroundStyle')) defaultBgMap[cMatch[1]] = cMatch[2];
+            }
+        }
+
+        // 舊指令轉移
+        function migrateOldCommands(data) {
+            if (!data) return;
+            Object.keys(data).forEach(category => {
+                if(data[category] && typeof data[category] === 'object') {
+                    Object.keys(data[category]).forEach(key => {
+                        const keyData = data[category][key];
+                        if (keyData && keyData.list && Array.isArray(keyData.list)) {
+                            keyData.list.forEach(item => {
+                                if (item.action && typeof item.action === 'object') {
+                                    if (item.action.shortCommand !== undefined) {
+                                        item.action.shortcut = item.action.shortCommand;
+                                        delete item.action.shortCommand;
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function parseDataFile(text) {
+            let cleanText = text.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/,\s*([}\]])/g, '$1');
+            return new Function("return (" + cleanText + ");")();
+        }
+
+        /* 渲染鍵盤 */
+        function renderKeyboard() {
+            const area = document.getElementById('keyboardRenderContainer');
+            area.innerHTML = '';
+            
+            let keyboardCount = 0;
+            let isNewKeyboard = true;
+            
+            layoutRows.forEach(row => {
+                // 豎屏/橫屏分隔標籤
+                if (isNewKeyboard) {
+                    const labelDiv = document.createElement('div');
+                    labelDiv.style.width = '100%';
+                    labelDiv.style.textAlign = 'center';
+                    labelDiv.style.fontWeight = 'bold';
+                    labelDiv.style.color = '#8e8e93';
+                    labelDiv.style.fontSize = '14px';
+                    labelDiv.style.marginTop = keyboardCount > 0 ? '25px' : '0';
+                    labelDiv.style.marginBottom = '10px';
+                    labelDiv.innerText = keyboardCount === 0 ? '📱 豎屏 (Portrait) 配置' : '🖥️ 橫屏 (Landscape) 配置';
+                    area.appendChild(labelDiv);
+                    keyboardCount++;
+                    isNewKeyboard = false;
+                }
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'keyboard-row';
+                
+                row.forEach(cellName => {
+                    let keyChar = extractKeyName(cellName);
+                    if (!keyChar) return;
+
+                    const keyBtn = document.createElement('div');
+                    keyBtn.className = 'key';
+                    keyBtn.id = 'key-' + keyChar;
+                    
+                    let bgStyle = 'alphabeticBackgroundStyle';
+                    if (['backspace', 'enter', 'shift', 'numeric', 'space'].includes(keyChar)) bgStyle = 'systemButtonBackgroundStyle';
+                    if (keyChar === 'enter' || keyChar === 'search') bgStyle = 'searchButtonBackgroundStyle';
+
+                    keyBtn.style.backgroundColor = defaultBgMap[bgStyle];
+                    if(keyChar === 'enter' || keyChar === 'search') keyBtn.style.color = '#ffffff';
+
+                    let displayChar = keyChar;
+                    if (keyChar === 'space') { keyBtn.style.flex = '4'; keyBtn.style.maxWidth = '180px'; displayChar = '空白鍵'; }
+                    else if (keyChar === 'backspace') { keyBtn.style.flex = '1.5'; keyBtn.style.maxWidth = '80px'; displayChar = '⌫'; }
+                    else if (keyChar === 'shift') { keyBtn.style.flex = '1.5'; keyBtn.style.maxWidth = '80px'; displayChar = '⇧'; }
+                    else if (keyChar === 'numeric') { keyBtn.style.flex = '1.5'; keyBtn.style.maxWidth = '80px'; displayChar = '123'; }
+                    else if (keyChar === 'enter' || keyChar === 'search') { keyBtn.style.flex = '2'; keyBtn.style.maxWidth = '100px'; displayChar = 'Enter'; }
+                    else if (keyChar.includes('tilde')) { keyBtn.style.flex = '1'; displayChar = '~'; }
+                    else if (keyChar.includes('perioddirect')) { keyBtn.style.flex = '1'; displayChar = '.'; }
+                    else if (keyChar === 'comma') displayChar = ',';
+                    else if (keyChar === 'period') displayChar = '.';
+                    
+                    keyBtn.innerText = displayChar;
+
+                    // 上滑標籤
+                    const upData = swipeData.swipe_up[keyChar];
+                    if (upData && upData.label) {
+                        const s = document.createElement('span'); s.className = 'swipe-label swipe-up-label';
+                        s.innerText = upData.label.systemImageName ? (sfSymbolEmojiMap[upData.label.systemImageName] || '❖') : (upData.label.text || '');
+                        if (upData.fontSize) s.style.fontSize = upData.fontSize + 'px';
+                        let c = upData.normalColor || upData.label.color; if (c) s.style.color = c;
+                        keyBtn.appendChild(s);
+                    }
+                    // 下滑標籤
+                    const downData = swipeData.swipe_down[keyChar];
+                    if (downData && downData.label) {
+                        const s = document.createElement('span'); s.className = 'swipe-label swipe-down-label';
+                        s.innerText = downData.label.systemImageName ? (sfSymbolEmojiMap[downData.label.systemImageName] || '❖') : (downData.label.text || '');
+                        if (downData.fontSize) s.style.fontSize = downData.fontSize + 'px';
+                        let c = downData.normalColor || downData.label.color; if (c) s.style.color = c;
+                        keyBtn.appendChild(s);
+                    }
+                    
+                    // 長按提示點
+                    let hasHint = false;
+                    if (currentCategory === 'both') {
+                        hasHint = (hintSymbolsData.alphabetic && hintSymbolsData.alphabetic[keyChar] && hintSymbolsData.alphabetic[keyChar].list.length > 0) ||
+                                  (hintSymbolsData.pinyin && hintSymbolsData.pinyin[keyChar] && hintSymbolsData.pinyin[keyChar].list.length > 0);
+                    } else {
+                        hasHint = hintSymbolsData[currentCategory] && hintSymbolsData[currentCategory][keyChar] && hintSymbolsData[currentCategory][keyChar].list.length > 0;
+                    }
+                    if (hasHint) keyBtn.classList.add('has-hint');
+
+                    keyBtn.onclick = () => selectKey(keyChar);
+                    rowDiv.appendChild(keyBtn);
+                });
+                area.appendChild(rowDiv);
+                
+                // 檢查是否換行 (以 space 作為最後一排的特徵)
+                let hasSpace = row.some(c => extractKeyName(c) === 'space');
+                if (hasSpace) {
+                    isNewKeyboard = true;
+                }
+            });
+
+            if (currentSelectedKey && document.getElementById('key-' + currentSelectedKey)) {
+                document.getElementById('key-' + currentSelectedKey).classList.add('selected');
+            }
+        }
+
+        // 切換 長按功能預覽群組 (中文/英文)
+        function switchCategory(cat) {
+            if (currentSelectedKey) silentSaveCurrentKey();
+            currentCategory = cat;
+            document.getElementById('btn-both').className = cat === 'both' ? 'btn active' : 'btn outline';
+            document.getElementById('btn-pinyin').className = cat === 'pinyin' ? 'btn active' : 'btn outline';
+            document.getElementById('btn-alphabetic').className = cat === 'alphabetic' ? 'btn active' : 'btn outline';
+            
+            currentSelectedKey = null;
+            document.getElementById('editorArea').style.opacity = '0.5';
+            document.getElementById('editorArea').style.pointerEvents = 'none';
+            document.getElementById('currentKeyDisplay').innerText = '-';
+            renderKeyboard();
+        }
+
+        // 切換 右側編輯面板 (Swipe / Hint)
+        function switchEditorMode(mode) {
+            currentEditorMode = mode;
+            
+            // 更新頁籤按鈕樣式
+            document.getElementById('editorModeSwipe').className = mode === 'swipe' ? 'btn active' : 'btn outline';
+            document.getElementById('editorModeHint').className = mode === 'hint' ? 'btn active' : 'btn outline';
+            
+            // 顯示/隱藏 對應的編輯內容
+            document.getElementById('swipeEditorSection').style.display = mode === 'swipe' ? 'block' : 'none';
+            document.getElementById('hintEditorSection').style.display = mode === 'hint' ? 'block' : 'none';
+            
+            // 顯示/隱藏 對應的複製貼上按鈕面板
+            document.getElementById('copyPastePanelSwipe').style.display = mode === 'swipe' ? 'flex' : 'none';
+            document.getElementById('copyPastePanelHint').style.display = mode === 'hint' ? 'flex' : 'none';
+            
+            // 根據模式顯示/隱藏左上角的「長按預覽群組」選項
+            document.getElementById('categoryTabs').style.display = mode === 'hint' ? 'flex' : 'none';
+            
+            // 連動切換左下的程式碼分頁
+            switchCodeTab(mode);
+        }
+
+        /* 選擇與設定面板 */
+        function selectKey(keyChar) {
+            if (currentSelectedKey && currentSelectedKey !== keyChar) silentSaveCurrentKey();
+            currentSelectedKey = keyChar;
+            renderKeyboard();
+            
+            document.getElementById('currentKeyDisplay').innerText = `${keyChar.toUpperCase()}`;
+            document.getElementById('editorArea').style.opacity = '1';
+            document.getElementById('editorArea').style.pointerEvents = 'auto';
+
+            // 載入 Swipe
+            setupSwipePanel('up', swipeData.swipe_up[keyChar] || {});
+            setupSwipePanel('down', swipeData.swipe_down[keyChar] || {});
+
+            // 載入 Hint
+            if (!hintSymbolsData.alphabetic) hintSymbolsData.alphabetic = {};
+            if (!hintSymbolsData.pinyin) hintSymbolsData.pinyin = {};
+            if (currentCategory === 'both') {
+                if (!hintSymbolsData.alphabetic[keyChar]) hintSymbolsData.alphabetic[keyChar] = { selectedIndex: 0, list: [] };
+                if (!hintSymbolsData.pinyin[keyChar]) hintSymbolsData.pinyin[keyChar] = { selectedIndex: 0, list: [] };
+            } else {
+                if (!hintSymbolsData[currentCategory][keyChar]) hintSymbolsData[currentCategory][keyChar] = { selectedIndex: 0, list: [] };
+            }
+            const activeCat = currentCategory === 'both' ? 'alphabetic' : currentCategory;
+            document.getElementById('selectedIndexInput').value = hintSymbolsData[activeCat][keyChar].selectedIndex || 0;
+            renderHintItems();
+        }
+
+        /* Swipe 邏輯 */
+        function updateSfPreview(prefix) {
+            const val = document.getElementById(prefix + 'Label').value.trim();
+            const box = document.getElementById(prefix + 'SfPreview');
+            if (val.toLowerCase().startsWith('sf:')) box.innerText = sfSymbolEmojiMap[val.substring(3).trim()] || '❖';
+            else if (val.length > 0) box.innerText = Array.from(val)[0];
+            else box.innerText = '';
+        }
+        function autoFillSf(prefix) {
+            const typeVal = document.getElementById(prefix + 'Type').value;
+            const labelInput = document.getElementById(prefix + 'Label');
+            if (commandToSfMap[typeVal]) labelInput.value = commandToSfMap[typeVal];
+            else labelInput.value = '';
+            updateSfPreview(prefix);
+        }
+        function handleTypeChange(prefix) {
+            const typeVal = document.getElementById(prefix + 'Type').value;
+            const symbolInput = document.getElementById(prefix + 'Symbol');
+            if (noValueCommands.includes(typeVal) || typeVal.startsWith('shortcut_')) {
+                symbolInput.disabled = true; symbolInput.value = '';
+            } else symbolInput.disabled = false;
+        }
+        function setupSwipePanel(prefix, data) {
+            let type = "none", val = "", labelText = "";
+            if (data.action) {
+                if (typeof data.action === 'string') {
+                    if (noValueCommands.includes(data.action)) type = data.action;
+                    else { type = "symbol"; val = data.action; }
+                } else if (typeof data.action === 'object') {
+                    if (data.action.shortcut) {
+                        if (reverseShortcutMap[data.action.shortcut]) type = reverseShortcutMap[data.action.shortcut];
+                        else { type = "shortcut"; val = data.action.shortcut; }
+                    }
+                    else if (data.action.character) { type = "character"; val = data.action.character; }
+                    else if (data.action.symbol) { type = "symbol"; val = data.action.symbol; }
+                    else if (data.action.sendKeys) { type = "sendKeys"; val = data.action.sendKeys; }
+                    else if (data.action.keyboardType) { type = "keyboardType"; val = data.action.keyboardType; }
+                }
+            }
+            if (data.label) {
+                if (data.label.systemImageName) labelText = "sf:" + data.label.systemImageName;
+                else labelText = data.label.text || '';
+            }
+            document.getElementById(prefix + 'Type').value = type;
+            document.getElementById(prefix + 'Symbol').value = val;
+            document.getElementById(prefix + 'Label').value = labelText;
+            
+            const sizeInput = document.getElementById(prefix + 'Size');
+            sizeInput.value = data.fontSize || '';
+            let colorVal = data.normalColor || data.label?.color || '#8e8e93';
+            document.getElementById(prefix + 'Color').value = colorVal;
+            document.getElementById(prefix + 'ColorText').value = colorVal.toUpperCase();
+            
+            handleTypeChange(prefix); updateSfPreview(prefix);
+        }
+        function buildSwipeNode(prefix, existingData) {
+            const type = document.getElementById(prefix + 'Type').value;
+            const val = document.getElementById(prefix + 'Symbol').value.trim();
+            const labelText = document.getElementById(prefix + 'Label').value.trim();
+            const size = document.getElementById(prefix + 'Size').value;
+            const color = document.getElementById(prefix + 'Color').value;
+
+            if (type === 'none' && !labelText) return null;
+            let node = existingData ? JSON.parse(JSON.stringify(existingData)) : { action: {}, label: {} };
+            if (!node.label) node.label = {};
+            delete node.action;
+
+            if (type !== 'none') {
+                if (noValueCommands.includes(type)) node.action = type;
+                else if (type.startsWith('shortcut_')) node.action = { "shortcut": presetShortcuts[type] };
+                else if (val) { node.action = {}; node.action[type] = val; }
+            }
+            
+            if (labelText) {
+                if (labelText.toLowerCase().startsWith('sf:')) {
+                    node.label.systemImageName = labelText.substring(3).trim(); delete node.label.text;
+                } else {
+                    node.label.text = labelText; delete node.label.systemImageName;
+                }
+            } else { delete node.label.text; delete node.label.systemImageName; }
+
+            if (size) node.fontSize = parseInt(size); else delete node.fontSize;
+            if (color && color.toLowerCase() !== '#8e8e93') { node.normalColor = node.highlightColor = color; }
+            else { delete node.normalColor; delete node.highlightColor; if (node.label && node.label.color) delete node.label.color; }
+            
+            if (Object.keys(node.label).length === 0) delete node.label;
+            if (!node.action && !node.label && !node.fontSize && !node.normalColor) return null;
+            return node;
+        }
+
+        /* Hint 邏輯 */
+        window.updateSelectedIndex = function(val) {
+            if (!currentSelectedKey) return;
+            const idx = parseInt(val) || 0;
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            cats.forEach(cat => {
+                if (hintSymbolsData[cat] && hintSymbolsData[cat][currentSelectedKey]) {
+                    hintSymbolsData[cat][currentSelectedKey].selectedIndex = idx;
+                }
+            });
+        };
+
+        function renderHintItems() {
+            const container = document.getElementById('hintItemsContainer');
+            container.innerHTML = '';
+            const activeCat = currentCategory === 'both' ? 'alphabetic' : currentCategory;
+            
+            if (!hintSymbolsData[activeCat] || !hintSymbolsData[activeCat][currentSelectedKey]) return;
+            const dataList = hintSymbolsData[activeCat][currentSelectedKey].list || [];
+
+            if (dataList.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#8e8e93; font-size: 13px; margin: 10px;">目前沒有設定長按選項</p>';
+                return;
+            }
+
+            dataList.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'hint-item';
+
+                // 判斷目前的 Action Type 與 Value
+                let actionType = 'symbol', actionValue = '';
+                if (typeof item.action === 'string') { actionType = item.action; }
+                else if (item.action) {
+                    if (item.action.symbol !== undefined) { actionType = 'symbol'; actionValue = item.action.symbol; }
+                    else if (item.action.character !== undefined) { actionType = 'character'; actionValue = item.action.character; }
+                    else if (item.action.sendKeys !== undefined) { actionType = 'sendKeys'; actionValue = item.action.sendKeys; }
+                    else if (item.action.shortcut !== undefined) {
+                        if (reverseShortcutMap[item.action.shortcut]) {
+                            actionType = reverseShortcutMap[item.action.shortcut];
+                            actionValue = '';
+                        } else {
+                            actionType = 'shortcut';
+                            actionValue = item.action.shortcut;
+                        }
+                    }
+                    else if (item.action.keyboardType !== undefined) { actionType = 'keyboardType'; actionValue = item.action.keyboardType; }
+                }
+
+                // 取得顯示標籤字串 (含 sf: 前綴)
+                let displayLabelText = "";
+                let previewSymbol = "";
+                if (item.label) {
+                    if (item.label.systemImageName) {
+                        displayLabelText = "sf:" + item.label.systemImageName;
+                        previewSymbol = sfSymbolEmojiMap[item.label.systemImageName] || '❖';
+                    } else if (item.label.text) {
+                        displayLabelText = item.label.text;
+                        previewSymbol = Array.from(displayLabelText)[0] || '';
+                    }
+                }
+
+                const showValueInput = !noValueCommands.includes(actionType) && !actionType.startsWith('shortcut_');
+                
+                let actionValueHtml = `<input type="text" style="width: 145px;" value="${actionValue}" onchange="updateHintItem(${index}, 'actionValue', this.value, false)">`;
+
+                if (actionType === 'shortcut') {
+                    let isMatched = shortCommandsGroups.flatMap(g=>g.options).some(c=>c.value===actionValue);
+                    let isCustom = item._isCustomUI || (!isMatched && actionValue !== '');
+                    let optionsHtml = `<option value="" ${!actionValue&&!isCustom?'selected disabled':''}>選擇...</option>`;
+                    shortCommandsGroups.forEach(g => {
+                        optionsHtml += `<optgroup label="${g.group}">` + g.options.map(c=>`<option value="${c.value}" ${actionValue===c.value&&!isCustom?'selected':''}>${c.label}</option>`).join('') + `</optgroup>`;
+                    });
+                    optionsHtml += `<option value="__custom__" ${isCustom?'selected':''}>自訂</option>`;
+                    
+                    actionValueHtml = `
+                        <div style="display:flex; flex-direction:column; gap:4px; width: 145px;">
+                            <select style="width: 145px;" onchange="updateHintShortcut(${index}, this.value)">${optionsHtml}</select>
+                            <input type="text" style="display:${isCustom?'block':'none'}; width: 145px;" placeholder="指令 (例如: #myCmd)" value="${actionValue}" onchange="updateHintItem(${index}, 'actionValue', this.value, false)">
+                        </div>
+                    `;
+                } else if (actionType === 'keyboardType') {
+                    let isMatched = keyboardTypesList.some(kb => kb.value === actionValue);
+                    let isCustom = item._isCustomKbUI || (!isMatched && actionValue !== '');
+                    let optionsHtml = `<option value="" ${!actionValue && !isCustom ? 'selected disabled' : ''}>請選擇鍵盤...</option>`;
+                    optionsHtml += keyboardTypesList.map(kb =>
+                        `<option value="${kb.value}" ${actionValue === kb.value && !isCustom ? 'selected' : ''}>${kb.label}</option>`
+                    ).join('');
+                    optionsHtml += `<option value="__custom__" ${isCustom ? 'selected' : ''}>自訂名稱</option>`;
+                    
+                    actionValueHtml = `
+                        <div style="display:flex; flex-direction:column; gap:4px; width: 145px;">
+                            <select style="width: 145px;" onchange="updateHintKeyboardType(${index}, this.value)">${optionsHtml}</select>
+                            <input type="text" style="display: ${isCustom?'block':'none'}; width: 145px;" placeholder="輸入鍵盤名稱" value="${actionValue}" onchange="updateHintItem(${index}, 'actionValue', this.value, false)">
+                        </div>
+                    `;
+                }
+
+                let actionSelectHtml = `
+                    <select style="width: 145px;" onchange="updateHintItem(${index}, 'actionType', this.value, true)">
+                        <optgroup label="常用快捷指令 (直接選取)">
+                            <option value="shortcut_undo" ${actionType==='shortcut_undo'?'selected':''}>撤銷 (undo)</option>
+                            <option value="shortcut_deleteText" ${actionType==='shortcut_deleteText'?'selected':''}>全刪除 (deleteText)</option>
+                            <option value="shortcut_copy" ${actionType==='shortcut_copy'?'selected':''}>複製 (copy)</option>
+                            <option value="shortcut_paste" ${actionType==='shortcut_paste'?'selected':''}>貼上 (paste)</option>
+                            <option value="shortcut_cut" ${actionType==='shortcut_cut'?'selected':''}>剪下 (cut)</option>
+                            <option value="shortcut_selectText" ${actionType==='shortcut_selectText'?'selected':''}>全選 (selectText)</option>
+                            <option value="shortcut_home" ${actionType==='shortcut_home'?'selected':''}>移至行首 (home)</option>
+                            <option value="shortcut_end" ${actionType==='shortcut_end'?'selected':''}>移至行尾 (end)</option>
+                            <option value="shortcut_onehanded" ${actionType==='shortcut_onehanded'?'selected':''}>單手模式切換</option>
+                            <option value="shortcut_rime2" ${actionType==='shortcut_rime2'?'selected':''}>次選上屏 (2nd)</option>
+                            <option value="shortcut_rime3" ${actionType==='shortcut_rime3'?'selected':''}>三選上屏 (3rd)</option>
+                        </optgroup>
+                        <optgroup label="無需設定值的獨立指令">
+                            <option value="backspace" ${actionType==='backspace'?'selected':''}>退格 (backspace)</option>
+                            <option value="enter" ${actionType==='enter'?'selected':''}>回車 (enter)</option>
+                            <option value="shift" ${actionType==='shift'?'selected':''}>Shift (shift)</option>
+                            <option value="tab" ${actionType==='tab'?'selected':''}>縮進 (tab)</option>
+                            <option value="space" ${actionType==='space'?'selected':''}>空格 (space)</option>
+                            <option value="nextKeyboard" ${actionType==='nextKeyboard'?'selected':''}>地球 (nextKeyboard)</option>
+                            <option value="characterMargin" ${actionType==='characterMargin'?'selected':''}>佔位 (characterMargin)</option>
+                            <option value="none" ${actionType==='none'?'selected':''}>無 (none)</option>
+                        </optgroup>
+                        <optgroup label="需要設定值的指令">
+                            <option value="character" ${actionType==='character'?'selected':''}>字符 (character)</option>
+                            <option value="symbol" ${actionType==='symbol'?'selected':''}>符號 (symbol)</option>
+                            <option value="sendKeys" ${actionType==='sendKeys'?'selected':''}>組合鍵 (sendKeys)</option>
+                            <option value="shortcut" ${actionType==='shortcut'?'selected':''}>自訂命令 (shortcut)</option>
+                            <option value="keyboardType" ${actionType==='keyboardType'?'selected':''}>鍵盤 (keyboardType)</option>
+                        </optgroup>
+                    </select>
+                `;
+
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #e5e5ea;">
+                        <span class="hint-index-badge" style="margin:0;">選項 [${index}]</span>
+                        <button class="btn danger" style="padding:4px 8px; font-size:12px;" onclick="removeHintItem(${index})">🗑️ 刪除此選項</button>
+                    </div>
+                    <div class="input-row" style="margin-bottom: 4px;">
+                        <label>輸出類型:</label>
+                        ${actionSelectHtml}
+                    </div>
+                    <div class="input-row" style="margin-bottom: 4px; display: ${showValueInput?'flex':'none'};">
+                        <label>輸出內容:</label>
+                        ${actionValueHtml}
+                    </div>
+                    <div class="input-row" style="margin-bottom: 4px;">
+                        <label>鍵盤顯示:</label>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            <div class="sf-input-container" style="width: 115px;">
+                                <div class="sf-preview-box">${previewSymbol}</div>
+                                <input type="text" class="sf-label-input" value="${displayLabelText}" onchange="updateHintItemLabel(${index}, this.value)" placeholder="sf:...">
+                            </div>
+                            <button class="btn outline" style="padding:0; width:26px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="openIconModal(${index})" title="選擇系統圖示">🔍</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.updateHintShortcut = function(index, value) {
+            const catsToUpdate = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            if (value === '__custom__') {
+                catsToUpdate.forEach(cat => hintSymbolsData[cat][currentSelectedKey].list[index]._isCustomUI = true);
+                updateHintItem(index, 'actionValue', '', true);
+            } else {
+                catsToUpdate.forEach(cat => hintSymbolsData[cat][currentSelectedKey].list[index]._isCustomUI = false);
+                const matchedCmd = shortCommandsGroups.flatMap(g=>g.options).find(c=>c.value===value);
+                if (matchedCmd) { updateHintItemLabel(index, matchedCmd.label); }
+                updateHintItem(index, 'actionValue', value, true);
+            }
+        };
+
+        window.updateHintKeyboardType = function(index, value) {
+            const catsToUpdate = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            if (value === '__custom__') {
+                catsToUpdate.forEach(cat => hintSymbolsData[cat][currentSelectedKey].list[index]._isCustomKbUI = true);
+                updateHintItem(index, 'actionValue', '', true);
+            } else {
+                catsToUpdate.forEach(cat => hintSymbolsData[cat][currentSelectedKey].list[index]._isCustomKbUI = false);
+                const matchedKb = keyboardTypesList.find(k => k.value === value);
+                if (matchedKb) { updateHintItemLabel(index, matchedKb.label.split(' ')[0]); }
+                updateHintItem(index, 'actionValue', value, true);
+            }
+        };
+
+        window.updateHintItemLabel = function(index, value) {
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            cats.forEach(cat => {
+                if (!hintSymbolsData[cat][currentSelectedKey].list[index]) hintSymbolsData[cat][currentSelectedKey].list[index] = { action:{symbol:''} };
+                const item = hintSymbolsData[cat][currentSelectedKey].list[index];
+                
+                let v = value.trim();
+                if (v) {
+                    item.label = {};
+                    if (v.toLowerCase().startsWith('sf:')) {
+                        item.label.systemImageName = v.substring(3).trim();
+                    } else {
+                        item.label.text = v;
+                    }
+                } else {
+                    delete item.label;
+                }
+            });
+            renderHintItems();
+        }
+
+        window.updateHintItem = function(index, field, value, forceRender) {
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            cats.forEach(cat => {
+                if (!hintSymbolsData[cat][currentSelectedKey].list[index]) hintSymbolsData[cat][currentSelectedKey].list[index] = { action:{symbol:''}, label:{text:''} };
+                const item = hintSymbolsData[cat][currentSelectedKey].list[index];
+                
+                let actionType = typeof item.action==='string' ? item.action : (item.action ? Object.keys(item.action)[0] : 'symbol');
+                let aVal = typeof item.action==='string' ? '' : (item.action ? item.action[actionType] : '');
+                
+                if(item.action && item.action.shortcut) {
+                    if (reverseShortcutMap[item.action.shortcut]) {
+                        actionType = reverseShortcutMap[item.action.shortcut];
+                    } else {
+                        actionType = 'shortcut';
+                    }
+                }
+
+                if (field === 'actionType') {
+                    actionType = value;
+                    if (noValueCommands.includes(actionType) || actionType.startsWith('shortcut_')) aVal = '';
+                    if(actionType==='shortcut') {aVal=''; item._isCustomUI=false;}
+                    if(actionType==='keyboardType') {aVal=''; item._isCustomKbUI=false;}
+                    
+                    if (actionType.startsWith('shortcut_')) {
+                        item.action = { "shortcut": presetShortcuts[actionType] };
+                    } else if (noValueCommands.includes(actionType)) {
+                        item.action = actionType;
+                    } else {
+                        item.action = {}; item.action[actionType] = aVal;
+                    }
+                    
+                    // 切換輸出類型時，自動帶入對應的 SF Symbol 或清空
+                    if (commandToSfMap[actionType]) {
+                        item.label = { systemImageName: commandToSfMap[actionType].substring(3).trim() };
+                    } else {
+                        delete item.label;
+                    }
+                }
+                else if (field === 'actionValue') {
+                    aVal = value;
+                    if (!actionType.startsWith('shortcut_') && !noValueCommands.includes(actionType)) {
+                         item.action = {}; item.action[actionType] = aVal;
+                    }
+                }
+            });
+            if (forceRender) renderHintItems();
+        };
+
+        window.addHintItem = function() {
+            const newItem = { action: { symbol: '' }, label: { text: '' } };
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            cats.forEach(cat => {
+                if (!hintSymbolsData[cat][currentSelectedKey].list) hintSymbolsData[cat][currentSelectedKey].list = [];
+                hintSymbolsData[cat][currentSelectedKey].list.push(JSON.parse(JSON.stringify(newItem)));
+            });
+            renderHintItems();
+        };
+        window.removeHintItem = function(index) {
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            cats.forEach(cat => { if (hintSymbolsData[cat][currentSelectedKey].list[index]) hintSymbolsData[cat][currentSelectedKey].list.splice(index, 1); });
+            renderHintItems();
+        };
+
+        /* 儲存與代碼產出 */
+        function silentSaveCurrentKey() {
+            if (!currentSelectedKey) return;
+            // Save Swipe
+            const nUp = buildSwipeNode('up', swipeData.swipe_up[currentSelectedKey]);
+            if (nUp) swipeData.swipe_up[currentSelectedKey] = nUp; else delete swipeData.swipe_up[currentSelectedKey];
+            const nDown = buildSwipeNode('down', swipeData.swipe_down[currentSelectedKey]);
+            if (nDown) swipeData.swipe_down[currentSelectedKey] = nDown; else delete swipeData.swipe_down[currentSelectedKey];
+
+            // Save Hint
+            const idx = parseInt(document.getElementById('selectedIndexInput').value) || 0;
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            cats.forEach(cat => {
+                if (hintSymbolsData[cat] && hintSymbolsData[cat][currentSelectedKey]) {
+                    hintSymbolsData[cat][currentSelectedKey].selectedIndex = idx;
+                    if (hintSymbolsData[cat][currentSelectedKey].list.length === 0) delete hintSymbolsData[cat][currentSelectedKey];
+                }
+            });
+        }
+
+        function saveKeyData() {
+            if (!currentSelectedKey) return;
+            silentSaveCurrentKey();
+            renderKeyboard();
+            updateCodeOutput();
+            const btn = document.getElementById('mainSaveBtn');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ 更新成功！已產出最新程式碼';
+            setTimeout(() => btn.innerText = originalText, 3000);
+        }
+
+        function batchUpdate(direction) {
+            if (currentSelectedKey) silentSaveCurrentKey();
+            const sizeStr = document.getElementById(direction === 'up' ? 'batchUpSize' : 'batchDownSize').value;
+            const color = document.getElementById(direction === 'up' ? 'batchUpColor' : 'batchDownColor').value;
+            const size = sizeStr ? parseInt(sizeStr) : null;
+            const targetData = direction === 'up' ? swipeData.swipe_up : swipeData.swipe_down;
+            
+            for (let key in targetData) {
+                if (targetData.hasOwnProperty(key)) {
+                    if (size !== null) targetData[key].fontSize = size;
+                    if (color.toLowerCase() !== '#8e8e93') { targetData[key].normalColor = targetData[key].highlightColor = color; }
+                }
+            }
+            renderKeyboard(); updateCodeOutput();
+            if (currentSelectedKey) selectKey(currentSelectedKey);
+        }
+
+        /* 程式碼分頁邏輯 */
+        function switchCodeTab(tab) {
+            activeCodeTab = tab;
+            document.getElementById('tabBtnSwipe').className = tab === 'swipe' ? 'btn active' : 'btn outline';
+            document.getElementById('tabBtnHint').className = tab === 'hint' ? 'btn active' : 'btn outline';
+            document.getElementById('codeTitle').innerText = tab === 'swipe' ? '程式碼預覽 (swipeData)' : '程式碼預覽 (hintSymbolsData)';
+            updateCodeOutput();
+        }
+
+        function updateCodeOutput() {
+            if (activeCodeTab === 'swipe') {
+                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev07) ===\n\n" + JSON.stringify(swipeData, null, 2);
+            } else {
+                let cleanData = JSON.parse(JSON.stringify(hintSymbolsData));
+                Object.keys(cleanData).forEach(c => Object.keys(cleanData[c]).forEach(k => {
+                    if (cleanData[c][k].list) cleanData[c][k].list.forEach(i => { delete i._isCustomUI; delete i._isCustomKbUI; });
+                }));
+                let out = JSON.stringify(cleanData, null, 2).replace(/"([a-zA-Z_][a-zA-Z0-9_]*)":/g, '$1:');
+                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev07) ===\n\n{\n" + out.substring(1, out.length-1) + "\n}";
+            }
+        }
+
+        /* 檔案與剪貼簿操作 */
+        function setupDropZone(dzId, inputId, textId, callback) {
+            const dz = document.getElementById(dzId), input = document.getElementById(inputId);
+            dz.onclick = () => input.click();
+            dz.ondragover = e => { e.preventDefault(); dz.classList.add('dragover'); };
+            dz.ondragleave = () => dz.classList.remove('dragover');
+            dz.ondrop = e => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files.length) callback(e.dataTransfer.files[0], textId); };
+            input.onchange = e => { if (e.target.files.length) callback(e.target.files[0], textId); input.value = ''; };
+        }
+
+        setupDropZone('dropZone1', 'fileInput1', 'dz1Text', (f, tid) => {
+            const r = new FileReader(); r.onload = e => { parseStep1Safe(e.target.result); document.getElementById(tid).innerHTML = '✅ 佈局已載入'; renderKeyboard(); }; r.readAsText(f);
+        });
+        setupDropZone('dropZone2', 'fileInput2', 'dz2Text', (f, tid) => {
+            const r = new FileReader(); r.onload = e => { swipeData = parseDataFile(e.target.result); step2Loaded=true; document.getElementById(tid).innerHTML = '✅ Swipe載入'; renderKeyboard(); updateCodeOutput(); }; r.readAsText(f);
+        });
+        setupDropZone('dropZone3', 'fileInput3', 'dz3Text', (f, tid) => {
+            const r = new FileReader(); r.onload = e => {
+                hintSymbolsData = parseDataFile(e.target.result);
+                migrateOldCommands(hintSymbolsData);
+                step3Loaded=true;
+                document.getElementById(tid).innerHTML = '✅ Hint載入';
+                switchCategory('both');
+                renderKeyboard();
+                updateCodeOutput();
+            }; r.readAsText(f);
+        });
+
+        // 剪貼簿與下載
+        function showBtnMsg(btnId, defaultText, msg) { const b = document.getElementById(btnId); b.innerText=msg; setTimeout(()=>b.innerText=defaultText,2000); }
+
+        window.handlePanelCopy = function(type) {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            if (activeCodeTab !== type) switchCodeTab(type);
+            
+            const text = document.getElementById('codeOutput').value;
+            internalClipboard[type] = text;
+            
+            const btnId = type === 'swipe' ? 'copySwipeBtn' : 'copyHintBtn';
+            const defaultText = type === 'swipe' ? '📄 複製上下滑配置' : '📄 複製長按配置';
+            
+            if(navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(()=>showBtnMsg(btnId, defaultText, '✅ 複製成功')).catch(()=>showBtnMsg(btnId, defaultText, '✅ 暫存複製'));
+            } else {
+                showBtnMsg(btnId, defaultText, '✅ 暫存複製');
+            }
+        };
+
+        window.handlePanelPaste = async function(type) {
+            let txt = "";
+            try { if(navigator.clipboard && navigator.clipboard.readText) txt = await navigator.clipboard.readText(); } catch(err){}
+            if(!txt) txt = internalClipboard[type];
+            
+            const btnId = type === 'swipe' ? 'pasteSwipeBtn' : 'pasteHintBtn';
+            const defaultText = type === 'swipe' ? '📋 貼上上下滑配置' : '📋 貼上長按配置';
+            
+            if(!txt) {
+                showBtnMsg(btnId, defaultText, '❌ 無內容可貼上');
+                return;
+            }
+            try {
+                if(type === 'swipe') {
+                    swipeData = parseDataFile(txt);
+                    step2Loaded=true;
+                } else {
+                    hintSymbolsData = parseDataFile(txt);
+                    migrateOldCommands(hintSymbolsData);
+                    step3Loaded=true;
+                }
+                if (activeCodeTab !== type) switchCodeTab(type);
+                renderKeyboard();
+                updateCodeOutput();
+                if (currentSelectedKey) selectKey(currentSelectedKey);
+                showBtnMsg(btnId, defaultText, '✅ 貼上成功');
+            } catch(e) {
+                showBtnMsg(btnId, defaultText, '❌ 解析失敗');
+            }
+        };
+
+        document.getElementById('copyFullBtn').addEventListener('click', () => {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            const text = document.getElementById('codeOutput').value;
+            internalClipboard[activeCodeTab] = text;
+            if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(()=>showBtnMsg('copyFullBtn','📄 複製代碼','✅ 成功')).catch(()=>showBtnMsg('copyFullBtn','📄 複製代碼','✅ 暫存複製'));
+            else showBtnMsg('copyFullBtn','📄 複製代碼','✅ 暫存複製');
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            const text = document.getElementById('codeOutput').value;
+            if(!text) return;
+            const b = new Blob([text], {type:'text/plain'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+            a.download = activeCodeTab === 'swipe' ? 'swipeData.libsonnet' : 'hintSymbolsData.libsonnet';
+            a.click(); URL.revokeObjectURL(a.href);
+        });
+
+        renderKeyboard();
+    </script>
+</body>
+</html>
