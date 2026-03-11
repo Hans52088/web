@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>鍵盤上下滑配置視覺化編輯器</title>
+    <title>鍵盤上下滑配置視覺化編輯器 Rev22</title>
     <style>
         body {
             background-color: #f0f8ff;
@@ -216,19 +216,30 @@
             border: 1px solid #e5e5ea;
         }
         .editor-group h3 { margin: 0 0 10px 0; font-size: 14px; color: #1c1c1e; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        
+        /* 統一欄位與文字大小 */
         .input-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
         }
-        .input-row label { font-size: 13px; color: #555; }
-        .input-row input[type="text"]:not(.hex-input), .input-row input[type="number"], .input-row select {
-            padding: 5px 8px;
+        .input-row label {
+            font-size: 14px; /* 加大文字 */
+            color: #444;
+            font-weight: 500; /* 微調粗細 */
+        }
+        
+        .input-row input[type="text"]:not(.hex-input):not(.sf-label-input),
+        .input-row input[type="number"],
+        .input-row select {
+            padding: 0 8px;
+            height: 32px; /* 統一高度 */
             border: 1px solid #d1d1d6;
             border-radius: 6px;
-            width: 140px;
-            font-size: 13px;
+            width: 155px;
+            font-size: 14px; /* 統一輸入框文字大小 */
+            box-sizing: border-box;
         }
         .input-row input:disabled {
             background-color: #f0f0f5;
@@ -239,21 +250,23 @@
         
         .input-row input[type="number"]::placeholder {
             color: #999;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .color-wrapper {
             display: flex;
             align-items: center;
             gap: 5px;
+            width: 155px;
         }
 
         .hex-input {
             font-family: monospace;
-            font-size: 13px;
+            font-size: 14px;
             color: #333;
             background: #fff;
-            padding: 4px 6px;
+            padding: 0 6px;
+            height: 32px; /* 統一高度 */
             border-radius: 4px;
             border: 1px solid #c7c7cc;
             width: 65px !important;
@@ -266,23 +279,64 @@
         .input-row input[type="color"] {
             padding: 0;
             width: 40px;
-            height: 28px;
+            height: 32px; /* 統一高度 */
             border: 1px solid #d1d1d6;
             border-radius: 4px;
             cursor: pointer;
+            box-sizing: border-box;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        select { max-width: 158px; }
+        select { max-width: 155px; }
         optgroup { font-weight: bold; color: #333; background: #eaf0f6; }
         option { font-weight: normal; color: #1c1c1e; background: #fff; }
         
+        /* ======== SF Symbol 預覽與輸入框樣式 ======== */
+        .sf-input-container {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            width: 155px;
+        }
+        
+        .sf-preview-box {
+            width: 32px;
+            height: 32px; /* 統一高度 */
+            border: 1px solid #d1d1d6;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            background: #fdfdfd;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            color: #333;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+        
+        .sf-label-input {
+            flex: 1;
+            width: 100% !important;
+            height: 32px; /* 統一高度 */
+            border: 1px solid #d1d1d6 !important;
+            border-radius: 6px;
+            padding: 0 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .sf-label-input:focus {
+            border-color: #007AFF !important;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
         .hint-text { font-size: 11px; color: #888; margin-top: -5px; margin-bottom: 8px; text-align: right; }
     </style>
 </head>
 <body>
 
-    <h2 class="header-title">⌨️ 鍵盤上下滑配置視覺化編輯器</h2>
+    <h2 class="header-title">⌨️ 鍵盤上下滑配置視覺化編輯器 (Rev22)</h2>
     <div class="author-badge">版權所有 ＆ 製作：WHY</div>
 
     <div class="steps-container">
@@ -325,7 +379,7 @@
                 <h3>⇧ 上滑 (Swipe Up)</h3>
                 <div class="input-row">
                     <label>輸出類型:</label>
-                    <select id="upType" onchange="handleTypeChange('up')">
+                    <select id="upType" onchange="handleTypeChange('up'); autoFillSf('up');">
                         <optgroup label="常用快捷指令 (直接選取)">
                             <option value="shortcut_undo">撤銷 (undo)</option>
                             <option value="shortcut_deleteText">全刪除 (deleteText)</option>
@@ -363,8 +417,11 @@
                     <input type="text" id="upSymbol" placeholder="例如: 1, @, Control+,">
                 </div>
                 <div class="input-row">
-                    <label>鍵盤顯示文字:</label>
-                    <input type="text" id="upLabel" placeholder="支援 sf:globe 等圖示">
+                    <label>鍵盤顯示:</label>
+                    <div class="sf-input-container">
+                        <div id="upSfPreview" class="sf-preview-box"></div>
+                        <input type="text" id="upLabel" class="sf-label-input" placeholder="支援 sf:globe" oninput="updateSfPreview('up')">
+                    </div>
                 </div>
                 <div class="hint-text">💡 顯示系統圖示請加 sf: (如 sf:globe)</div>
                 <div class="input-row">
@@ -384,7 +441,7 @@
                 <h3>⇩ 下滑 (Swipe Down)</h3>
                 <div class="input-row">
                     <label>輸出類型:</label>
-                    <select id="downType" onchange="handleTypeChange('down')">
+                    <select id="downType" onchange="handleTypeChange('down'); autoFillSf('down');">
                         <optgroup label="常用快捷指令 (直接選取)">
                             <option value="shortcut_undo">撤銷 (undo)</option>
                             <option value="shortcut_deleteText">全刪除 (deleteText)</option>
@@ -395,8 +452,8 @@
                             <option value="shortcut_home">移至行首 (home)</option>
                             <option value="shortcut_end">移至行尾 (end)</option>
                             <option value="shortcut_onehanded">單手模式切換</option>
-                            <option value="shortcut_rime2">次選上屏 (2nd)</option>
-                            <option value="shortcut_rime3">三選上屏 (3rd)</option>
+                            <option value="shortcut_rime2">次选上屏 (2nd)</option>
+                            <option value="shortcut_rime3">三选上屏 (3rd)</option>
                         </optgroup>
                         <optgroup label="無需設定值的獨立指令">
                             <option value="backspace">退格 (backspace)</option>
@@ -422,8 +479,11 @@
                     <input type="text" id="downSymbol" placeholder="例如: 1, @, Control+,">
                 </div>
                 <div class="input-row">
-                    <label>鍵盤顯示文字:</label>
-                    <input type="text" id="downLabel" placeholder="支援 sf:globe 等圖示">
+                    <label>鍵盤顯示:</label>
+                    <div class="sf-input-container">
+                        <div id="downSfPreview" class="sf-preview-box"></div>
+                        <input type="text" id="downLabel" class="sf-label-input" placeholder="支援 sf:globe" oninput="updateSfPreview('down')">
+                    </div>
                 </div>
                 <div class="hint-text">💡 顯示系統圖示請加 sf: (如 sf:globe)</div>
                 <div class="input-row">
@@ -449,7 +509,7 @@
                     <input type="number" id="batchUpSize" placeholder="尺寸" style="width: 40px !important;">
                     <input type="text" id="batchUpColorText" class="hex-input" value="#8E8E93" maxlength="7">
                     <input type="color" id="batchUpColor" value="#8e8e93">
-                    <button class="btn" style="flex: 1; padding: 5px; font-size: 13px; min-width: 0;" onclick="batchUpdate('up')">套用上滑</button>
+                    <button class="btn" style="flex: 1; padding: 0; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px; min-width: 0;" onclick="batchUpdate('up')">套用上滑</button>
                 </div>
 
                 <div class="input-row" style="justify-content: flex-start; gap: 6px; margin-bottom: 0;">
@@ -457,7 +517,7 @@
                     <input type="number" id="batchDownSize" placeholder="尺寸" style="width: 40px !important;">
                     <input type="text" id="batchDownColorText" class="hex-input" value="#8E8E93" maxlength="7">
                     <input type="color" id="batchDownColor" value="#8e8e93">
-                    <button class="btn" style="flex: 1; padding: 5px; font-size: 13px; min-width: 0;" onclick="batchUpdate('down')">套用下滑</button>
+                    <button class="btn" style="flex: 1; padding: 0; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px; min-width: 0;" onclick="batchUpdate('down')">套用下滑</button>
                 </div>
             </div>
 
@@ -512,10 +572,12 @@
             reverseShortcutMap[presetShortcuts[key]] = key;
         }
 
+        // 擴充版 SF Symbols 對應的 Emoji 預覽表
         const sfSymbolEmojiMap = {
             'globe': '🌐',
             'delete.left': '⌫',
             'delete.left.fill': '⌫',
+            'trash': '🗑️',
             'shift': '⇧',
             'shift.fill': '⇧',
             'capslock.fill': '⇪',
@@ -524,10 +586,73 @@
             'keyboard.onehanded.right': '👉',
             'text.cursor': 'I',
             'space': '␣',
-            'trash': '🗑️',
-            'trash.fill': '🗑️',
-            'arrow.uturn.backward': '↩️'
+            'arrow.uturn.backward': '↩️',
+            'arrow.uturn.forward': '↪️',
+            'doc.on.doc': '📄',
+            'doc.on.clipboard': '📋',
+            'scissors': '✂️',
+            'square.dashed': '⬚',
+            'arrow.left.to.line': '⇤',
+            'arrow.right.to.line': '⇥',
+            'arrow.left': '⬅️',
+            'arrow.right': '➡️',
+            'keyboard.chevron.compact.down': '⏬',
+            '2.circle': '②',
+            '3.circle': '③'
         };
+
+        // 指令對應預設 SF Symbols 的對照表
+        const commandToSfMap = {
+            'shortcut_undo': 'sf:arrow.uturn.backward',
+            'shortcut_deleteText': 'sf:delete.left',
+            'shortcut_copy': 'sf:doc.on.doc',
+            'shortcut_paste': 'sf:doc.on.clipboard',
+            'shortcut_cut': 'sf:scissors',
+            'shortcut_selectText': 'sf:square.dashed',
+            'shortcut_home': 'sf:arrow.left.to.line',
+            'shortcut_end': 'sf:arrow.right.to.line',
+            'shortcut_onehanded': 'sf:keyboard.onehanded.left',
+            'shortcut_rime2': 'sf:2.circle',
+            'shortcut_rime3': 'sf:3.circle',
+            'backspace': 'sf:delete.left',
+            'enter': 'sf:return',
+            'shift': 'sf:shift',
+            'space': 'sf:space',
+            'nextKeyboard': 'sf:globe'
+        };
+
+        // 更新 SF Symbol 預覽圖
+        function updateSfPreview(prefix) {
+            const labelInput = document.getElementById(prefix + 'Label');
+            const previewBox = document.getElementById(prefix + 'SfPreview');
+            let val = labelInput.value.trim();
+
+            if (val.toLowerCase().startsWith('sf:')) {
+                let symbol = val.substring(3).trim();
+                previewBox.innerText = sfSymbolEmojiMap[symbol] || '❖'; // 找不到則顯示預設菱形圖示
+            } else if (val.length > 0) {
+                // 如果是普通文字，則顯示第一個字元 (支援 Emoji)
+                previewBox.innerText = Array.from(val)[0];
+            } else {
+                previewBox.innerText = '';
+            }
+        }
+
+        // 自動帶入/清除 SF Symbol 代碼
+        function autoFillSf(prefix) {
+            const typeVal = document.getElementById(prefix + 'Type').value;
+            const labelInput = document.getElementById(prefix + 'Label');
+            
+            // 如果我們有預設的 SF 圖示，就自動帶入
+            if (commandToSfMap[typeVal]) {
+                labelInput.value = commandToSfMap[typeVal];
+            } else {
+                // 如果是沒有預設定義圖示的選項，則自動清空文字，避免殘留
+                labelInput.value = '';
+            }
+            // 觸發更新預覽框
+            updateSfPreview(prefix);
+        }
 
         function bindColorInputs(colorId, textId) {
             const colorEl = document.getElementById(colorId);
@@ -557,7 +682,8 @@
                 'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
                 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'zero': '0',
                 'semicolon': ';', 'slash': '/', 'comma': ',', 'period': '.',
-                'perioddirect': '.', 'tildedirect': '~'
+                // 移除了 perioddirect 的取代邏輯，讓 perioddirect 獨立存在，不會與 period 衝突
+                'tildedirect': '~'
             };
             return map[name] || name;
         }
@@ -596,7 +722,26 @@
             const area = document.getElementById('keyboardArea');
             area.innerHTML = '';
 
+            let keyboardCount = 0;
+            let isNewKeyboard = true;
+
             layoutRows.forEach(row => {
+                // 判斷是否為新的鍵盤區塊 (豎屏/橫屏分隔)
+                if (isNewKeyboard) {
+                    const labelDiv = document.createElement('div');
+                    labelDiv.style.width = '100%';
+                    labelDiv.style.textAlign = 'center';
+                    labelDiv.style.fontWeight = 'bold';
+                    labelDiv.style.color = '#8e8e93';
+                    labelDiv.style.fontSize = '14px';
+                    labelDiv.style.marginTop = keyboardCount > 0 ? '25px' : '0';
+                    labelDiv.style.marginBottom = '10px';
+                    labelDiv.innerText = keyboardCount === 0 ? '📱 豎屏 (Portrait) 配置' : '🖥️ 橫屏 (Landscape) 配置';
+                    area.appendChild(labelDiv);
+                    keyboardCount++;
+                    isNewKeyboard = false;
+                }
+
                 const rowDiv = document.createElement('div');
                 rowDiv.className = 'keyboard-row';
                 
@@ -614,25 +759,28 @@
 
                     keyBtn.style.backgroundColor = defaultBgMap[bgStyle];
 
+                    let displayChar = keyChar;
                     if (keyChar === 'space') {
                         keyBtn.style.width = '159px';
-                        keyBtn.innerText = '空白鍵';
+                        displayChar = '空白鍵';
                     } else if (keyChar === 'backspace') {
                         keyBtn.style.width = '50px';
-                        keyBtn.innerText = '⌫';
+                        displayChar = '⌫';
                     } else if (keyChar === 'shift') {
                         keyBtn.style.width = '50px';
-                        keyBtn.innerText = '⇧';
+                        displayChar = '⇧';
                     } else if (keyChar === 'numeric') {
                         keyBtn.style.width = '55px';
-                        keyBtn.innerText = '123';
+                        displayChar = '123';
                     } else if (keyChar === 'enter') {
                         keyBtn.style.width = '70px';
-                        keyBtn.innerText = 'Enter';
+                        displayChar = 'Enter';
                         keyBtn.style.color = '#fff';
-                    } else {
-                        keyBtn.innerText = keyChar;
+                    } else if (keyChar === 'perioddirect') {
+                        displayChar = '.'; // 畫面上顯示一樣的點，但底層 ID 不同
                     }
+                    
+                    keyBtn.innerText = displayChar;
                     
                     const upData = swipeData.swipe_up[keyChar];
                     if (upData && upData.label) {
@@ -672,6 +820,12 @@
                     rowDiv.appendChild(keyBtn);
                 });
                 area.appendChild(rowDiv);
+                
+                // 檢查如果這列包含 space 鍵，代表這是一個鍵盤的最後一列，下一列將是新佈局
+                let hasSpace = row.some(c => extractKeyName(c) === 'space');
+                if (hasSpace) {
+                    isNewKeyboard = true;
+                }
             });
 
             if (currentSelectedKey && document.getElementById('key-' + currentSelectedKey)) {
@@ -679,7 +833,7 @@
             }
         }
 
-        // 動態禁用/啟用輸入框 (支援常用快捷指令與無值獨立指令)
+        // 動態禁用/啟用輸入框
         function handleTypeChange(prefix) {
             const typeVal = document.getElementById(prefix + 'Type').value;
             const symbolInput = document.getElementById(prefix + 'Symbol');
@@ -708,10 +862,9 @@
                 }
                 else if (typeof data.action === 'object') {
                     if (data.action.shortcut) {
-                        // 檢查是否為預設的快捷指令
                         if (reverseShortcutMap[data.action.shortcut]) {
                             type = reverseShortcutMap[data.action.shortcut];
-                            val = ""; // 禁用輸入框不需要值
+                            val = "";
                         } else {
                             type = "shortcut";
                             val = data.action.shortcut;
@@ -749,6 +902,7 @@
             document.getElementById(prefix + 'ColorText').value = colorVal.toUpperCase();
             
             handleTypeChange(prefix);
+            updateSfPreview(prefix); // 載入資料後，更新預覽圖示
         }
 
         function silentSaveCurrentKey() {
@@ -770,7 +924,13 @@
             currentSelectedKey = keyChar;
             renderKeyboard();
             
-            document.getElementById('currentKeyDisplay').innerText = keyChar.toUpperCase();
+            // 區別顯示兩個不同的 '.' 鍵標題
+            let displayName = keyChar.toUpperCase();
+            if (keyChar === 'perioddirect') {
+                displayName = '. (符號)';
+            }
+            document.getElementById('currentKeyDisplay').innerText = displayName;
+            
             document.getElementById('editorArea').style.opacity = '1';
             document.getElementById('editorArea').style.pointerEvents = 'auto';
 
@@ -796,7 +956,6 @@
                 if (noValueCommands.includes(type)) {
                     node.action = type;
                 } else if (type.startsWith('shortcut_')) {
-                    // 自動轉換為對應的快捷指令物件
                     node.action = { "shortcut": presetShortcuts[type] };
                 } else if (val) {
                     node.action = {};
