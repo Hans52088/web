@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>鍵盤上下滑與長按配置視覺化編輯器 Rev07</title>
+    <title>鍵盤上下滑與長按配置視覺化編輯器 Rev09</title>
     <style>
         body {
             background-color: #f0f8ff;
@@ -352,7 +352,7 @@
 </head>
 <body>
 
-    <h2 class="header-title">⌨️ 鍵盤上下滑與長按配置視覺化編輯器 (Rev07)</h2>
+    <h2 class="header-title">⌨️ 鍵盤上下滑與長按配置視覺化編輯器 (Rev09)</h2>
     <div class="author-badge">版權所有 ＆ 製作：WHY</div>
 
     <div class="steps-container">
@@ -633,10 +633,17 @@
 
         /* Swipe 專用快捷對映 */
         const presetShortcuts = {
-            'shortcut_undo': '#undo', 'shortcut_deleteText': '#deleteText', 'shortcut_copy': '#copy',
-            'shortcut_paste': '#paste', 'shortcut_cut': '#cut', 'shortcut_selectText': '#selectText',
-            'shortcut_home': '#行首', 'shortcut_end': '#行尾', 'shortcut_onehanded': '#左手模式',
-            'shortcut_rime2': '#次选上屏', 'shortcut_rime3': '#三选上屏'
+            'shortcut_undo': '#undo',
+            'shortcut_deleteText': '#deleteText',
+            'shortcut_copy': '#copy',
+            'shortcut_paste': '#paste',
+            'shortcut_cut': '#cut',
+            'shortcut_selectText': '#selectText',
+            'shortcut_home': '#行首',
+            'shortcut_end': '#行尾',
+            'shortcut_onehanded': '#左手模式',
+            'shortcut_rime2': '#次选上屏',
+            'shortcut_rime3': '#三选上屏'
         };
         const reverseShortcutMap = {};
         for (let key in presetShortcuts) reverseShortcutMap[presetShortcuts[key]] = key;
@@ -750,7 +757,7 @@
             }
         }
 
-        // 舊指令轉移
+        // 舊指令轉移與格式修復
         function migrateOldCommands(data) {
             if (!data) return;
             Object.keys(data).forEach(category => {
@@ -759,11 +766,16 @@
                         const keyData = data[category][key];
                         if (keyData && keyData.list && Array.isArray(keyData.list)) {
                             keyData.list.forEach(item => {
+                                // 舊版快捷指令結構相容處理
                                 if (item.action && typeof item.action === 'object') {
                                     if (item.action.shortCommand !== undefined) {
                                         item.action.shortcut = item.action.shortCommand;
                                         delete item.action.shortCommand;
                                     }
+                                }
+                                // 自動補齊缺失的 label 欄位，防止編譯器報錯
+                                if (!item.label) {
+                                    item.label = { text: "" };
                                 }
                             });
                         }
@@ -1030,8 +1042,12 @@
             if (color && color.toLowerCase() !== '#8e8e93') { node.normalColor = node.highlightColor = color; }
             else { delete node.normalColor; delete node.highlightColor; if (node.label && node.label.color) delete node.label.color; }
             
-            if (Object.keys(node.label).length === 0) delete node.label;
-            if (!node.action && !node.label && !node.fontSize && !node.normalColor) return null;
+            if (Object.keys(node.label).length === 0) {
+                 // 保留空的 label 物件，避免編譯錯誤
+                 node.label = { text: "" };
+            }
+            
+            if (!node.action && (!node.label || (node.label.text === "" && !node.label.systemImageName)) && !node.fontSize && !node.normalColor) return null;
             return node;
         }
 
@@ -1236,7 +1252,8 @@
                         item.label.text = v;
                     }
                 } else {
-                    delete item.label;
+                    // 保留空的 label 物件，避免編譯錯誤
+                    item.label = { text: "" };
                 }
             });
             renderHintItems();
@@ -1277,7 +1294,8 @@
                     if (commandToSfMap[actionType]) {
                         item.label = { systemImageName: commandToSfMap[actionType].substring(3).trim() };
                     } else {
-                        delete item.label;
+                        // 保留空的 label 物件，避免編譯錯誤
+                        item.label = { text: "" };
                     }
                 }
                 else if (field === 'actionValue') {
@@ -1364,14 +1382,25 @@
 
         function updateCodeOutput() {
             if (activeCodeTab === 'swipe') {
-                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev07) ===\n\n" + JSON.stringify(swipeData, null, 2);
+                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev09) ===\n\n" + JSON.stringify(swipeData, null, 2);
             } else {
                 let cleanData = JSON.parse(JSON.stringify(hintSymbolsData));
                 Object.keys(cleanData).forEach(c => Object.keys(cleanData[c]).forEach(k => {
-                    if (cleanData[c][k].list) cleanData[c][k].list.forEach(i => { delete i._isCustomUI; delete i._isCustomKbUI; });
+                    if (cleanData[c][k].list) {
+                        cleanData[c][k].list.forEach(i => {
+                            delete i._isCustomUI;
+                            delete i._isCustomKbUI;
+                            // 強制確保輸出時一定有 label，如果為空則給 { text: "" }
+                            if (!i.label) {
+                                i.label = { text: "" };
+                            } else if (Object.keys(i.label).length === 0) {
+                                i.label = { text: "" };
+                            }
+                        });
+                    }
                 }));
                 let out = JSON.stringify(cleanData, null, 2).replace(/"([a-zA-Z_][a-zA-Z0-9_]*)":/g, '$1:');
-                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev07) ===\n\n{\n" + out.substring(1, out.length-1) + "\n}";
+                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev09) ===\n\n{\n" + out.substring(1, out.length-1) + "\n}";
             }
         }
 
