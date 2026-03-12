@@ -7,7 +7,7 @@
 本儲存庫包含以下主要的網頁工具與視覺資源：
 
 * **`index.html`**
-    專案的主頁面與導覽入口，方便快速切換至不同的鍵盤編輯工具。
+    專案的主頁面與導覽入口，元書輸入法安裝與增加大易輸入法方案說明。
 
 * **`keyboard_layout_color_tools.html`**
     **鍵盤佈局與配色工具**：提供視覺化的介面，讓你可以輕鬆配置鍵盤的按鍵排列與顏色主題，即時預覽各種主題風格下的鍵盤外觀。
@@ -21,6 +21,12 @@
 ## 🚀 使用方式
 
 本專案所有的工具皆為純靜態的 HTML 檔案，無須安裝任何後端環境或伺服器。只需用瀏覽器即可開始使用你的視覺化編輯功能：
+元書輸入法安裝與增加大易輸入方案說明網頁
+https://hans52088.github.io/web/
 
-```bash
-git clone [https://github.com/Hans52088/web.git](https://github.com/Hans52088/web.git)
+鍵盤佈局與顏色視覺化編輯器
+https://hans52088.github.io/web/keyboard_layout_color_tools.html
+
+鍵盤上下滑與長按配置視覺化編輯器
+https://hans52088.github.io/web/keyboard_swipe_hint_tools.html
+
