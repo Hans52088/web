@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器Rev20</title>
+    <title>⌨️ 鍵盤佈局與顏色視覺化編輯器Rev22</title>
     <style>
         :root{--primary-color:#007AFF;--bg-color:#f0f8ff;--panel-bg:#ffffff;--border-color:#e5e5ea}
         *{box-sizing:border-box}
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器Rev20</div>
+    <div class="header-title">⌨️ 鍵盤佈局與顏色視覺化編輯器Rev22</div>
     <div class="author-badge">版權所有 ＆ 製作：WHY</div>
 
     <div class="main-container">
@@ -204,7 +204,6 @@
             return res.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
         }
         
-        // 核心更新：精準取得當前需要同步的語系，中文不干擾英文，英文不干擾中文
         function getSyncTargets(mode) {
             if (!document.getElementById('syncAllCheck').checked) return [mode];
             if (mode.includes('Pinyin')) return ['portraitPinyin', 'landscapePinyin'];
@@ -376,10 +375,8 @@
                     const k = document.createElement('div');
                     k.className = 'preview-key';
                     
-                    // 【精準顯示修正】：取消強制將英文轉大寫的限制，還原最真實的顯示結果！
                     const rawCode = String(key.code || key.outCode || '');
                     const upperCode = rawCode.toUpperCase();
-                    // 只有在 systemKeys (如 SPACE, ENTER) 時才進行 symbolMap 對應轉換
                     k.innerText = symbolMap[upperCode] !== undefined ? symbolMap[upperCode] : rawCode;
                     
                     k.style.width = (key.width * 100) + '%';
@@ -526,8 +523,6 @@
                     let safeOutCode = String(data.outCode || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
                     let safePrefix = prefix.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
                     
-                    // 只負責產生原代碼中不存在的新按鍵定義，絕對不碰已存在的按鍵，保護滑動結構
-                    // 【字首邊界修復】：確保精準比對單詞
                     let btnDefRegex = new RegExp(`(?:^|[^a-zA-Z0-9_])['"]?${safePrefix}Button['"]?\\s*:`, 'i');
                     if (!btnDefRegex.test(newCode)) {
                         if (isSystemKey && sameCode) return;
@@ -559,17 +554,31 @@
                 if (lSIdx !== -1 && lEIdx !== -1) {
                     newCode = newCode.substring(0, lSIdx) + layoutReplacement + newCode.substring(lEIdx + layoutEndMarker.length);
                 } else {
-                    const startMarker = "keyboardLayout: [";
-                    const startIndex = newCode.indexOf(startMarker);
-                    if (startIndex !== -1) {
+                    // 【寫入修復】：強化自動替換佈局陣列，適用於無註解的檔案（使用精確陣列追蹤）
+                    let klRegex = /keyboardLayout\s*:\s*(?:if\s+orientation\s*==\s*['"]portrait['"]\s*then\s*)?\[/i;
+                    let klMatch = newCode.match(klRegex);
+                    if (klMatch) {
+                        let startIndex = klMatch.index;
                         let bracketCount = 0;
                         let endIndex = -1;
-                        for (let i = startIndex + startMarker.length - 1; i < newCode.length; i++) {
-                            if (newCode[i] === '[') bracketCount++;
-                            if (newCode[i] === ']') bracketCount--;
-                            if (bracketCount === 0) {
-                                endIndex = i;
-                                break;
+                        let inArray = false;
+                        
+                        for (let i = startIndex; i < newCode.length; i++) {
+                            if (newCode[i] === '[') {
+                                bracketCount++;
+                                inArray = true;
+                            } else if (newCode[i] === ']') {
+                                bracketCount--;
+                            }
+                            
+                            if (inArray && bracketCount === 0) {
+                                let remainder = newCode.substring(i + 1);
+                                if (remainder.match(/^\s*else\s*\[/)) {
+                                    inArray = false; // 等待匹配橫屏的陣列
+                                } else {
+                                    endIndex = i;
+                                    break;
+                                }
                             }
                         }
                         if (endIndex !== -1) {
@@ -636,13 +645,11 @@
 
                 let allCellNames = new Set([...Object.keys(portWidths), ...Object.keys(landWidths)]);
                 
-                // 【精準修復】：僅寫入尺寸與邊界。絕不在按鍵本體覆寫 text 或 swipeStyle，防止引擎語法解析崩潰！
                 allCellNames.forEach(cell => {
                     let pw = portWidths[cell] || "0.1";
                     let lw = landWidths[cell] || "0.1";
                     let swipeInject = '';
                     
-                    // 只有逗號和句號這兩個寫死的孤兒按鍵需要手動補上 prune，保證氣泡正常運作
                     if (cell === 'commaButton' || cell === 'periodButton') {
                         let outC = (cell === 'commaButton') ? ',' : '.';
                         let safeOut = String(outC).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
@@ -664,9 +671,6 @@
                         
                         let isDefaultColor = (color === defTextC.toUpperCase() || color === '');
                         
-                        // 【終極強勢修復】：將自訂字根直接疊加到 ForegroundStyle 的源頭！
-                        // 加入 uppercaseText 確保引擎任何狀態下都會讀取到設定的字。
-                        // 並且保證純英文鍵盤如果不設定不同字，就不會強迫大寫覆蓋小寫。
                         let textInject = '';
                         if (rawDisplay !== rawOutput && rawDisplay.toLowerCase() !== rawOutput.toLowerCase() && rawDisplay !== '' && !['enter', 'backspace', 'shift', 'space', 'numeric'].includes(prefix.toLowerCase())) {
                             let safeDisplay = rawDisplay.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, "");
@@ -690,7 +694,6 @@
                             }
                         }
 
-                        // 【安全隔離修復】：嚴格隔離 period 和 perioddirect 的樣式疊加，防止互相覆寫干擾
                         let permutations = new Set([ rawCode, prefix ]);
 
                         permutations.forEach(p => {
@@ -896,6 +899,19 @@
                     currentFileName = file.name.toLowerCase();
                     let parseSuccess = false;
 
+                    let customKeyMap = {};
+                    let mapRegex = /\{\s*char\s*:\s*['"]([^'"]+)['"]\s*,\s*keys\s*:\s*\[([^\]]+)\]\s*\}/ig;
+                    let mapMatch;
+                    while ((mapMatch = mapRegex.exec(text)) !== null) {
+                        let char = mapMatch[1];
+                        let keysStr = mapMatch[2];
+                        let keyRegex = /['"]([^'"]+)['"]/g;
+                        let km;
+                        while ((km = keyRegex.exec(keysStr)) !== null) {
+                            customKeyMap[km[1].toLowerCase()] = char;
+                        }
+                    }
+
                     const parseRows = (chunk, isPortrait = true) => {
                         const rows = [];
                         const hstackRegex = /HStack\s*:\s*\{\s*subviews\s*:\s*\[([\s\S]*?)\]\s*\}/g;
@@ -927,10 +943,15 @@
                                     let finalDisplay = uiCode.toUpperCase();
                                     let finalOutput = uiCode.toLowerCase();
 
+                                    if (customKeyMap[uiCode.toLowerCase()]) {
+                                        finalDisplay = customKeyMap[uiCode.toLowerCase()];
+                                    } else if (customKeyMap[sysCodeMap[uiCode.toLowerCase()] || uiCode.toLowerCase()]) {
+                                        finalDisplay = customKeyMap[sysCodeMap[uiCode.toLowerCase()] || uiCode.toLowerCase()];
+                                    }
+
                                     let safeCForRegex = escapeRegExp(c);
-                                    // 【核心修復一】：嚴格邊界防護，防止 eButton 匹配到 oneButton，xButton 匹配到 sixButton 等子字串問題！
                                     const bnd = `(?:^|[^a-zA-Z0-9_])`;
-                                    let defRegex = new RegExp(`${bnd}['"]?${safeCForRegex}['"]?\\s*:\\s*.*?createButton\\s*\\([^{]*\\{([\\s\\S]*?)\\}\\s*\\)`, 'i');
+                                    let defRegex = new RegExp(`${bnd}['"]?${safeCForRegex}['"]?\\s*:\\s*[\\s\\S]{0,150}?createButton\\s*\\([^{]*\\{([\\s\\S]*?)\\}\\s*\\)`, 'i');
                                     let defMatch = text.match(defRegex);
                                     
                                     if (defMatch) {
@@ -947,7 +968,7 @@
                                         else if (uiCode === ';') finalOutput = ';';
                                         else if (uiCode === 'TILDEDIRECT') finalOutput = '~';
                                         else if (uiCode === 'PERIODDIRECT') finalOutput = 'PERIODDIRECT';
-                                        else finalOutput = uiCode.toLowerCase(); // 確保無法匹配時預設也是小寫
+                                        else finalOutput = uiCode.toLowerCase();
                                     }
 
                                     let outCodeToSave = finalOutput;
@@ -971,14 +992,19 @@
                                         if (prefixToFind === 'perioddirect') prefixToFind = 'periodDirect';
                                         
                                         let extractedText = null;
+
+                                        if (customKeyMap[uiCode.toLowerCase()]) {
+                                            extractedText = customKeyMap[uiCode.toLowerCase()];
+                                        } else if (customKeyMap[prefixToFind]) {
+                                            extractedText = customKeyMap[prefixToFind];
+                                        }
                                         
-                                        if (defMatch) {
+                                        if (!extractedText && defMatch) {
                                             let tm = defMatch[1].match(/text\s*:\s*['"]([^'"]+)['"]/i);
                                             if (tm) extractedText = tm[1];
                                         }
                                         
                                         if (!extractedText) {
-                                            // 【核心修復二】：同樣補上邊界防禦
                                             let declRegex = new RegExp(`${bnd}['"]?${escapeRegExp(prefixToFind)}(?:Button)?(?:Schema[a-zA-Z]+)?(?:ForegroundStyle)?['"]?\\+?:\\s*\\{([^{}]+)\\}`, 'ig');
                                             let matches = [...text.matchAll(declRegex)];
                                             for (let match of matches) {
@@ -994,7 +1020,6 @@
                                         }
                                     }
 
-                                    // 【核心修復三】：取消強制把英文 Output 變成大寫的錯誤邏輯！確保如 z, e, r 等字元保持小寫輸出。
                                     if (codeToSave.toLowerCase() === outCodeToSave.toLowerCase()) {
                                         if (/^[a-z]$/i.test(outCodeToSave)) {
                                             outCodeToSave = outCodeToSave.toLowerCase();
@@ -1011,7 +1036,6 @@
                                     for (let p of permutations) {
                                         if (!p) continue;
                                         let safeP = escapeRegExp(p);
-                                        // 邊界防禦套用於顏色抓取
                                         let cRegex = new RegExp(`${bnd}['"]?(?:${safeP}ButtonForegroundStyle|${safeP}ForegroundStyle|${safeP}SchemaLiurForegroundStyle|${safeP}SchemaEasyEnForegroundStyle|number${safeP}ButtonForegroundStyle|${safeP}ButtonLiurForegroundStyle|${safeP}ButtonEasyEnForegroundStyle)['"]?\\+?:\\s*\\{[\\s\\S]{0,120}?normalColor:\\s*(?:if[\\s\\S]+?else\\s*)?'([^']+)'`, "i");
                                         let colorMatch = text.match(cRegex);
                                         if(colorMatch && colorMatch[1] && !colorMatch[1].includes('color')) {
@@ -1021,7 +1045,6 @@
                                     }
 
                                     let safePForW = escapeRegExp(prefix);
-                                    // 邊界防禦套用於寬度抓取
                                     let wRegex = new RegExp(`${bnd}['"]?${safePForW}Button['"]?\\+?:\\s*\\{[\\s\\S]{0,150}?percentage:\\s*(?:if\\s+orientation\\s*==\\s*'portrait'\\s*then\\s*)?([0-9.]+)(?:\\s*else\\s*([0-9.]+))?`, "i");
                                     let wMatch = text.match(wRegex);
                                     if (wMatch) {
@@ -1113,8 +1136,24 @@
                                 landRows = JSON.parse(JSON.stringify(portRows));
                             }
                         } else {
-                            portRows = parseRows(text, true);
-                            landRows = JSON.parse(JSON.stringify(portRows));
+                            // 【讀取修復】：精準提取無註解的佈局陣列，分別解析成豎屏與橫屏
+                            let layoutMatch = text.match(/keyboardLayout\s*:\s*if\s+orientation\s*==\s*['"]portrait['"]\s*then\s*\[([\s\S]+?)\]\s*else\s*\[([\s\S]+)/i);
+                            if (layoutMatch) {
+                                let portChunk = layoutMatch[1];
+                                let landChunk = layoutMatch[2];
+                                
+                                // 防止解析到底部無關的代碼
+                                let endMatch = landChunk.match(/\n\s*\]\s*(?:,|\})/);
+                                if (endMatch) {
+                                    landChunk = landChunk.substring(0, endMatch.index);
+                                }
+                                
+                                portRows = parseRows(portChunk, true);
+                                landRows = parseRows(landChunk, false);
+                            } else {
+                                portRows = parseRows(text, true);
+                                landRows = JSON.parse(JSON.stringify(portRows));
+                            }
                         }
 
                         if (portRows.length > 0) {
