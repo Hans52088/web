@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>鍵盤上下滑與長按配置視覺化編輯器 Rev09</title>
+    <title>鍵盤上下滑與長按配置視覺化編輯器 Rev16.5</title>
     <style>
         body {
             background-color: #f0f8ff;
@@ -301,14 +301,24 @@
             flex: 1; width: 100% !important; height: 32px; border: 1px solid #d1d1d6 !important; border-radius: 6px;
             padding: 0 8px; font-size: 13px; box-sizing: border-box; outline: none;
         }
-        .hint-text { font-size: 11px; color: #888; margin-top: -5px; margin-bottom: 8px; text-align: right; }
 
         /* Hints Specific Styles */
         .hint-items-container { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .hint-item {
             background: #fff; padding: 12px 15px; border-radius: 8px; border: 1px solid #d1d1d6; display: flex; flex-direction: column; gap: 4px; position: relative;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; /* Add transition for drag effect */
         }
         
+        /* Drag and Drop styles for hint item */
+        .hint-item.dragging {
+            opacity: 0.5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+        .hint-item.drag-over {
+            border: 2px dashed #007aff;
+        }
+
         .hint-index-badge {
             display: inline-flex;
             align-items: center;
@@ -320,9 +330,13 @@
             font-size: 12px;
             font-weight: bold;
             padding: 4px 8px;
+            cursor: grab; /* Indicate draggable */
+        }
+        .hint-index-badge:active {
+            cursor: grabbing;
         }
 
-        .index-control { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+        .index-control { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin-bottom: 5px; }
         .index-control label { font-size: 13px; font-weight: 500; color: #333; }
         .index-control input { padding: 4px 8px; border: 1px solid #d1d1d6; border-radius: 6px; width: 60px; font-size: 13px; }
 
@@ -348,11 +362,61 @@
         .icon-cell:hover { background: #e6f7ff; border-color: #007aff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,122,255,0.15); }
         .icon-visual { font-size: 24px; }
         .icon-desc { font-size: 13px; font-weight: 600; color: #333; line-height: 1.2; }
+
+        /* ======== Long Press Popup Preview ======== */
+        .key-popup {
+            position: fixed;
+            background: #e5e5ea;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            padding: 4px;
+            gap: 4px;
+            z-index: 9999;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease-in-out;
+        }
+        .key-popup.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .key-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: #e5e5ea transparent transparent transparent;
+        }
+        .popup-item {
+            min-width: 32px;
+            height: 38px;
+            padding: 0 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 500;
+            color: #000;
+            border-radius: 6px;
+            background: transparent;
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+        .popup-item.selected {
+            background: #007aff;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
-    <h2 class="header-title">⌨️ 鍵盤上下滑與長按配置視覺化編輯器 (Rev09)</h2>
+    <h2 class="header-title">⌨️ 鍵盤上下滑與長按配置視覺化編輯器 (Rev16.5)</h2>
     <div class="author-badge">版權所有 ＆ 製作：WHY</div>
 
     <div class="steps-container">
@@ -564,8 +628,11 @@
                 <div class="editor-group">
                     <h3 style="color: #ff9500; border-bottom-color: #ffe0b2;">🔘 長按選項 (Hint / Long Press)</h3>
                     <div class="index-control">
-                        <label>預設選中索引 (0開始):</label>
-                        <input type="number" id="selectedIndexInput" min="0" value="0" onchange="updateSelectedIndex(this.value)">
+                        <label style="margin-right: 5px;">預設選項:</label>
+                        <input type="number" id="selectedIndexInput" min="0" value="0" style="width: 50px;" onchange="updateSelectedIndex(this.value)">
+                        <div style="flex: 1;"></div>
+                        <label style="margin-right: 5px;">選項寬度:</label>
+                        <input type="number" id="hintWidthInput" min="0" placeholder="未設定" style="width: 60px;" onchange="updateHintWidth(this.value)">
                     </div>
                     <div class="hint-items-container" id="hintItemsContainer">
                         <!-- Hint 項目動態生成 -->
@@ -600,6 +667,9 @@
         </div>
     </div>
 
+    <!-- 長按預覽氣泡 (Long Press Popup) -->
+    <div id="keyPopup" class="key-popup"></div>
+
     <script>
         /* 共用變數與資料庫 */
         let layoutRows = [
@@ -621,6 +691,13 @@
         let step2Loaded = false;
         let step3Loaded = false;
         let internalClipboard = { swipe: "", hint: "" };
+        let longPressTimer = null; // 長按計時器
+        
+        // 儲存原始上傳的檔名
+        let fileNames = {
+            swipe: 'swipeData.libsonnet',
+            hint: 'hintSymbolsData.libsonnet'
+        };
         
         let defaultBgMap = {
             'alphabeticBackgroundStyle': '#ffffff',
@@ -716,6 +793,67 @@
             closeIconModal();
         }
 
+        /* 顯示與隱藏長按預覽彈出框 */
+        function showPopup(keyElement, keyChar) {
+            const activeCat = currentCategory === 'both' ? 'alphabetic' : currentCategory;
+            // 檢查該按鍵是否有長按資料
+            if (!hintSymbolsData[activeCat] || !hintSymbolsData[activeCat][keyChar]) return;
+            
+            const keyData = hintSymbolsData[activeCat][keyChar];
+            if (!keyData.list || keyData.list.length === 0) return;
+
+            let popup = document.getElementById('keyPopup');
+            popup.innerHTML = '';
+            
+            // 生成氣泡內容
+            keyData.list.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'popup-item';
+                if (index === (keyData.selectedIndex || 0)) {
+                    div.classList.add('selected');
+                }
+                
+                let text = '';
+                // 優先顯示圖標，再顯示文字，若兩者皆無則以指令符號作為退路 (Fall back)
+                if (item.label && item.label.systemImageName) {
+                    text = sfSymbolEmojiMap[item.label.systemImageName] || '❖';
+                } else if (item.label && item.label.text !== "" && item.label.text !== undefined) {
+                    text = item.label.text;
+                } else if (item.action) {
+                    if (item.action.symbol) text = item.action.symbol;
+                    else if (item.action.character) text = item.action.character;
+                    else if (item.action.shortcut) text = '⚙️';
+                    else if (item.action.keyboardType) text = '⌨️';
+                    else text = '❖';
+                } else {
+                    text = '❖';
+                }
+                
+                div.innerText = text;
+                
+                // 套用寬度設定 (如果有)
+                if (keyData.size && keyData.size.width) {
+                    div.style.minWidth = keyData.size.width + 'px';
+                    div.style.width = keyData.size.width + 'px';
+                }
+                
+                popup.appendChild(div);
+            });
+
+            // 計算定位並顯示
+            const rect = keyElement.getBoundingClientRect();
+            popup.style.left = (rect.left + rect.width / 2) + 'px';
+            popup.style.top = (rect.top - 8) + 'px';
+            popup.classList.add('show');
+        }
+
+        function hidePopup() {
+            const popup = document.getElementById('keyPopup');
+            if (popup) {
+                popup.classList.remove('show');
+            }
+        }
+
         /* 工具與解析函式 */
         function bindColorInputs(colorId, textId) {
             const colorEl = document.getElementById(colorId);
@@ -728,12 +866,13 @@
         }
         ['upColor','downColor','batchUpColor','batchDownColor'].forEach(id => bindColorInputs(id, id+'Text'));
 
+        // 移除 comma 與 period 的轉換，保持為字串，以對應 JSON 中設定的鍵名
         function extractKeyName(cellName) {
             if (!cellName) return null;
             let name = cellName.replace(/Button/i, '').trim().toLowerCase();
             const map = {
                 'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'zero': '0',
-                'semicolon': ';', 'slash': '/', 'comma': ',', 'period': '.',
+                'semicolon': ';', 'slash': '/', 'comma': 'comma', 'period': 'period',
                 'tildedirect': 'tildedirect', 'perioddirect': 'perioddirect',
                 'spacedirect': 'space', 'backspacedirect': 'backspace', 'shiftdirect': 'shift',
                 'numericdirect': 'numeric', 'enterdirect': 'enter'
@@ -832,6 +971,7 @@
                     keyBtn.style.backgroundColor = defaultBgMap[bgStyle];
                     if(keyChar === 'enter' || keyChar === 'search') keyBtn.style.color = '#ffffff';
 
+                    // 處理鍵盤按鍵顯示文字
                     let displayChar = keyChar;
                     if (keyChar === 'space') { keyBtn.style.flex = '4'; keyBtn.style.maxWidth = '180px'; displayChar = '空白鍵'; }
                     else if (keyChar === 'backspace') { keyBtn.style.flex = '1.5'; keyBtn.style.maxWidth = '80px'; displayChar = '⌫'; }
@@ -842,6 +982,8 @@
                     else if (keyChar.includes('perioddirect')) { keyBtn.style.flex = '1'; displayChar = '.'; }
                     else if (keyChar === 'comma') displayChar = ',';
                     else if (keyChar === 'period') displayChar = '.';
+                    else if (keyChar === ';') displayChar = ';';
+                    else if (keyChar === '/') displayChar = '/';
                     
                     keyBtn.innerText = displayChar;
 
@@ -874,7 +1016,27 @@
                     }
                     if (hasHint) keyBtn.classList.add('has-hint');
 
+                    // === 事件監聽器：支援點擊與長按氣泡預覽 ===
                     keyBtn.onclick = () => selectKey(keyChar);
+                    
+                    // 滑鼠長按事件
+                    keyBtn.onmousedown = (e) => {
+                        if (e.button !== 0) return; // 只接受左鍵
+                        longPressTimer = setTimeout(() => showPopup(keyBtn, keyChar), 350); // 長按 350ms 後顯示
+                    };
+                    keyBtn.onmouseup = () => { clearTimeout(longPressTimer); hidePopup(); };
+                    keyBtn.onmouseleave = () => { clearTimeout(longPressTimer); hidePopup(); };
+                    
+                    // 觸控長按事件 (Mobile)
+                    keyBtn.ontouchstart = () => {
+                        longPressTimer = setTimeout(() => showPopup(keyBtn, keyChar), 350);
+                    };
+                    keyBtn.ontouchend = () => { clearTimeout(longPressTimer); hidePopup(); };
+                    keyBtn.ontouchcancel = () => { clearTimeout(longPressTimer); hidePopup(); };
+                    
+                    // 關閉右鍵選單以防干擾長按
+                    keyBtn.oncontextmenu = (e) => { e.preventDefault(); return false; };
+
                     rowDiv.appendChild(keyBtn);
                 });
                 area.appendChild(rowDiv);
@@ -935,7 +1097,15 @@
             currentSelectedKey = keyChar;
             renderKeyboard();
             
-            document.getElementById('currentKeyDisplay').innerText = `${keyChar.toUpperCase()}`;
+            // 增進面板名稱顯示，給予清楚的提示
+            let displayName = keyChar.toUpperCase();
+            if (keyChar === 'perioddirect') displayName = '. (符號)';
+            else if (keyChar === 'comma') displayName = ', (COMMA)';
+            else if (keyChar === 'period') displayName = '. (PERIOD)';
+            else if (keyChar === ';') displayName = '; (SEMICOLON)';
+            else if (keyChar === '/') displayName = '/ (SLASH)';
+            
+            document.getElementById('currentKeyDisplay').innerText = `${displayName}`;
             document.getElementById('editorArea').style.opacity = '1';
             document.getElementById('editorArea').style.pointerEvents = 'auto';
 
@@ -954,6 +1124,15 @@
             }
             const activeCat = currentCategory === 'both' ? 'alphabetic' : currentCategory;
             document.getElementById('selectedIndexInput').value = hintSymbolsData[activeCat][keyChar].selectedIndex || 0;
+            
+            // 讀取並設定選項寬度
+            const widthInput = document.getElementById('hintWidthInput');
+            if (hintSymbolsData[activeCat][keyChar].size && hintSymbolsData[activeCat][keyChar].size.width) {
+                widthInput.value = hintSymbolsData[activeCat][keyChar].size.width;
+            } else {
+                widthInput.value = '';
+            }
+            
             renderHintItems();
         }
 
@@ -1043,7 +1222,6 @@
             else { delete node.normalColor; delete node.highlightColor; if (node.label && node.label.color) delete node.label.color; }
             
             if (Object.keys(node.label).length === 0) {
-                 // 保留空的 label 物件，避免編譯錯誤
                  node.label = { text: "" };
             }
             
@@ -1063,6 +1241,126 @@
             });
         };
 
+        window.updateHintWidth = function(val) {
+            if (!currentSelectedKey) return;
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+            const widthVal = parseInt(val);
+            
+            cats.forEach(cat => {
+                if (hintSymbolsData[cat] && hintSymbolsData[cat][currentSelectedKey]) {
+                    if (widthVal > 0) {
+                        hintSymbolsData[cat][currentSelectedKey].size = {
+                            width: widthVal,
+                            height: 53
+                        };
+                    } else {
+                        delete hintSymbolsData[cat][currentSelectedKey].size;
+                    }
+                }
+            });
+        };
+
+        /* Hint Drag and Drop Sorting Logic */
+        let draggedHintIndex = null;
+
+        window.handleDragStart = function(e, index) {
+            draggedHintIndex = index;
+            // Timeout to allow the drag image to be set before adding dragging class
+            setTimeout(() => {
+                e.target.closest('.hint-item').classList.add('dragging');
+            }, 0);
+            e.dataTransfer.effectAllowed = 'move';
+        };
+
+        window.handleDragOver = function(e, index) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (draggedHintIndex === null || draggedHintIndex === index) return;
+
+            const item = e.target.closest('.hint-item');
+            if (item) {
+                // Determine mouse position relative to the element to show where it will drop
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                
+                // Clear previous classes
+                document.querySelectorAll('.hint-item').forEach(el => {
+                    el.style.borderTop = '';
+                    el.style.borderBottom = '';
+                });
+
+                if (e.clientY < midY) {
+                    item.style.borderTop = '2px solid #007aff';
+                } else {
+                    item.style.borderBottom = '2px solid #007aff';
+                }
+            }
+        };
+        
+        window.handleDragLeave = function(e) {
+             const item = e.target.closest('.hint-item');
+             if(item) {
+                 item.style.borderTop = '';
+                 item.style.borderBottom = '';
+             }
+        };
+
+        window.handleDrop = function(e, targetIndex) {
+            e.preventDefault();
+            document.querySelectorAll('.hint-item').forEach(el => {
+                el.classList.remove('dragging');
+                el.style.borderTop = '';
+                el.style.borderBottom = '';
+            });
+
+            if (draggedHintIndex === null || draggedHintIndex === targetIndex) return;
+
+            // Determine if dropped above or below middle to fine-tune target index
+            const item = e.target.closest('.hint-item');
+            let finalTargetIndex = targetIndex;
+            if (item) {
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                if (e.clientY > midY && draggedHintIndex < targetIndex) {
+                   // drag down, insert after
+                } else if (e.clientY < midY && draggedHintIndex > targetIndex) {
+                   // drag up, insert before
+                } else if (e.clientY > midY && draggedHintIndex > targetIndex){
+                    finalTargetIndex++;
+                } else if (e.clientY < midY && draggedHintIndex < targetIndex) {
+                    finalTargetIndex--;
+                }
+            }
+
+            const activeCat = currentCategory === 'both' ? 'alphabetic' : currentCategory;
+            const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
+
+            cats.forEach(cat => {
+                if (hintSymbolsData[cat] && hintSymbolsData[cat][currentSelectedKey] && hintSymbolsData[cat][currentSelectedKey].list) {
+                    const list = hintSymbolsData[cat][currentSelectedKey].list;
+                    const movedItem = list.splice(draggedHintIndex, 1)[0];
+                    
+                    // Adjust target index if necessary because of the splice
+                    let actualInsertIndex = finalTargetIndex;
+                    
+                    list.splice(actualInsertIndex, 0, movedItem);
+                }
+            });
+
+            draggedHintIndex = null;
+            renderHintItems();
+        };
+
+        window.handleDragEnd = function(e) {
+            document.querySelectorAll('.hint-item').forEach(el => {
+                el.classList.remove('dragging');
+                el.style.borderTop = '';
+                el.style.borderBottom = '';
+            });
+            draggedHintIndex = null;
+        };
+
         function renderHintItems() {
             const container = document.getElementById('hintItemsContainer');
             container.innerHTML = '';
@@ -1079,8 +1377,13 @@
             dataList.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'hint-item';
+                div.draggable = true;
+                div.ondragstart = (e) => handleDragStart(e, index);
+                div.ondragover = (e) => handleDragOver(e, index);
+                div.ondragleave = (e) => handleDragLeave(e);
+                div.ondrop = (e) => handleDrop(e, index);
+                div.ondragend = (e) => handleDragEnd(e);
 
-                // 判斷目前的 Action Type 與 Value
                 let actionType = 'symbol', actionValue = '';
                 if (typeof item.action === 'string') { actionType = item.action; }
                 else if (item.action) {
@@ -1099,7 +1402,6 @@
                     else if (item.action.keyboardType !== undefined) { actionType = 'keyboardType'; actionValue = item.action.keyboardType; }
                 }
 
-                // 取得顯示標籤字串 (含 sf: 前綴)
                 let displayLabelText = "";
                 let previewSymbol = "";
                 if (item.label) {
@@ -1185,7 +1487,7 @@
 
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #e5e5ea;">
-                        <span class="hint-index-badge" style="margin:0;">選項 [${index}]</span>
+                        <span class="hint-index-badge" style="margin:0;" title="拖曳以改變順序">選項 [${index}] ↕️</span>
                         <button class="btn danger" style="padding:4px 8px; font-size:12px;" onclick="removeHintItem(${index})">🗑️ 刪除此選項</button>
                     </div>
                     <div class="input-row" style="margin-bottom: 4px;">
@@ -1252,7 +1554,6 @@
                         item.label.text = v;
                     }
                 } else {
-                    // 保留空的 label 物件，避免編譯錯誤
                     item.label = { text: "" };
                 }
             });
@@ -1290,11 +1591,9 @@
                         item.action = {}; item.action[actionType] = aVal;
                     }
                     
-                    // 切換輸出類型時，自動帶入對應的 SF Symbol 或清空
                     if (commandToSfMap[actionType]) {
                         item.label = { systemImageName: commandToSfMap[actionType].substring(3).trim() };
                     } else {
-                        // 保留空的 label 物件，避免編譯錯誤
                         item.label = { text: "" };
                     }
                 }
@@ -1334,10 +1633,22 @@
 
             // Save Hint
             const idx = parseInt(document.getElementById('selectedIndexInput').value) || 0;
+            const widthVal = parseInt(document.getElementById('hintWidthInput').value) || 0;
+            
             const cats = currentCategory === 'both' ? ['alphabetic', 'pinyin'] : [currentCategory];
             cats.forEach(cat => {
                 if (hintSymbolsData[cat] && hintSymbolsData[cat][currentSelectedKey]) {
                     hintSymbolsData[cat][currentSelectedKey].selectedIndex = idx;
+                    
+                    if (widthVal > 0) {
+                        hintSymbolsData[cat][currentSelectedKey].size = {
+                            width: widthVal,
+                            height: 53
+                        };
+                    } else {
+                        delete hintSymbolsData[cat][currentSelectedKey].size;
+                    }
+                    
                     if (hintSymbolsData[cat][currentSelectedKey].list.length === 0) delete hintSymbolsData[cat][currentSelectedKey];
                 }
             });
@@ -1376,13 +1687,13 @@
             activeCodeTab = tab;
             document.getElementById('tabBtnSwipe').className = tab === 'swipe' ? 'btn active' : 'btn outline';
             document.getElementById('tabBtnHint').className = tab === 'hint' ? 'btn active' : 'btn outline';
-            document.getElementById('codeTitle').innerText = tab === 'swipe' ? '程式碼預覽 (swipeData)' : '程式碼預覽 (hintSymbolsData)';
+            document.getElementById('codeTitle').innerText = tab === 'swipe' ? '程式碼預覽 (' + fileNames.swipe + ')' : '程式碼預覽 (' + fileNames.hint + ')';
             updateCodeOutput();
         }
 
         function updateCodeOutput() {
             if (activeCodeTab === 'swipe') {
-                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev09) ===\n\n" + JSON.stringify(swipeData, null, 2);
+                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev16.5) ===\n\n" + JSON.stringify(swipeData, null, 2);
             } else {
                 let cleanData = JSON.parse(JSON.stringify(hintSymbolsData));
                 Object.keys(cleanData).forEach(c => Object.keys(cleanData[c]).forEach(k => {
@@ -1390,7 +1701,6 @@
                         cleanData[c][k].list.forEach(i => {
                             delete i._isCustomUI;
                             delete i._isCustomKbUI;
-                            // 強制確保輸出時一定有 label，如果為空則給 { text: "" }
                             if (!i.label) {
                                 i.label = { text: "" };
                             } else if (Object.keys(i.label).length === 0) {
@@ -1400,27 +1710,42 @@
                     }
                 }));
                 let out = JSON.stringify(cleanData, null, 2).replace(/"([a-zA-Z_][a-zA-Z0-9_]*)":/g, '$1:');
-                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev09) ===\n\n{\n" + out.substring(1, out.length-1) + "\n}";
+                document.getElementById('codeOutput').value = "// === 本配置檔由按鍵上下滑與長按配置整合版編輯器產出 (Rev16.5) ===\n\n{\n" + out.substring(1, out.length-1) + "\n}";
             }
         }
 
         /* 檔案與剪貼簿操作 */
-        function setupDropZone(dzId, inputId, textId, callback) {
+        function setupDropZone(dzId, inputId, textId, type, callback) {
             const dz = document.getElementById(dzId), input = document.getElementById(inputId);
             dz.onclick = () => input.click();
             dz.ondragover = e => { e.preventDefault(); dz.classList.add('dragover'); };
             dz.ondragleave = () => dz.classList.remove('dragover');
-            dz.ondrop = e => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files.length) callback(e.dataTransfer.files[0], textId); };
-            input.onchange = e => { if (e.target.files.length) callback(e.target.files[0], textId); input.value = ''; };
+            dz.ondrop = e => {
+                e.preventDefault();
+                dz.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    if (type === 'swipe') fileNames.swipe = e.dataTransfer.files[0].name;
+                    if (type === 'hint') fileNames.hint = e.dataTransfer.files[0].name;
+                    callback(e.dataTransfer.files[0], textId);
+                }
+            };
+            input.onchange = e => {
+                if (e.target.files.length) {
+                    if (type === 'swipe') fileNames.swipe = e.target.files[0].name;
+                    if (type === 'hint') fileNames.hint = e.target.files[0].name;
+                    callback(e.target.files[0], textId);
+                }
+                input.value = '';
+            };
         }
 
-        setupDropZone('dropZone1', 'fileInput1', 'dz1Text', (f, tid) => {
+        setupDropZone('dropZone1', 'fileInput1', 'dz1Text', 'layout', (f, tid) => {
             const r = new FileReader(); r.onload = e => { parseStep1Safe(e.target.result); document.getElementById(tid).innerHTML = '✅ 佈局已載入'; renderKeyboard(); }; r.readAsText(f);
         });
-        setupDropZone('dropZone2', 'fileInput2', 'dz2Text', (f, tid) => {
-            const r = new FileReader(); r.onload = e => { swipeData = parseDataFile(e.target.result); step2Loaded=true; document.getElementById(tid).innerHTML = '✅ Swipe載入'; renderKeyboard(); updateCodeOutput(); }; r.readAsText(f);
+        setupDropZone('dropZone2', 'fileInput2', 'dz2Text', 'swipe', (f, tid) => {
+            const r = new FileReader(); r.onload = e => { swipeData = parseDataFile(e.target.result); step2Loaded=true; document.getElementById(tid).innerHTML = '✅ Swipe載入'; renderKeyboard(); updateCodeOutput(); switchCodeTab(activeCodeTab); }; r.readAsText(f);
         });
-        setupDropZone('dropZone3', 'fileInput3', 'dz3Text', (f, tid) => {
+        setupDropZone('dropZone3', 'fileInput3', 'dz3Text', 'hint', (f, tid) => {
             const r = new FileReader(); r.onload = e => {
                 hintSymbolsData = parseDataFile(e.target.result);
                 migrateOldCommands(hintSymbolsData);
@@ -1429,6 +1754,7 @@
                 switchCategory('both');
                 renderKeyboard();
                 updateCodeOutput();
+                switchCodeTab(activeCodeTab);
             }; r.readAsText(f);
         });
 
@@ -1497,7 +1823,7 @@
             if(!text) return;
             const b = new Blob([text], {type:'text/plain'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(b);
-            a.download = activeCodeTab === 'swipe' ? 'swipeData.libsonnet' : 'hintSymbolsData.libsonnet';
+            a.download = activeCodeTab === 'swipe' ? fileNames.swipe : fileNames.hint;
             a.click(); URL.revokeObjectURL(a.href);
         });
 
