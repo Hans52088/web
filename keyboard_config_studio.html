@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⌨️ 鍵盤配置工作室</title>
+    <meta name="description" content="整合鍵盤佈局、配色、上下滑與長按配置的視覺化編輯器">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        :root {
+            --ios-blue: #007AFF; --ios-green: #34C759; --ios-red: #FF3B30;
+            --ios-orange: #FF9500; --ios-purple: #AF52DE; --ios-teal: #5AC8FA;
+            --bg: #F2F2F7; --card: #FFFFFF; --card-secondary: #F9F9FB;
+            --text-primary: #1C1C1E; --text-secondary: #8E8E93; --text-tertiary: #AEAEB2;
+            --border: #E5E5EA; --border-light: #F0F0F5;
+            --separator: #C6C6C8; --fill: #E5E5EA;
+            --nav-bg: rgba(249,249,249,0.94); --nav-border: rgba(0,0,0,0.1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+            --transition: 0.25s cubic-bezier(0.25,0.1,0.25,1);
+        }
+        html[data-theme="dark"] {
+            --bg: #000000; --card: #1C1C1E; --card-secondary: #2C2C2E;
+            --text-primary: #FFFFFF; --text-secondary: #8E8E93; --text-tertiary: #636366;
+            --border: #38383A; --border-light: #2C2C2E;
+            --separator: #48484A; --fill: #3A3A3C;
+            --nav-bg: rgba(29,29,31,0.94); --nav-border: rgba(255,255,255,0.1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); font-family: 'Inter',-apple-system,BlinkMacSystemFont,sans-serif; color: var(--text-primary); min-height: 100vh; transition: background var(--transition), color var(--transition); }
+
+        /* === NAV BAR === */
+        .navbar { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 0.5px solid var(--nav-border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-left { display: flex; align-items: center; gap: 12px; }
+        .nav-title { font-size: 20px; font-weight: 700; }
+        .author-badge { background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple)); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+        .theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all var(--transition); }
+        .theme-toggle:hover { transform: scale(1.1); box-shadow: var(--shadow-md); }
+
+        /* === SEGMENTED CONTROL === */
+        .segmented-wrap { padding: 12px 24px 0; display: flex; justify-content: center; }
+        .segmented-control { display: inline-flex; background: var(--fill); border-radius: 10px; padding: 3px; position: relative; }
+        .seg-btn { padding: 8px 24px; border-radius: 8px; border: none; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition); position: relative; z-index: 1; white-space: nowrap; }
+        .seg-btn.active { color: var(--text-primary); background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+        /* === MAIN LAYOUT === */
+        .main-content { max-width: 1600px; margin: 0 auto; padding: 16px 24px 40px; }
+        .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+        .tab-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* === iOS GROUPED CARDS === */
+        .ios-card { background: var(--card); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); border: 0.5px solid var(--border); transition: background var(--transition), border var(--transition); }
+        .ios-card-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding: 0 4px; }
+        .ios-section-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .ios-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border-light); }
+        .ios-row:last-child { border-bottom: none; }
+        .ios-row label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* === DROP ZONE === */
+        .drop-zone { border: 2px dashed var(--ios-teal); background: var(--card-secondary); border-radius: var(--radius-md); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--ios-teal); font-size: 14px; font-weight: 600; }
+        .drop-zone:hover, .drop-zone.dragover { background: rgba(90,200,250,0.08); border-color: var(--ios-blue); color: var(--ios-blue); transform: scale(1.01); }
+
+        /* === SPLIT LAYOUT === */
+        .split-layout { display: flex; gap: 20px; align-items: flex-start; }
+        .split-left { flex: 1; min-width: 0; }
+        .split-right { flex: 1; min-width: 0; max-width: 50%; }
+
+        /* === BUTTONS === */
+        .btn { padding: 10px 16px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--ios-blue); color: #fff; }
+        .btn-primary:hover { background: #0066D6; }
+        .btn-green { background: var(--ios-green); color: #fff; }
+        .btn-green:hover { background: #2EB350; }
+        .btn-red { background: var(--ios-red); color: #fff; }
+        .btn-red:hover { background: #D73128; }
+        .btn-orange { background: var(--ios-orange); color: #fff; }
+        .btn-orange:hover { background: #E08300; }
+        .btn-ghost { background: transparent; color: var(--ios-blue); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: rgba(0,122,255,0.06); }
+        .btn-tint { background: rgba(0,122,255,0.1); color: var(--ios-blue); }
+        .btn-tint:hover { background: rgba(0,122,255,0.18); }
+        .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+        .btn-full { width: 100%; }
+
+        /* === INPUTS === */
+        input[type="text"], input[type="number"], select { height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--card-secondary); color: var(--text-primary); transition: all var(--transition); outline: none; font-family: inherit; }
+        input:focus, select:focus { border-color: var(--ios-blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+        textarea { width: 100%; font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card-secondary); color: var(--text-primary); resize: none; outline: none; transition: all var(--transition); }
+        textarea:focus { border-color: var(--ios-blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+
+        /* === COLOR PICKER === */
+        .color-cell { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .color-label { font-size: 13px; font-weight: 500; color: var(--text-primary); width: 68px; }
+        .color-picker { width: 36px!important; height: 36px!important; padding: 0!important; cursor: pointer; border: 1px solid var(--border)!important; border-radius: var(--radius-sm); overflow: hidden; flex-shrink: 0; }
+        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker::-webkit-color-swatch { border: none; border-radius: 6px; }
+        .hex-input { font-family: 'SF Mono',monospace; font-size: 12px!important; text-transform: uppercase; width: 78px!important; text-align: center; }
+
+        /* === MODE TABS (layout editor sub-tabs) === */
+        .mode-tabs { display: flex; gap: 4px; background: var(--fill); padding: 3px; border-radius: 10px; }
+        .mode-tab { flex: 1; padding: 8px 6px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: 600; font-size: 12px; color: var(--text-secondary); transition: all var(--transition); border: none; background: transparent; }
+        .mode-tab.active { background: var(--card); color: var(--ios-blue); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+        /* === KEYBOARD PREVIEW (layout tool) === */
+        .keyboard-preview { background: #d1d5db; padding: 12px; border-radius: var(--radius-md); display: flex; flex-direction: column; width: 100%; border: 1px solid #999; transition: 0.3s; }
+        .keyboard-row-preview { display: flex; width: 100%; }
+        .preview-key { background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border-bottom: 2px solid rgba(0,0,0,0.15); font-weight: 500; overflow: hidden; white-space: nowrap; transition: 0.3s; }
+
+        /* === LAYOUT EDITOR ROWS === */
+        .row-item { background: var(--card-secondary); border: 1px solid var(--border); margin-bottom: 16px; padding: 16px; border-radius: var(--radius-md); transition: all var(--transition); }
+        .key-grid-header, .key-input-row, .sum-header-row { display: grid; grid-template-columns: 20px 95px 65px 65px 45px 75px 115px 45px 35px; gap: 8px; }
+        .key-grid-header { margin-bottom: 8px; font-size: 11px; color: var(--text-secondary); font-weight: 600; text-align: center; }
+        .key-input-row { margin-bottom: 6px; align-items: center; }
+        .sum-header-row { margin-bottom: 4px; }
+        .sum-text { grid-column: 6; text-align: center; font-size: 12px; font-weight: 700; color: var(--ios-red); }
+
+        /* === STYLE GRID === */
+        .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* === SYNC BOX === */
+        .sync-box { background: rgba(255,149,0,0.08); border: 1px solid rgba(255,149,0,0.3); padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; color: var(--ios-orange); }
+        html[data-theme="dark"] .sync-box { background: rgba(255,149,0,0.12); }
+
+        /* === EXPORT SELECT === */
+        .export-select { width: 100%; height: 38px; border: 2px solid var(--ios-blue); border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; color: var(--text-primary); padding: 0 10px; cursor: pointer; background: var(--card); }
+
+        /* ======== SWIPE/HINT TOOL STYLES ======== */
+        .steps-row { display: flex; gap: 12px; }
+        .steps-row .drop-zone { flex: 1; padding: 14px; }
+
+        .swipe-workspace { display: flex; gap: 20px; align-items: flex-start; }
+        .swipe-left { flex: 1.4; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+        .swipe-right { flex: 1; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+
+        /* Keyboard keys (swipe tool) */
+        .keyboard-container { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 15px; background: #d1d5db; padding: 12px; border-radius: var(--radius-md); border: 1px solid #999; }
+        html[data-theme="dark"] .keyboard-container { background: #1C1C1E; border-color: #38383A; }
+        .keyboard-row { display: flex; width: 100%; }
+        .key { position: relative; height: 60px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border-bottom: 2px solid rgba(0,0,0,0.15); font-size: 18px; font-weight: 500; color: #000; transition: all 0.15s; overflow: hidden; white-space: nowrap; }
+        .key:hover { filter: brightness(0.95); }
+        .key:active { transform: scale(0.95); background-color: #e5e5ea; }
+        html[data-theme="dark"] .key { background: #4a4a4c; box-shadow: 0 1px 2px rgba(0,0,0,0.6); border-bottom: 2px solid rgba(0,0,0,0.6); color: #fff; }
+        .key.selected { border: 3px solid var(--ios-blue); box-shadow: 0 0 12px rgba(0,122,255,0.4); transform: scale(1.05); z-index: 10; }
+        .swipe-label { position: absolute; font-size: 11px; color: var(--text-secondary); font-weight: 500; pointer-events: none; }
+        .swipe-up-label { top: 4px; }
+        .swipe-down-label { bottom: 4px; }
+        .key.has-hint::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--ios-blue); border-radius: 50%; }
+
+        /* Editor groups */
+        .editor-group { background: var(--card-secondary); padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border); }
+        .editor-group h3 { margin: 0 0 10px; font-size: 15px; color: var(--text-primary); border-bottom: 1px solid var(--border-light); padding-bottom: 8px; }
+        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .input-row label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+        .input-row input[type="text"]:not(.hex-input):not(.sf-label-input), .input-row input[type="number"], .input-row select { width: 145px; }
+
+        /* Hint items */
+        .hint-items-container { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .hint-item { background: var(--card); padding: 12px 15px; border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; transition: all 0.2s; }
+        .hint-item.dragging { opacity: 0.5; box-shadow: var(--shadow-lg); }
+        .hint-index-badge { display: inline-flex; align-items: center; justify-content: center; background: rgba(0,122,255,0.08); color: var(--ios-blue); border: 1px solid rgba(0,122,255,0.2); border-radius: 6px; font-size: 12px; font-weight: 700; padding: 4px 8px; cursor: grab; }
+
+        /* SF Symbol */
+        .sf-input-container { display: flex; gap: 6px; align-items: center; width: 145px; }
+        .sf-preview-box { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; justify-content: center; align-items: center; font-size: 16px; background: var(--card-secondary); flex-shrink: 0; color: var(--text-primary); }
+        .sf-label-input { flex: 1; width: 100%!important; height: 36px; border: 1px solid var(--border)!important; border-radius: var(--radius-sm); padding: 0 8px; font-size: 13px; outline: none; background: var(--card-secondary); color: var(--text-primary); }
+
+        /* Code tabs */
+        .code-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+
+        /* Icon Modal */
+        .icon-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
+        .icon-modal-content { background: var(--card); width: 90%; max-width: 800px; border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-lg); max-height: 85vh; display: flex; flex-direction: column; }
+        .icon-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; overflow-y: auto; }
+        .icon-cell { background: var(--card-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 6px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .icon-cell:hover { background: rgba(0,122,255,0.08); border-color: var(--ios-blue); transform: translateY(-2px); }
+
+        /* Long press popup */
+        .key-popup { position: fixed; background: var(--fill); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); display: flex; padding: 4px; gap: 4px; z-index: 9999; pointer-events: none; transform: translate(-50%,-100%); opacity: 0; visibility: hidden; transition: opacity 0.15s; }
+        .key-popup.show { opacity: 1; visibility: visible; }
+        .key-popup::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: var(--fill) transparent transparent; }
+        .popup-item { min-width: 32px; height: 38px; padding: 0 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 500; color: var(--text-primary); border-radius: 6px; }
+        .popup-item.selected { background: var(--ios-blue); color: #fff; }
+
+        /* Category tabs */
+        .category-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 3px; }
+
+        /* Action panel */
+        .action-panel { display: flex; flex-direction: column; gap: 10px; }
+
+        /* Color grid for dark mode panel */
+        .color-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+
+        /* Batch panel */
+        .batch-panel { background: rgba(0,122,255,0.05); border: 1px solid rgba(0,122,255,0.15); padding: 12px 16px; border-radius: var(--radius-md); }
+        html[data-theme="dark"] .batch-panel { background: rgba(0,122,255,0.1); }
+
+        /* === CSKIN GLOBAL UPLOAD/EXPORT === */
+        .cskin-zone { max-width: 900px; margin: 0 auto 0; padding: 0 20px; }
+        .cskin-card { background: linear-gradient(135deg, rgba(255,149,0,0.06), rgba(0,122,255,0.06)); border: 2px dashed rgba(255,149,0,0.4); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; gap: 16px; transition: all 0.3s; cursor: default; }
+        .cskin-card.dragover { border-color: var(--ios-orange); background: linear-gradient(135deg, rgba(255,149,0,0.12), rgba(0,122,255,0.12)); transform: scale(1.01); }
+        .cskin-card.loaded { border-style: solid; border-color: var(--ios-green); background: linear-gradient(135deg, rgba(52,199,89,0.06), rgba(0,122,255,0.06)); }
+        html[data-theme="dark"] .cskin-card { background: linear-gradient(135deg, rgba(255,149,0,0.1), rgba(0,122,255,0.1)); }
+        html[data-theme="dark"] .cskin-card.loaded { background: linear-gradient(135deg, rgba(52,199,89,0.1), rgba(0,122,255,0.1)); }
+        .cskin-icon { font-size: 32px; flex-shrink: 0; }
+        .cskin-info { flex: 1; }
+        .cskin-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .cskin-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+        .cskin-status { display: none; margin-top: 8px; }
+        .cskin-status.show { display: block; }
+        .cskin-status-item { font-size: 11px; color: var(--ios-green); font-weight: 600; margin-bottom: 2px; }
+        .cskin-status-item.missing { color: var(--text-tertiary); }
+        .cskin-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    </style>
+    <!-- 引入 JSZip 套件以支援 Rime 資料夾打包 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+    <!-- NAV BAR -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <span class="nav-title">⌨️ 鍵盤配置工作室</span>
+            <span class="author-badge">版權所有 ＆ 製作：WHY</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
+    </nav>
+
+    <!-- SEGMENTED CONTROL -->
+    <div class="segmented-wrap">
+        <div class="segmented-control">
+            <button class="seg-btn active" data-tab="tab-layout" onclick="switchMainTab('tab-layout',this)">⌨️ 佈局與配色</button>
+            <button class="seg-btn" data-tab="tab-swipe" onclick="switchMainTab('tab-swipe',this)">👆 上下滑與長按</button>
+        </div>
+    </div>
+
+    <!-- CSKIN GLOBAL UPLOAD/EXPORT ZONE -->
+    <div class="cskin-zone">
+        <div class="cskin-card" id="cskinCard">
+            <div class="cskin-icon">📦</div>
+            <div class="cskin-info">
+                <div class="cskin-title" id="cskinTitle">一鍵匯入 .cskin 皮膚包</div>
+                <div class="cskin-desc" id="cskinDesc">拖放或點擊上傳您的 .cskin 皮膚包，系統會自動解壓並將佈局、上下滑、長按等配置分別載入到對應的分頁中。</div>
+                <div class="cskin-status" id="cskinStatus"></div>
+            </div>
+            <div class="cskin-actions">
+                <button class="btn btn-orange btn-sm" id="cskinUploadBtn" onclick="document.getElementById('cskinFileInput').click()">📂 選擇 .cskin</button>
+                <button class="btn btn-green btn-sm" id="cskinExportBtn" onclick="exportCskin()" style="display:none">💾 匯出 .cskin</button>
+            </div>
+            <input type="file" id="cskinFileInput" hidden accept=".cskin,.zip">
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- ==================== TAB 1: 佈局與配色 ==================== -->
+        <div id="tab-layout" class="tab-panel active">
+            <div class="ios-card">
+                <div id="layoutDropZone" class="drop-zone">📂 點擊或拖放 <b>.libsonnet</b> 或 <b>.jsonnet</b> 載入</div>
+                <input type="file" id="layoutFileInput" hidden accept=".libsonnet,.jsonnet">
+            </div>
+
+            <div class="split-layout">
+                <!-- LEFT: Config -->
+                <div class="split-left" style="overflow-y:auto; max-height:calc(100vh - 180px);">
+                    <div class="ios-card">
+                        <div class="sync-box" style="margin-bottom:14px;">
+                            <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                                <input type="checkbox" id="syncAllCheck" checked> 🔄 同時編輯對應語系的豎屏與橫屏
+                            </label>
+                        </div>
+                        <div class="style-grid" style="margin-bottom:14px;">
+                            <div><label style="font-size:13px;font-weight:500;">文字大小(px)</label><input type="number" id="globalFontSize" value="18" style="width:100%;margin-top:4px;" oninput="applyG()"></div>
+                            <div><label style="font-size:13px;font-weight:500;">鍵盤寬度(%)</label><input type="number" id="kbWidthPerc" value="100" style="width:100%;margin-top:4px;" oninput="renderPreview()"></div>
+                            <div><label style="font-size:13px;font-weight:500;">高度模式</label><select id="heightMode" style="width:100%;margin-top:4px;" onchange="renderPreview()"><option value="total">鍵盤總高度</option><option value="single">單行高度</option></select></div>
+                            <div><label style="font-size:13px;font-weight:500;">高度(px)</label><input type="number" id="heightInput" value="250" style="width:100%;margin-top:4px;" oninput="renderPreview()"></div>
+                            <div><label style="font-size:13px;font-weight:500;">間距(px)</label><input type="number" id="keyGap" value="5" style="width:100%;margin-top:4px;" oninput="renderPreview()"></div>
+                            <div><label style="font-size:13px;font-weight:500;">圓角(px)</label><input type="number" id="keyRadius" value="8" style="width:100%;margin-top:4px;" oninput="renderPreview()"></div>
+                        </div>
+                    </div>
+
+                    <!-- Color settings -->
+                    <div class="ios-card">
+                        <div class="ios-section-title">🌙 暗黑模式配色選項</div>
+                        <select id="darkModeHandling" style="width:100%;height:36px;border-radius:8px;border:1px solid var(--border);font-weight:600;font-size:13px;margin-bottom:14px;background:var(--card-secondary);color:var(--text-primary);" onchange="toggleDarkPanel()">
+                            <option value="system" selected>智慧模式 (白天自訂，夜間還原 iOS 系統暗色)</option>
+                            <option value="unified">統一配色 (無分日夜配色相同)</option>
+                            <option value="custom">獨立配色 (分別設定白天與夜間的配色)</option>
+                        </select>
+
+                        <div class="ios-card-title">☀️ 日間模式 / 通用配色</div>
+                        <div class="color-options-grid">
+                            <div class="color-cell"><span class="color-label">鍵盤底色</span><input type="color" class="color-picker" id="kbBgColor" value="#d1d5db" oninput="syncC('kbBgColor','kbBgHex')"><input type="text" id="kbBgHex" class="hex-input" value="#D1D5DB" oninput="syncH('kbBgHex','kbBgColor')"></div>
+                            <div class="color-cell"><span class="color-label">預設字色</span><input type="color" class="color-picker" id="defKeyColor" value="#000000" oninput="syncGlobalDefColor(this.value)"><input type="text" id="defKeyHex" class="hex-input" value="#000000" oninput="syncGlobalDefHex(this.value)"></div>
+                            <div class="color-cell"><span class="color-label">一般鍵底</span><input type="color" class="color-picker" id="keyBgColor" value="#ffffff" oninput="syncC('keyBgColor','keyBgHex')"><input type="text" id="keyBgHex" class="hex-input" value="#FFFFFF" oninput="syncH('keyBgHex','keyBgColor')"></div>
+                            <div class="color-cell"><span class="color-label">系統鍵底</span><input type="color" class="color-picker" id="sysKeyBgColor" value="#b3bce2" oninput="syncC('sysKeyBgColor','sysKeyHex')"><input type="text" id="sysKeyHex" class="hex-input" value="#B3BCE2" oninput="syncH('sysKeyHex','sysKeyBgColor')"></div>
+                            <div class="color-cell"><span class="color-label">Enter底色</span><input type="color" class="color-picker" id="enterBgColor" value="#007aff" oninput="syncC('enterBgColor','enterBgHex')"><input type="text" id="enterBgHex" class="hex-input" value="#007AFF" oninput="syncH('enterBgHex','enterBgColor')"></div>
+                            <div class="color-cell"><span class="color-label">Enter字色</span><input type="color" class="color-picker" id="enterTextColor" value="#ffffff" oninput="syncC('enterTextColor','enterTextHex')"><input type="text" id="enterTextHex" class="hex-input" value="#FFFFFF" oninput="syncH('enterTextHex','enterTextColor')"></div>
+                        </div>
+
+                        <div id="darkPanelWrap" style="display:none; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+                            <div class="ios-card-title">🌙 暗黑模式專屬配色</div>
+                            <div class="color-options-grid">
+                                <div class="color-cell"><span class="color-label">鍵盤底色</span><input type="color" class="color-picker" id="kbBgColorD" value="#1c1c1e" oninput="syncCD('kbBgColorD','kbBgHexD')"><input type="text" id="kbBgHexD" class="hex-input" value="#1C1C1E" oninput="syncHD('kbBgHexD','kbBgColorD')"></div>
+                                <div class="color-cell"><span class="color-label">預設字色</span><input type="color" class="color-picker" id="defKeyColorD" value="#ffffff" oninput="syncCD('defKeyColorD','defKeyHexD')"><input type="text" id="defKeyHexD" class="hex-input" value="#FFFFFF" oninput="syncHD('defKeyHexD','defKeyColorD')"></div>
+                                <div class="color-cell"><span class="color-label">一般鍵底</span><input type="color" class="color-picker" id="keyBgColorD" value="#4a4a4c" oninput="syncCD('keyBgColorD','keyBgHexD')"><input type="text" id="keyBgHexD" class="hex-input" value="#4A4A4C" oninput="syncHD('keyBgHexD','keyBgColorD')"></div>
+                                <div class="color-cell"><span class="color-label">系統鍵底</span><input type="color" class="color-picker" id="sysKeyBgColorD" value="#2c2c2e" oninput="syncCD('sysKeyBgColorD','sysKeyHexD')"><input type="text" id="sysKeyHexD" class="hex-input" value="#2C2C2E" oninput="syncHD('sysKeyHexD','sysKeyBgColorD')"></div>
+                                <div class="color-cell"><span class="color-label">Enter底色</span><input type="color" class="color-picker" id="enterBgColorD" value="#0a60fe" oninput="syncCD('enterBgColorD','enterBgHexD')"><input type="text" id="enterBgHexD" class="hex-input" value="#0A60FE" oninput="syncHD('enterBgHexD','enterBgColorD')"></div>
+                                <div class="color-cell"><span class="color-label">Enter字色</span><input type="color" class="color-picker" id="enterTextColorD" value="#ffffff" oninput="syncCD('enterTextColorD','enterTextHexD')"><input type="text" id="enterTextHexD" class="hex-input" value="#FFFFFF" oninput="syncHD('enterTextHexD','enterTextColorD')"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rows editor -->
+                    <div id="rowsContainer"></div>
+                    <button class="btn btn-green btn-full" style="margin-bottom:16px;" onclick="addNewRowSync()">＋ 新增一排按鍵</button>
+                </div>
+
+                <!-- RIGHT: Preview -->
+                <div class="split-right" style="overflow-y:auto; max-height:calc(100vh - 180px); padding-right:4px;">
+                    <div class="ios-card">
+                        <div class="mode-tabs" id="modeTabs" style="margin-bottom:12px;">
+                            <button class="mode-tab active" data-mode="portraitPinyin">豎屏中文</button>
+                            <button class="mode-tab" data-mode="landscapePinyin">橫屏中文</button>
+                            <button class="mode-tab" data-mode="portraitEn">豎屏英文</button>
+                            <button class="mode-tab" data-mode="landscapeEn">橫屏英文</button>
+                        </div>
+                        <select id="previewTheme" style="width:100%;height:36px;border-radius:8px;border:1px solid var(--border);font-weight:600;font-size:13px;cursor:pointer;text-align:center;margin-bottom:12px;background:var(--card-secondary);color:var(--text-primary);" onchange="renderPreview()">
+                            <option value="light">☀️ 預覽日間模式配色</option>
+                            <option value="dark">🌙 預覽夜間模式配色</option>
+                        </select>
+                        <div class="keyboard-preview" id="kbPreview"></div>
+                    </div>
+
+                    <div class="ios-card action-panel">
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-ghost" style="flex:1;" id="btnCopyL" onclick="copyL()">📋 複製配置</button>
+                            <button class="btn btn-ghost" style="flex:1;" id="btnPasteL" onclick="pasteL()">📥 貼上配置</button>
+                        </div>
+                        <select id="exportFormat" class="export-select">
+                            <option value="jsonnet" selected>產出格式：.jsonnet (單一佈局，支援完美雙模配色)</option>
+                            <option value="libsonnet">產出格式：.libsonnet (純多佈局代碼)</option>
+                        </select>
+                        <button class="btn btn-primary btn-full" id="btnGen" onclick="gen()">🚀 套用鍵盤配置並產出程式碼</button>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-tint" style="flex:1;" id="btnCopyC" onclick="copyC()">📄 複製程式碼</button>
+                            <button class="btn btn-tint" style="flex:1;" onclick="dl()">💾 下載檔案</button>
+                        </div>
+                        <textarea id="outArea" style="height:280px;" placeholder="產出的程式碼將顯示在此..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: 上下滑與長按 ==================== -->
+        <div id="tab-swipe" class="tab-panel">
+            <div class="ios-card">
+                <div class="steps-row">
+                    <div class="drop-zone" id="dropZone1"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;">Step 1</div><span id="dz1Text">拖放「配置與顏色檔 (pinyin_26.jsonnet)」<br>還原原始鍵盤佈局</span><input type="file" id="fileInput1" hidden accept=".libsonnet,.json,.jsonnet"></div>
+                    <div class="drop-zone" id="dropZone2"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;">Step 2</div><span id="dz2Text">拖放「swipeData.libsonnet」<br>載入上下滑資料</span><input type="file" id="fileInput2" hidden accept=".libsonnet,.json,.jsonnet"></div>
+                    <div class="drop-zone" id="dropZone3"><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;">Step 3</div><span id="dz3Text">拖放「hintSymbolsData.libsonnet」<br>載入長按資料</span><input type="file" id="fileInput3" hidden accept=".libsonnet,.json,.jsonnet"></div>
+                </div>
+            </div>
+
+            <div class="swipe-workspace">
+                <div class="swipe-left">
+                    <!-- Keyboard area -->
+                    <div class="ios-card" id="keyboardArea">
+                        <div class="category-tabs" id="categoryTabs" style="display:none;">
+                            <span style="font-size:13px;color:var(--text-secondary);align-self:center;margin-right:5px;">長按功能預覽群組:</span>
+                            <button class="btn btn-primary btn-sm" id="btn-both" onclick="switchCategory('both')">中文與英文</button>
+                            <button class="btn btn-ghost btn-sm" id="btn-pinyin" onclick="switchCategory('pinyin')">中文 (pinyin)</button>
+                            <button class="btn btn-ghost btn-sm" id="btn-alphabetic" onclick="switchCategory('alphabetic')">英文 (alphabetic)</button>
+                        </div>
+                        <div id="keyboardRenderContainer" class="keyboard-container">
+                            <p style="color:var(--text-secondary);margin-top:50px;text-align:center;">請先完成上方檔案上傳</p>
+                        </div>
+                    </div>
+
+                    <!-- Code area -->
+                    <div class="ios-card" style="display:flex;flex-direction:column;">
+                        <div class="code-tabs">
+                            <button class="btn btn-primary btn-sm" id="tabBtnSwipe" onclick="switchCodeTab('swipe')">上下滑 (swipeData)</button>
+                            <button class="btn btn-ghost btn-sm" id="tabBtnHint" onclick="switchCodeTab('hint')">長按 (hintSymbolsData)</button>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <h3 id="codeTitle" style="font-size:15px;color:var(--text-primary);">程式碼預覽 (swipeData)</h3>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-ghost btn-sm" id="copyFullBtn">📄 複製代碼</button>
+                                <button class="btn btn-green btn-sm" id="downloadBtn">💾 下載檔案</button>
+                            </div>
+                        </div>
+                        <textarea id="codeOutput" readonly style="min-height:220px;flex:1;" placeholder="// 當您套用更新後，程式碼將會顯示於此..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Right: Editor panel -->
+                <div class="swipe-right ios-card" id="editorArea" style="opacity:0.5;pointer-events:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--border);padding-bottom:10px;margin-bottom:15px;">
+                        <h2 style="font-size:17px;color:var(--ios-blue);">Step 4: 編輯按鍵 <span id="currentKeyDisplay" style="color:var(--text-primary);">-</span></h2>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-primary btn-sm" id="editorModeSwipe" onclick="switchEditorMode('swipe')">上下滑配置</button>
+                            <button class="btn btn-ghost btn-sm" id="editorModeHint" onclick="switchEditorMode('hint')">長按配置</button>
+                        </div>
+                    </div>
+
+                    <!-- Swipe editor -->
+                    <div id="swipeEditorSection">
+                        <div class="editor-group" style="margin-bottom:12px;">
+                            <h3>⇧ 上滑 (Swipe Up)</h3>
+                            <div class="input-row"><label>輸出類型:</label><select id="upType" onchange="handleTypeChange('up');autoFillSf('up');"><optgroup label="常用快捷指令"><option value="shortcut_undo">撤銷 (undo)</option><option value="shortcut_deleteText">全刪除 (deleteText)</option><option value="shortcut_copy">複製 (copy)</option><option value="shortcut_paste">貼上 (paste)</option><option value="shortcut_cut">剪下 (cut)</option><option value="shortcut_selectText">全選 (selectText)</option><option value="shortcut_home">移至行首 (home)</option><option value="shortcut_end">移至行尾 (end)</option><option value="shortcut_onehanded">單手模式切換</option><option value="shortcut_rime2">次選上屏 (2nd)</option><option value="shortcut_rime3">三選上屏 (3rd)</option></optgroup><optgroup label="獨立指令"><option value="backspace">退格 (backspace)</option><option value="enter">回車 (enter)</option><option value="shift">Shift</option><option value="tab">縮進 (tab)</option><option value="space">空格 (space)</option><option value="nextKeyboard">地球 (nextKeyboard)</option><option value="characterMargin">占位</option><option value="none">無 (none)</option></optgroup><optgroup label="需要設定值"><option value="character">字符 (character)</option><option value="symbol">符號 (symbol)</option><option value="sendKeys">組合鍵 (sendKeys)</option><option value="shortcut">自訂命令 (shortcut)</option><option value="keyboardType">鍵盤 (keyboardType)</option></optgroup></select></div>
+                            <div class="input-row"><label>輸出內容:</label><input type="text" id="upSymbol" placeholder="例如: 1, @"></div>
+                            <div class="input-row"><label>鍵盤顯示:</label><div class="sf-input-container"><div id="upSfPreview" class="sf-preview-box"></div><input type="text" id="upLabel" class="sf-label-input" placeholder="支援 sf:globe" oninput="updateSfPreview('up')"></div></div>
+                            <div class="input-row"><label>尺寸/顏色:</label><div style="display:flex;gap:8px;align-items:center;"><input type="number" id="upSize" placeholder="尺寸" style="width:60px;"><div class="color-cell"><input type="text" id="upColorText" class="hex-input" value="#8E8E93" maxlength="7"><input type="color" id="upColor" value="#8e8e93" class="color-picker"></div></div></div>
+                        </div>
+                        <div class="editor-group" style="margin-bottom:12px;">
+                            <h3>⇩ 下滑 (Swipe Down)</h3>
+                            <div class="input-row"><label>輸出類型:</label><select id="downType" onchange="handleTypeChange('down');autoFillSf('down');"><optgroup label="常用快捷指令"><option value="shortcut_undo">撤銷 (undo)</option><option value="shortcut_deleteText">全刪除 (deleteText)</option><option value="shortcut_copy">複製 (copy)</option><option value="shortcut_paste">貼上 (paste)</option><option value="shortcut_cut">剪下 (cut)</option><option value="shortcut_selectText">全選 (selectText)</option><option value="shortcut_home">移至行首 (home)</option><option value="shortcut_end">移至行尾 (end)</option><option value="shortcut_onehanded">單手模式切換</option><option value="shortcut_rime2">次選上屏 (2nd)</option><option value="shortcut_rime3">三選上屏 (3rd)</option></optgroup><optgroup label="獨立指令"><option value="backspace">退格 (backspace)</option><option value="enter">回車 (enter)</option><option value="shift">Shift</option><option value="tab">縮進 (tab)</option><option value="space">空格 (space)</option><option value="nextKeyboard">地球 (nextKeyboard)</option><option value="characterMargin">占位</option><option value="none">無 (none)</option></optgroup><optgroup label="需要設定值"><option value="character">字符 (character)</option><option value="symbol">符號 (symbol)</option><option value="sendKeys">組合鍵 (sendKeys)</option><option value="shortcut">自訂命令 (shortcut)</option><option value="keyboardType">鍵盤 (keyboardType)</option></optgroup></select></div>
+                            <div class="input-row"><label>輸出內容:</label><input type="text" id="downSymbol" placeholder="例如: 1, @"></div>
+                            <div class="input-row"><label>鍵盤顯示:</label><div class="sf-input-container"><div id="downSfPreview" class="sf-preview-box"></div><input type="text" id="downLabel" class="sf-label-input" placeholder="支援 sf:globe" oninput="updateSfPreview('down')"></div></div>
+                            <div class="input-row"><label>尺寸/顏色:</label><div style="display:flex;gap:8px;align-items:center;"><input type="number" id="downSize" placeholder="尺寸" style="width:60px;"><div class="color-cell"><input type="text" id="downColorText" class="hex-input" value="#8E8E93" maxlength="7"><input type="color" id="downColor" value="#8e8e93" class="color-picker"></div></div></div>
+                        </div>
+                        <div class="batch-panel">
+                            <div class="ios-card-title" style="color:var(--ios-blue);">🎨 一鍵批次修改上下滑設定</div>
+                            <div class="input-row" style="gap:6px;justify-content:flex-start;margin-bottom:4px;"><label style="width:45px;">上滑:</label><input type="number" id="batchUpSize" placeholder="尺寸" style="width:50px!important;"><input type="text" id="batchUpColorText" class="hex-input" value="#8E8E93" maxlength="7"><input type="color" id="batchUpColor" value="#8e8e93" class="color-picker"><button class="btn btn-tint btn-sm" style="flex:1;" onclick="batchUpdate('up')">套用上滑</button></div>
+                            <div class="input-row" style="gap:6px;justify-content:flex-start;margin-bottom:0;"><label style="width:45px;">下滑:</label><input type="number" id="batchDownSize" placeholder="尺寸" style="width:50px!important;"><input type="text" id="batchDownColorText" class="hex-input" value="#8E8E93" maxlength="7"><input type="color" id="batchDownColor" value="#8e8e93" class="color-picker"><button class="btn btn-tint btn-sm" style="flex:1;" onclick="batchUpdate('down')">套用下滑</button></div>
+                        </div>
+                    </div>
+
+                    <!-- Hint editor -->
+                    <div id="hintEditorSection" style="display:none;">
+                        <div class="editor-group">
+                            <h3 style="color:var(--ios-orange);">🔘 長按選項 (Hint / Long Press)</h3>
+                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                                <label style="font-size:13px;font-weight:500;">預設選項:</label>
+                                <input type="number" id="selectedIndexInput" min="0" value="0" style="width:50px;" onchange="updateSelectedIndex(this.value)">
+                                <div style="flex:1;"></div>
+                                <label style="font-size:13px;font-weight:500;">選項寬度:</label>
+                                <input type="number" id="hintWidthInput" min="0" placeholder="未設定" style="width:60px;" onchange="updateHintWidth(this.value)">
+                            </div>
+                            <div class="hint-items-container" id="hintItemsContainer"></div>
+                            <button class="btn btn-ghost btn-full btn-sm" style="margin-top:10px;border-color:var(--ios-orange);color:var(--ios-orange);" onclick="addHintItem()">+ 新增長按選項</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-green btn-full" id="mainSaveBtn" style="font-size:15px;margin-top:14px;padding:12px;" onclick="saveKeyData()">套用全部變更並產出程式碼</button>
+
+                    <div id="copyPastePanelSwipe" style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn btn-ghost btn-sm" style="flex:1;" id="copySwipeBtn" onclick="handlePanelCopy('swipe')">📄 複製上下滑配置</button>
+                        <button class="btn btn-orange btn-sm" style="flex:1;" id="pasteSwipeBtn" onclick="handlePanelPaste('swipe')">📋 貼上上下滑配置</button>
+                    </div>
+                    <div id="copyPastePanelHint" style="display:none;gap:10px;margin-top:10px;">
+                        <button class="btn btn-ghost btn-sm" style="flex:1;" id="copyHintBtn" onclick="handlePanelCopy('hint')">📄 複製長按配置</button>
+                        <button class="btn btn-orange btn-sm" style="flex:1;" id="pasteHintBtn" onclick="handlePanelPaste('hint')">📋 貼上長按配置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- SHARED: SF Symbol Modal -->
+    <div class="icon-modal-overlay" id="iconModalOverlay">
+        <div class="icon-modal-content">
+            <div class="icon-modal-header"><h3 style="font-size:18px;">選擇系統圖標 (SF Symbols)</h3><button style="background:none;border:none;font-size:24px;color:var(--text-secondary);cursor:pointer;" onclick="closeIconModal()">&times;</button></div>
+            <div class="icon-grid" id="iconGrid"></div>
+        </div>
+    </div>
+
+    <!-- SHARED: Long press popup -->
+    <div id="keyPopup" class="key-popup"></div>
+
+    <script>
+    /* ======================================================================
+       PART 0: GLOBAL UI — Tab switching & Theme toggle
+       ====================================================================== */
+    function switchMainTab(tabId, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+        // Sync Tab 2 keyboard when switching to swipe tab
+        if (tabId === 'tab-swipe' && typeof renderKeyboard === 'function') {
+            renderKeyboard();
+        }
+    }
+    function toggleEditorTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeToggle').innerText = isDark ? '☀️' : '🌙';
+        // Re-render keyboards to update theme-aware colors
+        renderKeyboard();
+    }
+
+    /* ======================================================================
+       CSKIN: One-click import/export for .cskin skin packages
+       ====================================================================== */
+    let cskinZip = null;          // JSZip object holding the entire .cskin
+    let cskinOriginalName = '';   // Original filename for re-export
+    let cskinFileMap = {};        // Map of path -> file entry for quick lookup
+
+    async function handleCskinImport(file) {
+        const card = document.getElementById('cskinCard');
+        const statusDiv = document.getElementById('cskinStatus');
+        const titleEl = document.getElementById('cskinTitle');
+        const descEl = document.getElementById('cskinDesc');
+        
+        try {
+            titleEl.innerText = '⏳ 正在解壓 .cskin...';
+            descEl.innerText = '請稍候...';
+            
+            const arrayBuffer = await file.arrayBuffer();
+            cskinZip = await JSZip.loadAsync(arrayBuffer);
+            cskinOriginalName = file.name;
+            cskinFileMap = {};
+            
+            // Build file map (skip __MACOSX and .DS_Store)
+            const allPaths = [];
+            cskinZip.forEach((path, entry) => {
+                if (path.includes('__MACOSX') || path.endsWith('.DS_Store')) return;
+                cskinFileMap[path] = entry;
+                allPaths.push(path);
+            });
+            
+            // Find key files by filename (endsWith matching — structure is fixed)
+            const findFile = (name) => allPaths.find(p => p.endsWith('/' + name) || p === name);
+            
+            const pinyinPath = findFile('pinyin_26.jsonnet');
+            const alphabeticPath = findFile('alphabetic_26.jsonnet');
+            const layoutLibPath = findFile('keyboardLayout.libsonnet');
+            const swipeDataPath = findFile('swipeData.libsonnet');
+            const swipeDataEnPath = findFile('swipeData-en.libsonnet');
+            const hintDataPath = findFile('hintSymbolsData.libsonnet');
+            const schemaPath = findFile('dayi4.schema.yaml');
+            
+            let statusHtml = '';
+            let loadedCount = 0;
+            
+            // Helper: wrap handleLayoutFile in a Promise so we can await it
+            function loadLayoutAsync(text, fileName) {
+                return new Promise((resolve) => {
+                    const fakeFile = new File([text], fileName, { type: 'text/plain' });
+                    const origAlert = window.alert;
+                    window.alert = (msg) => {};
+                    handleLayoutFile(fakeFile);
+                    window.alert = origAlert;
+                    // handleLayoutFile uses FileReader which is async, 
+                    // wait a tick for it to complete
+                    setTimeout(resolve, 100);
+                });
+            }
+            
+            // === TAB 1: Load pinyin_26.jsonnet (layout + color) ===
+            if (pinyinPath) {
+                const text = await cskinZip.file(pinyinPath).async('string');
+                await loadLayoutAsync(text, 'pinyin_26.jsonnet');
+                statusHtml += `<div class="cskin-status-item">✅ pinyin_26.jsonnet → 分頁1 佈局配色</div>`;
+                loadedCount++;
+            } else {
+                statusHtml += `<div class="cskin-status-item missing">⬜ pinyin_26.jsonnet (未找到)</div>`;
+            }
+            
+            if (alphabeticPath) {
+                const text = await cskinZip.file(alphabeticPath).async('string');
+                await loadLayoutAsync(text, 'alphabetic_26.jsonnet');
+                statusHtml += `<div class="cskin-status-item">✅ alphabetic_26.jsonnet → 分頁1 英文佈局</div>`;
+                loadedCount++;
+            } else {
+                statusHtml += `<div class="cskin-status-item missing">⬜ alphabetic_26.jsonnet (未找到)</div>`;
+            }
+            
+            // === TAB 2: Load swipe & hint data ===
+            // Tab 2 keyboard now reads from window.layouts (set by handleLayoutFile above)
+            // No need to call parseStep1Safe separately — it would duplicate rows
+            if (pinyinPath) {
+                document.getElementById('dz1Text').innerHTML = '✅ 佈局已載入 (from .cskin)';
+            }
+            
+            if (swipeDataPath) {
+                const text = await cskinZip.file(swipeDataPath).async('string');
+                swipeData = parseDataFile(text);
+                step2Loaded = true;
+                fileNames.swipe = 'swipeData.libsonnet';
+                document.getElementById('dz2Text').innerHTML = '✅ Swipe載入 (from .cskin)';
+                statusHtml += `<div class="cskin-status-item">✅ swipeData.libsonnet → 分頁2 上下滑(中文)</div>`;
+                loadedCount++;
+            } else {
+                statusHtml += `<div class="cskin-status-item missing">⬜ swipeData.libsonnet (未找到)</div>`;
+            }
+            
+            if (swipeDataEnPath) {
+                const text = await cskinZip.file(swipeDataEnPath).async('string');
+                // Store English swipe data separately
+                window.swipeDataEn = parseDataFile(text);
+                statusHtml += `<div class="cskin-status-item">✅ swipeData-en.libsonnet → 分頁2 上下滑(英文)</div>`;
+                loadedCount++;
+            } else {
+                statusHtml += `<div class="cskin-status-item missing">⬜ swipeData-en.libsonnet (未找到)</div>`;
+            }
+            
+            if (hintDataPath) {
+                const text = await cskinZip.file(hintDataPath).async('string');
+                hintSymbolsData = parseDataFile(text);
+                migrateOldCommands(hintSymbolsData);
+                step3Loaded = true;
+                fileNames.hint = 'hintSymbolsData.libsonnet';
+                document.getElementById('dz3Text').innerHTML = '✅ Hint載入 (from .cskin)';
+                statusHtml += `<div class="cskin-status-item">✅ hintSymbolsData.libsonnet → 分頁2 長按</div>`;
+                loadedCount++;
+            } else {
+                statusHtml += `<div class="cskin-status-item missing">⬜ hintSymbolsData.libsonnet (未找到)</div>`;
+            }
+            
+            // dayi4.schema.yaml: just store for re-export, no UI for now
+            if (schemaPath) {
+                const text = await cskinZip.file(schemaPath).async('string');
+                window.cskinSchemaPath = schemaPath;
+                window.cskinSchemaText = text;
+                statusHtml += `<div class="cskin-status-item">✅ dayi4.schema.yaml (保留原始設定)</div>`;
+                loadedCount++;
+            }
+            
+            // Update UI
+            renderKeyboard();
+            updateCodeOutput();
+            switchCodeTab(activeCodeTab);
+            switchCategory('both');
+            
+            // Update cskin card
+            card.classList.add('loaded');
+            titleEl.innerText = `✅ ${cskinOriginalName} 已載入`;
+            descEl.innerText = `成功載入 ${loadedCount} 個配置檔案。修改完成後點擊「💾 匯出 .cskin」重新打包下載。`;
+            statusDiv.innerHTML = statusHtml;
+            statusDiv.classList.add('show');
+            document.getElementById('cskinExportBtn').style.display = 'block';
+            document.getElementById('cskinUploadBtn').innerText = '🔄 重新上傳';
+            
+        } catch (err) {
+            console.error('cskin import error:', err);
+            titleEl.innerText = '❌ 匯入失敗';
+            descEl.innerText = '解壓過程發生錯誤：' + err.message;
+            card.classList.remove('loaded');
+        }
+    }
+    
+    async function exportCskin() {
+        if (!cskinZip) { alert('請先匯入一個 .cskin 檔案！'); return; }
+        
+        const btn = document.getElementById('cskinExportBtn');
+        const origText = btn.innerText;
+        btn.innerText = '📦 打包中...';
+        
+        try {
+            // Save any pending edits
+            if (typeof silentSaveCurrentKey === 'function' && currentSelectedKey) silentSaveCurrentKey();
+            
+            // Create a new ZIP, copying all files from original (excluding __MACOSX, .DS_Store)
+            const newZip = new JSZip();
+            const allPaths = [];
+            cskinZip.forEach((path, entry) => {
+                if (path.includes('__MACOSX') || path.endsWith('.DS_Store')) return;
+                allPaths.push(path);
+            });
+            
+            const findFile = (name) => allPaths.find(p => p.endsWith('/' + name) || p === name);
+            
+            // Determine which files were modified
+            const pinyinPath = findFile('pinyin_26.jsonnet');
+            const alphabeticPath = findFile('alphabetic_26.jsonnet');
+            const swipeDataPath = findFile('swipeData.libsonnet');
+            const swipeDataEnPath = findFile('swipeData-en.libsonnet');
+            const hintDataPath = findFile('hintSymbolsData.libsonnet');
+            const schemaPath = findFile('dayi4.schema.yaml');
+            
+            // Generate modified content
+            // Tab 1: Generate code for pinyin and alphabetic
+            let pinyinCode = null;
+            let alphabeticCode = null;
+            
+            if (pinyinPath) {
+                // Save current state
+                const savedMode = currentMode;
+                const savedTemplate = rawTemplateStr;
+                const savedFileName = currentFileName;
+                const savedFormat = document.getElementById('exportFormat').value;
+                const savedOutArea = document.getElementById('outArea').value;
+                document.getElementById('exportFormat').value = 'jsonnet';
+                
+                // Generate pinyin code
+                currentMode = 'portraitPinyin';
+                currentFileName = 'pinyin_26.jsonnet';
+                const pinyinTemplate = await cskinZip.file(pinyinPath).async('string');
+                rawTemplateStr = pinyinTemplate;
+                const origAlert = window.alert;
+                window.alert = () => {};
+                gen();
+                window.alert = origAlert;
+                pinyinCode = document.getElementById('outArea').value;
+                
+                // Generate alphabetic code
+                if (alphabeticPath) {
+                    currentMode = 'portraitEn';
+                    currentFileName = 'alphabetic_26.jsonnet';
+                    const alphaTemplate = await cskinZip.file(alphabeticPath).async('string');
+                    rawTemplateStr = alphaTemplate;
+                    window.alert = () => {};
+                    gen();
+                    window.alert = origAlert;
+                    alphabeticCode = document.getElementById('outArea').value;
+                }
+                
+                // Restore state
+                currentMode = savedMode;
+                rawTemplateStr = savedTemplate;
+                currentFileName = savedFileName;
+                document.getElementById('exportFormat').value = savedFormat;
+                document.getElementById('outArea').value = savedOutArea;
+            }
+            
+            // Tab 2: Generate swipe and hint code
+            let swipeCode = "// === 本配置檔由鍵盤配置工作室產出 ===\n\n" + JSON.stringify(swipeData, null, 2);
+            let swipeEnCode = null;
+            if (window.swipeDataEn) {
+                swipeEnCode = "// === 本配置檔由鍵盤配置工作室產出 ===\n\n" + JSON.stringify(window.swipeDataEn, null, 2);
+            }
+            
+            let cleanHint = JSON.parse(JSON.stringify(hintSymbolsData));
+            Object.keys(cleanHint).forEach(c => Object.keys(cleanHint[c]).forEach(k => {
+                if (cleanHint[c][k].list) {
+                    cleanHint[c][k].list.forEach(i => {
+                        delete i._isCustomUI;
+                        delete i._isCustomKbUI;
+                        if (!i.label) i.label = { text: "" };
+                        else if (Object.keys(i.label).length === 0) i.label = { text: "" };
+                    });
+                }
+            }));
+            let hintOut = JSON.stringify(cleanHint, null, 2).replace(/"([a-zA-Z_][a-zA-Z0-9_]*)":/g, '$1:');
+            let hintCode = "// === 本配置檔由鍵盤配置工作室產出 ===\n\n{\n" + hintOut.substring(1, hintOut.length - 1) + "\n}";
+            
+            // Schema: keep original content as-is for re-export
+            let schemaCode = window.cskinSchemaText || null;
+            
+            // Copy all files, replacing modified ones
+            for (const path of allPaths) {
+                if (path.endsWith('/')) {
+                    // Directory entry
+                    newZip.folder(path);
+                    continue;
+                }
+                
+                if (pinyinPath && path === pinyinPath && pinyinCode) {
+                    newZip.file(path, pinyinCode);
+                } else if (alphabeticPath && path === alphabeticPath && alphabeticCode) {
+                    newZip.file(path, alphabeticCode);
+                } else if (swipeDataPath && path === swipeDataPath) {
+                    newZip.file(path, swipeCode);
+                } else if (swipeDataEnPath && path === swipeDataEnPath && swipeEnCode) {
+                    newZip.file(path, swipeEnCode);
+                } else if (hintDataPath && path === hintDataPath) {
+                    newZip.file(path, hintCode);
+                } else if (schemaPath && path === schemaPath && schemaCode) {
+                    newZip.file(path, schemaCode);
+                } else {
+                    // Copy original file as-is
+                    const data = await cskinZip.file(path).async('blob');
+                    newZip.file(path, data);
+                }
+            }
+            
+            // Generate zip Blob
+            const content = await newZip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+            
+            // Force .zip extension so macOS doesn't drop it
+            let orig = cskinOriginalName || 'exported.cskin';
+            const fileName = orig.replace(/\.cskin$/i, '.zip');
+            
+            const blobUrl = URL.createObjectURL(content);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName;
+            
+            // Auto click to download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+            
+            // Render a visible link as a fallback if Safari still blocked the name
+            const statusDiv = document.getElementById('cskinStatus');
+            statusDiv.innerHTML += `<div style="margin-top:15px; padding:10px; background:var(--bg-secondary); border-radius:8px;">
+                ✅ 準備就緒！如果下載的檔案變成亂碼，請對右方連結<strong style="color:var(--primary-color)">按右鍵 -> 下載連結檔案 (儲存連結為)</strong>：
+                <a href="${blobUrl}" download="${fileName}" style="color:var(--primary-color); font-weight:bold; text-decoration:underline;">📥 下載 ${fileName}</a>
+                <br><small style="color:var(--text-tertiary);">下載後請自行將 .zip 改名為 .cskin 即可使用。</small>
+            </div>`;
+            
+            btn.innerText = '✅ 匯出成功！';
+            setTimeout(() => { btn.innerText = origText; }, 3000);
+            
+        } catch (err) {
+            console.error('cskin export error:', err);
+            alert('匯出過程發生錯誤：' + err.message);
+            btn.innerText = origText;
+        }
+    }
+
+    /* ======================================================================
+       PART 1: LAYOUT & COLOR EDITOR (from keyboard_layout_color_tools.html)
+       ====================================================================== */
+    const symbolMap = {'SEMICOLON':';','COMMA':',','PERIOD':'.','SLASH':'/','NUMERIC':'123','SHIFT':'⇧','BACKSPACE':'⌫','ENTER':'↵','SPACE':' ','TILDEDIRECT':'~','PERIODDIRECT':'.','UNDO':'↩️','DELETETEXT':'⌫ (全刪)','COPY':'📄','PASTE':'📋','CUT':'✂️','SELECTTEXT':'⬚','HOME':'⇤','END':'⇥','NEXTKEYBOARD':'🌐','TAB':'⇥ (Tab)','ONEHANDED':'👈','RIME2':'②','RIME3':'③','NONE':'(無)'};
+    const sysCodeMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','~':'tildeDirect','tildedirect':'tildeDirect',';':'semicolon','semicolon':'semicolon',',':'comma','comma':'comma','.':'period','period':'period','/':'slash','slash':'slash','perioddirect':'periodDirect','globe':'nextKeyboard'};
+    const reverseKeyMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','TILDEDIRECT':'tildeDirect','SEMICOLON':'semicolon','COMMA':'comma','PERIOD':'period','SLASH':'slash','PERIODDIRECT':'periodDirect','BACKSPACE':'backspace','ENTER':'enter','SHIFT':'shift','SPACE':'space','NUMERIC':'numeric','NEXTKEYBOARD':'nextKeyboard','TAB':'tab','UNDO':'undo','DELETETEXT':'deleteText','COPY':'copy','PASTE':'paste','CUT':'cut','SELECTTEXT':'selectText','HOME':'home','END':'end','ONEHANDED':'onehanded','RIME2':'rime2','RIME3':'rime3','NONE':'none'};
+    const defaultWidths = {'SPACE':0.36,'ENTER':0.12,'BACKSPACE':0.12,'SHIFT':0.12,'NUMERIC':0.12,'TILDEDIRECT':0.08,'PERIODDIRECT':0.08,'COMMA':0.1,'PERIOD':0.1,'SLASH':0.1,'SEMICOLON':0.1};
+    const systemKeys = ['BACKSPACE','ENTER','SHIFT','SPACE','NUMERIC','NEXTKEYBOARD','TAB','UNDO','DELETETEXT','COPY','PASTE','CUT','SELECTTEXT','HOME','END','ONEHANDED','RIME2','RIME3','NONE'];
+    const dropdownOptions = [{label:'字元(char)',val:''},{label:'退格(back)',val:'BACKSPACE'},{label:'回車(ent)',val:'ENTER'},{label:'Shift',val:'SHIFT'},{label:'數字(num)',val:'NUMERIC'},{label:'空格',val:'SPACE'},{label:'分號(;)',val:'SEMICOLON'},{label:'逗號(,)',val:'COMMA'},{label:'句號(.)',val:'PERIOD'},{label:'斜槓(/)',val:'SLASH'},{label:'波浪(~)',val:'TILDEDIRECT'},{label:'句號(底排)',val:'PERIODDIRECT'},{label:'地球(globe)',val:'NEXTKEYBOARD'},{label:'縮進(tab)',val:'TAB'},{label:'撤銷(undo)',val:'UNDO'},{label:'全刪除',val:'DELETETEXT'},{label:'複製(copy)',val:'COPY'},{label:'貼上(paste)',val:'PASTE'},{label:'剪下(cut)',val:'CUT'},{label:'全選',val:'SELECTTEXT'},{label:'移至行首',val:'HOME'},{label:'移至行尾',val:'END'},{label:'單手切換',val:'ONEHANDED'},{label:'次選上屏',val:'RIME2'},{label:'三選上屏',val:'RIME3'},{label:'占位/無(none)',val:'NONE'}];
+
+    let currentMode = 'portraitPinyin';
+    let layouts = {portraitPinyin:{rows:[]},landscapePinyin:{rows:[]},portraitEn:{rows:[]},landscapeEn:{rows:[]}};
+    let clip = null;
+    let currentDefaultColor = '#000000';
+    let rawTemplateStr = '';
+    let currentFileName = '';
+
+    function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+    function getSysCode(code){let str=String(code||'').toLowerCase();let res=sysCodeMap[str]||str;return res.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");}
+    function getSyncTargets(mode){if(!document.getElementById('syncAllCheck').checked)return[mode];if(mode.includes('Pinyin'))return['portraitPinyin','landscapePinyin'];if(mode.includes('En'))return['portraitEn','landscapeEn'];return[mode];}
+    function toggleDarkPanel(){const m=document.getElementById('darkModeHandling').value;document.getElementById('darkPanelWrap').style.display=m==='custom'?'block':'none';renderPreview();}
+
+    function init(){renderEditor();renderPreview();}
+
+    function renderEditor(){
+        const container=document.getElementById('rowsContainer');container.innerHTML='';
+        layouts[currentMode].rows.forEach((row,rIdx)=>{
+            const div=document.createElement('div');div.className='row-item';
+            div.innerHTML=`<div style="display:flex;align-items:center;margin-bottom:10px;"><b style="font-size:15px;margin-right:15px;">第 ${rIdx+1} 排</b><b style="font-size:15px;display:flex;align-items:center;">按鍵數: <input type="number" value="${row.keys.length}" style="width:50px;margin-left:8px;font-weight:normal;" onchange="setK(${rIdx},this.value)"></b><div style="flex-grow:1"></div><button class="btn btn-red btn-sm" onclick="removeRSync(${rIdx})">刪除排</button></div><div class="sum-header-row"><span></span><span></span><span></span><span></span><span></span><div class="sum-text">加總：<span id="sum-${rIdx}">0.00</span></div><span></span><span></span><span></span></div><div class="key-grid-header"><span></span><span>類型選單</span><span>輸出內容</span><span>按鍵顯示</span><span>調整</span><span>寬度比例</span><span>日間顏色</span><span>尺寸</span><span>刪</span></div><div id="keys-${rIdx}"></div>`;
+            const kBox=div.querySelector(`#keys-${rIdx}`);
+            row.keys.forEach((key,kIdx)=>{
+                const kRow=document.createElement('div');kRow.className='key-input-row';
+                const safeCode=String(key.code||'').replace(/'/g,"&#39;");
+                const safeOutCode=String(key.outCode||'').replace(/'/g,"&#39;");
+                let optionsHTML=dropdownOptions.map(opt=>`<option value="${opt.val}" ${safeOutCode.toUpperCase()===opt.val?'selected':''}>${opt.label}</option>`).join('');
+                kRow.innerHTML=`<div class="drag-handle" style="cursor:grab; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:18px;">☰</div><select onchange="updateKey(${rIdx},${kIdx},'type',this.value,this);renderEditor();">${optionsHTML}</select><input type="text" class="out-code-input" value="${safeOutCode}" placeholder="如:e" oninput="updateKey(${rIdx},${kIdx},'outCode',this.value,this)"><input type="text" class="code-input" value="${safeCode}" placeholder="如:E" oninput="updateKey(${rIdx},${kIdx},'code',this.value,this)"><button class="btn btn-orange btn-sm" onclick="autoWidth(${rIdx},${kIdx})">Auto</button><input type="number" step="0.01" value="${key.width}" oninput="updateKey(${rIdx},${kIdx},'width',this.value,this);updateSum(${rIdx});"><div class="color-cell" style="padding:0;background:transparent;border:none;"><input type="color" class="color-picker" value="${key.color}" oninput="updateKey(${rIdx},${kIdx},'color',this.value,this);"><input type="text" class="hex-input" value="${(key.color||'#000000').toUpperCase()}" oninput="updateKey(${rIdx},${kIdx},'color',this.value,this);"></div><input type="number" value="${key.fontSize}" oninput="updateKey(${rIdx},${kIdx},'fontSize',this.value,this)"><button class="btn btn-red btn-sm" style="width:35px;height:35px;padding:0;" onclick="removeKSync(${rIdx},${kIdx})">×</button>`;
+                kBox.appendChild(kRow);
+            });
+            container.appendChild(div);updateSum(rIdx);
+            new Sortable(kBox, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function (evt) {
+                    const r = rIdx;
+                    const oldI = evt.oldIndex;
+                    const newI = evt.newIndex;
+                    if (oldI !== newI) {
+                        const targets = getSyncTargets(currentMode);
+                        targets.forEach(m => {
+                            if (layouts[m] && layouts[m].rows[r]) {
+                                const arr = layouts[m].rows[r].keys;
+                                const item = arr.splice(oldI, 1)[0];
+                                arr.splice(newI, 0, item);
+                            }
+                        });
+                        renderEditor();
+                        renderPreview();
+                    }
+                }
+            });
+        });
+    }
+
+    function syncGlobalDefColor(val){const hexVal=val.toUpperCase();document.getElementById('defKeyHex').value=hexVal;const targets=getSyncTargets(currentMode);targets.forEach(m=>{layouts[m].rows.forEach(row=>{row.keys.forEach(key=>{const c=key.color?key.color.toUpperCase():'';if(c===currentDefaultColor||c===''||c==='#000000'){key.color=hexVal;}});});});currentDefaultColor=hexVal;renderEditor();renderPreview();}
+    function syncGlobalDefHex(val){if(/^#[0-9A-F]{6}$/i.test(val)){document.getElementById('defKeyColor').value=val;syncGlobalDefColor(val);}}
+    function syncC(p,h){document.getElementById(h).value=document.getElementById(p).value.toUpperCase();renderPreview();}
+    function syncH(h,p){const v=document.getElementById(h).value;if(/^#[0-9A-F]{6}$/i.test(v)){document.getElementById(p).value=v;renderPreview();}}
+    function syncCD(p,h){document.getElementById(h).value=document.getElementById(p).value.toUpperCase();renderPreview();}
+    function syncHD(h,p){const v=document.getElementById(h).value;if(/^#[0-9A-F]{6}$/i.test(v)){document.getElementById(p).value=v;renderPreview();}}
+
+    function autoWidth(rIdx,kIdx){const row=layouts[currentMode].rows[rIdx];let o=0;row.keys.forEach((k,i)=>{if(i!==kIdx)o+=(parseFloat(k.width)||0);});updateKey(rIdx,kIdx,'width',Math.max(0,(1-o)).toFixed(4),null);renderEditor();}
+    function updateSum(rIdx){const row=layouts[currentMode].rows[rIdx];if(!row)return;const sum=row.keys.reduce((a,b)=>a+(parseFloat(b.width)||0),0);const el=document.getElementById(`sum-${rIdx}`);if(el){el.innerText=sum.toFixed(2);el.style.color=Math.abs(sum-1.0)<0.001?"#34c759":"#ff3b30";}}
+
+    function renderPreview(){
+        const preview=document.getElementById('kbPreview');const data=layouts[currentMode];
+        const hMode=document.getElementById('heightMode').value;const hIn=document.getElementById('heightInput').value;
+        const gap=parseInt(document.getElementById('keyGap').value);
+        const pTheme=document.getElementById('previewTheme').value;const dmMode=document.getElementById('darkModeHandling').value;
+        let curKbBg,curDefC,curKeyBg,curSysBg,curEnterBg,curEnterText;
+        if(pTheme==='dark'){if(dmMode==='custom'){curKbBg=document.getElementById('kbBgHexD').value||'#1C1C1E';curDefC=document.getElementById('defKeyHexD').value||'#FFFFFF';curKeyBg=document.getElementById('keyBgHexD').value||'#4A4A4C';curSysBg=document.getElementById('sysKeyHexD').value||'#2C2C2E';curEnterBg=document.getElementById('enterBgHexD').value||'#0A60FE';curEnterText=document.getElementById('enterTextHexD').value||'#FFFFFF';}else if(dmMode==='system'){curKbBg='#1C1C1E';curDefC='#FFFFFF';curKeyBg='#4A4A4C';curSysBg='#2C2C2E';curEnterBg='#0A60FE';curEnterText='#FFFFFF';}else{curKbBg=document.getElementById('kbBgHex').value;curDefC=document.getElementById('defKeyHex').value;curKeyBg=document.getElementById('keyBgHex').value;curSysBg=document.getElementById('sysKeyHex').value;curEnterBg=document.getElementById('enterBgHex').value;curEnterText=document.getElementById('enterTextHex').value;}}else{curKbBg=document.getElementById('kbBgHex').value;curDefC=document.getElementById('defKeyHex').value;curKeyBg=document.getElementById('keyBgHex').value;curSysBg=document.getElementById('sysKeyHex').value;curEnterBg=document.getElementById('enterBgHex').value;curEnterText=document.getElementById('enterTextHex').value;}
+        const lightDefC=document.getElementById('defKeyHex').value;
+        preview.style.width=document.getElementById('kbWidthPerc').value+'%';preview.style.backgroundColor=curKbBg;preview.style.gap=gap+'px';preview.innerHTML='';
+        const rowC=data.rows.length;let h=hMode==='total'?(hIn-(gap*(rowC-1)))/rowC:hIn;
+        data.rows.forEach(row=>{const rDiv=document.createElement('div');rDiv.className='keyboard-row-preview';rDiv.style.height=h+'px';rDiv.style.gap=gap+'px';row.keys.forEach(key=>{const k=document.createElement('div');k.className='preview-key';const rawCode=String(key.code||key.outCode||'');const upperCode=rawCode.toUpperCase();k.innerText=symbolMap[upperCode]!==undefined?symbolMap[upperCode]:rawCode;k.style.width=(key.width*100)+'%';k.style.fontSize=key.fontSize+'px';k.style.borderRadius=document.getElementById('keyRadius').value+'px';const isEnter=['ENTER','↵','RETURN'].includes(String(key.outCode||key.code||'').toUpperCase());const isSys=systemKeys.includes(String(key.outCode||key.code||'').toUpperCase());let keyHex=(key.color||'').toUpperCase();let displayColor;if(keyHex===lightDefC||keyHex===''||keyHex==='#000000'){displayColor=curDefC;}else{displayColor=key.color;}if(isEnter){k.style.backgroundColor=curEnterBg;k.style.color=curEnterText;}else if(isSys){k.style.backgroundColor=curSysBg;k.style.color=displayColor;}else{k.style.backgroundColor=curKeyBg;k.style.color=displayColor;}rDiv.appendChild(k);});preview.appendChild(rDiv);});
+    }
+
+    function updateKey(r,k,f,v,el){const val=(f==='width'||f==='fontSize')?parseFloat(v):v;const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m].rows[r]&&layouts[m].rows[r].keys[k]){let keyObj=layouts[m].rows[r].keys[k];if(f==='type'){keyObj.outCode=val;keyObj.code=val;}else if(f==='outCode'){if(!keyObj.code){keyObj.code=val;if(el&&currentMode===m){let ci=el.parentElement.querySelector('.code-input');if(ci)ci.value=val;}}keyObj.outCode=val;}else if(f==='code'){if(!keyObj.outCode){keyObj.outCode=val;if(el&&currentMode===m){let oi=el.parentElement.querySelector('.out-code-input');if(oi)oi.value=val;}}keyObj.code=val;}else{keyObj[f]=val;}}});renderPreview();}
+    function setK(r,c){const num=Math.max(1,parseInt(c));const defC=document.getElementById('defKeyColor').value;const targets=getSyncTargets(currentMode);targets.forEach(m=>{const row=layouts[m].rows[r];if(!row)return;if(num>row.keys.length){for(let i=row.keys.length;i<num;i++)row.keys.push({code:'',outCode:'',width:(1/num).toFixed(4),color:defC,fontSize:18});}else{row.keys=row.keys.slice(0,num);}row.keys.forEach(k=>k.width=(1/num).toFixed(4));});renderEditor();renderPreview();}
+
+    function flashBtn(id,text){const btn=document.getElementById(id);if(!btn)return;const old=btn.innerText;btn.innerText=text;setTimeout(()=>btn.innerText=old,2000);}
+    function copyL(){clip=JSON.parse(JSON.stringify(layouts[currentMode].rows));flashBtn('btnCopyL','✅ 複製成功');}
+    function pasteL(){if(clip){layouts[currentMode].rows=JSON.parse(JSON.stringify(clip));renderEditor();renderPreview();flashBtn('btnPasteL','✅ 貼上成功');}}
+    function copyC(){const a=document.getElementById('outArea');a.select();document.execCommand('copy');flashBtn('btnCopyC','✅ 複製成功');}
+    function getCellName(k){let outCode=k.outCode||k.code;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';return `${prefix}Button`;}
+    </script>
+    <script src="js_part1b.js"></script>
+    <script src="js_part1c.js"></script>
+    <script src="js_part2.js"></script>
+    <script src="js_part2b.js"></script>
+    <script>
+    /* ======================================================================
+       PART 3: INITIALIZATION — Bind events, set up drop zones, init
+       ====================================================================== */
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mode tabs (layout editor)
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentMode = this.dataset.mode;
+                renderEditor();
+                renderPreview();
+            });
+        });
+
+        // CSKIN global upload zone
+        const cskinCard = document.getElementById('cskinCard');
+        const cskinInput = document.getElementById('cskinFileInput');
+        cskinCard.ondragover = e => { e.preventDefault(); cskinCard.classList.add('dragover'); };
+        cskinCard.ondragleave = () => cskinCard.classList.remove('dragover');
+        cskinCard.ondrop = e => { e.preventDefault(); cskinCard.classList.remove('dragover'); if (e.dataTransfer.files.length) handleCskinImport(e.dataTransfer.files[0]); };
+        cskinInput.onchange = e => { if (e.target.files.length) handleCskinImport(e.target.files[0]); cskinInput.value = ''; };
+        // Layout file drop zone
+        const layoutDZ = document.getElementById('layoutDropZone');
+        const layoutInput = document.getElementById('layoutFileInput');
+        layoutDZ.onclick = () => layoutInput.click();
+        layoutDZ.ondragover = e => { e.preventDefault(); layoutDZ.classList.add('dragover'); };
+        layoutDZ.ondragleave = () => layoutDZ.classList.remove('dragover');
+        layoutDZ.ondrop = e => { e.preventDefault(); layoutDZ.classList.remove('dragover'); if (e.dataTransfer.files.length) handleLayoutFile(e.dataTransfer.files[0]); };
+        layoutInput.onchange = e => { if (e.target.files.length) handleLayoutFile(e.target.files[0]); layoutInput.value = ''; };
+
+        // Swipe tool drop zones
+        setupDropZone('dropZone1', 'fileInput1', 'dz1Text', 'layout', (f, tid) => {
+            const r = new FileReader(); r.onload = e => { parseStep1Safe(e.target.result); document.getElementById(tid).innerHTML = '✅ 佈局已載入'; renderKeyboard(); }; r.readAsText(f);
+        });
+        setupDropZone('dropZone2', 'fileInput2', 'dz2Text', 'swipe', (f, tid) => {
+            const r = new FileReader(); r.onload = e => { swipeData = parseDataFile(e.target.result); step2Loaded = true; document.getElementById(tid).innerHTML = '✅ Swipe載入'; renderKeyboard(); updateCodeOutput(); switchCodeTab(activeCodeTab); }; r.readAsText(f);
+        });
+        setupDropZone('dropZone3', 'fileInput3', 'dz3Text', 'hint', (f, tid) => {
+            const r = new FileReader(); r.onload = e => {
+                hintSymbolsData = parseDataFile(e.target.result);
+                migrateOldCommands(hintSymbolsData);
+                step3Loaded = true;
+                document.getElementById(tid).innerHTML = '✅ Hint載入';
+                switchCategory('both');
+                renderKeyboard();
+                updateCodeOutput();
+                switchCodeTab(activeCodeTab);
+            }; r.readAsText(f);
+        });
+
+        // Code copy/download buttons
+        document.getElementById('copyFullBtn').addEventListener('click', () => {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            const text = document.getElementById('codeOutput').value;
+            internalClipboard[activeCodeTab] = text;
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showBtnMsg('copyFullBtn', '📄 複製代碼', '✅ 成功')).catch(() => showBtnMsg('copyFullBtn', '📄 複製代碼', '✅ 暫存複製'));
+            else showBtnMsg('copyFullBtn', '📄 複製代碼', '✅ 暫存複製');
+        });
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (currentSelectedKey) { silentSaveCurrentKey(); updateCodeOutput(); renderKeyboard(); }
+            const text = document.getElementById('codeOutput').value;
+            if (!text) return;
+            const b = new Blob([text], { type: 'text/plain' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+            a.download = activeCodeTab === 'swipe' ? fileNames.swipe : fileNames.hint;
+            a.click(); URL.revokeObjectURL(a.href);
+        });
+
+        // Color syncing for batch inputs
+        bindColorInputs('upColor', 'upColorText');
+        bindColorInputs('downColor', 'downColorText');
+        bindColorInputs('batchUpColor', 'batchUpColorText');
+        bindColorInputs('batchDownColor', 'batchDownColorText');
+
+        // Icon grid
+        renderIconGrid();
+
+        // Layout editor init
+        init();
+
+        // Swipe tool keyboard render
+        renderKeyboard();
+
+
+    });
+    </script>
+</body>
+</html>
+
