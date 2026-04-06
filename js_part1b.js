@@ -17,7 +17,22 @@ function gen(){
         layouts[portMode].rows.forEach(r=>r.keys.forEach(addKey));
         layouts[landMode].rows.forEach(r=>r.keys.forEach(addKey));
 
-        const wrapBg=(sysKey,lightHex,darkHex)=>{if(dmMode==='unified')return`'${lightHex}'`;if(dmMode==='system')return`if theme == 'dark' then color['dark']['${sysKey}'] else '${lightHex}'`;if(dmMode==='custom')return`if theme == 'dark' then '${darkHex}' else '${lightHex}'`;};
+        const wrapBg=(sysKey,lightHex,darkHex)=>{
+            if(dmMode==='unified') return `'${lightHex}'`;
+            if(dmMode==='custom') return `if theme == 'dark' then '${darkHex}' else '${lightHex}'`;
+            if(dmMode==='system') {
+                let fallbacks = [sysKey];
+                if(sysKey.includes('字母键')) fallbacks.push('按键背景颜色','字母鍵背景顏色','按鍵背景顏色');
+                if(sysKey.includes('功能键')) fallbacks.push('系统键背景颜色','功能鍵背景顏色','系統鍵背景顏色');
+                if(sysKey.includes('键盘')) fallbacks.push('背景颜色','鍵盤背景顏色','背景顏色');
+                let checkStr = `if theme == 'dark' then (`;
+                fallbacks.forEach((f, idx) => {
+                    checkStr += `if std.objectHas(color['dark'], '${f}') then color['dark']['${f}'] else `;
+                });
+                checkStr += `'${darkHex}') else '${lightHex}'`;
+                return checkStr;
+            }
+        };
         let kbBg=document.getElementById('kbBgHex').value||'#D1D5DB';let defTextC=document.getElementById('defKeyHex').value||'#000000';let generalKeyBg=document.getElementById('keyBgHex').value||'#FFFFFF';let sysKeyBg=document.getElementById('sysKeyHex').value||'#B3BCE2';let enterBg=document.getElementById('enterBgHex').value||'#007AFF';let enterText=document.getElementById('enterTextHex').value||'#FFFFFF';
         let kbBgD=document.getElementById('kbBgHexD').value||'#1C1C1E';let defTextCD=document.getElementById('defKeyHexD').value||'#FFFFFF';let generalKeyBgD=document.getElementById('keyBgHexD').value||'#4A4A4C';let sysKeyBgD=document.getElementById('sysKeyHexD').value||'#2C2C2E';let enterBgD=document.getElementById('enterBgHexD').value||'#0A60FE';let enterTextD=document.getElementById('enterTextHexD').value||'#FFFFFF';
 
@@ -112,7 +127,22 @@ function gen(){
         
         let allRows=layouts[portMode].rows.concat(layouts[landMode].rows);
         allRows.forEach(r=>{r.keys.forEach(k=>{let color=(k.color||defTextC).toUpperCase();let rawDisplay=String(k.code||'');let rawOutput=String(k.outCode||rawDisplay);let rawCode=rawOutput.toLowerCase();let prefix=sysCodeMap[rawCode]||rawCode;let isDefaultColor=(color===defTextC.toUpperCase()||color==='');let textInject='';if(rawDisplay!==rawOutput&&rawDisplay.toLowerCase()!==rawOutput.toLowerCase()&&rawDisplay!==''&&!['enter','backspace','shift','space','numeric','tab','globe'].includes(prefix.toLowerCase())){let safeDisplay=rawDisplay.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");textInject=`text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;}
-            let colorStr;if(dmMode==='unified'){colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}else if(dmMode==='system'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}else if(dmMode==='custom'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}
+            let colorStr;
+            if(dmMode==='unified'){
+                colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
+            }else if(dmMode==='system'){
+                if(isDefaultColor){
+                    colorStr=`{ ${textInject}normalColor: if theme == 'dark' then (if std.objectHas(color['dark'], '按键前景颜色') then color['dark']['按键前景颜色'] else if std.objectHas(color['dark'], '按鍵前景顏色') then color['dark']['按鍵前景顏色'] else '${defTextCD}') else '${color}', highlightColor: if theme == 'dark' then (if std.objectHas(color['dark'], '按键前景颜色') then color['dark']['按键前景颜色'] else if std.objectHas(color['dark'], '按鍵前景顏色') then color['dark']['按鍵前景顏色'] else '${defTextCD}') else '${color}' }`;
+                }else{
+                    colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
+                }
+            }else if(dmMode==='custom'){
+                if(isDefaultColor){
+                    colorStr=`{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;
+                }else{
+                    colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
+                }
+            }
             let permutations=new Set([rawCode,prefix]);permutations.forEach(p=>{if(!p)return;let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p==='tab'||p.startsWith('shortcut_');
                 addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
                 addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
@@ -139,7 +169,15 @@ function gen(){
             }
         });});
 
-        let eTextLogic;if(dmMode==='unified'){eTextLogic=`'${enterText}'`;}else if(dmMode==='system'){eTextLogic=`if theme == 'dark' then '#FFFFFF' else '${enterText}'`;}else if(dmMode==='custom'){eTextLogic=`if theme == 'dark' then '${enterTextD}' else '${enterText}'`;}let enterColorStr=`{ normalColor: ${eTextLogic}, highlightColor: ${eTextLogic} }`;
+        let eTextLogic;
+        if(dmMode==='unified'){
+            eTextLogic=`'${enterText}'`;
+        }else if(dmMode==='system'){
+            eTextLogic=`if theme == 'dark' then (if std.objectHas(color['dark'], '確定按鍵前景顏色') then color['dark']['確定按鍵前景顏色'] else if std.objectHas(color['dark'], '确定按键前景颜色') then color['dark']['确定按键前景颜色'] else '#FFFFFF') else '${enterText}'`;
+        }else if(dmMode==='custom'){
+            eTextLogic=`if theme == 'dark' then '${enterTextD}' else '${enterText}'`;
+        }
+        let enterColorStr=`{ normalColor: ${eTextLogic}, highlightColor: ${eTextLogic} }`;
         let enterPermutations=['enter', 'return', '↵', 'ENTER', 'RETURN'];enterPermutations.forEach(p=>{addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',eTextLogic);addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',eTextLogic);});
 
         let overrides=`\n    ${overrideStartMarker}\n    + {\n`;
