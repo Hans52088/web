@@ -26,6 +26,12 @@ function gen(){
                 return `if theme == 'dark' then (${checkStr} else '${darkHex}') else '${lightHex}'`;
             }
         };
+        
+        // Helper for safe size access to prevent "field does not exist" errors
+        const wrapSize = (label) => {
+            return `if std.objectHas(ButtonSize, '${label}鍵size') then ButtonSize['${label}鍵size'] else ButtonSize['${label}键size']`;
+        };
+
         let kbBg=document.getElementById('kbBgHex').value||'#D1D5DB';let defTextC=document.getElementById('defKeyHex').value||'#000000';let generalKeyBg=document.getElementById('keyBgHex').value||'#FFFFFF';let sysKeyBg=document.getElementById('sysKeyHex').value||'#AAAAAA';let enterBg=document.getElementById('enterBgHex').value||'#007AFF';let enterText=document.getElementById('enterTextHex').value||'#FFFFFF';
         let kbBgD=document.getElementById('kbBgHexD').value||'#1C1C1E';let defTextCD=document.getElementById('defKeyHexD').value||'#FFFFFF';let generalKeyBgD=document.getElementById('keyBgHexD').value||'#4A4A4C';let sysKeyBgD=document.getElementById('sysKeyHexD').value||'#2C2C2E';let enterBgD=document.getElementById('enterBgHexD').value||'#0A60FE';let enterTextD=document.getElementById('enterTextHexD').value||'#FFFFFF';
 
@@ -61,8 +67,9 @@ function gen(){
                     }
                     
                     let bgStyle = (sp==='enter')?'searchButtonBackgroundStyle':'systemButtonBackgroundStyle';
+                    let sKey = sp === 'enter' ? 'enter' : (sp === 'shift' ? 'shift' : (sp === 'backspace' ? 'backspace' : (sp==='numeric'?'numeric': '普通')));
                     
-                    btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${sp}', text: '${spText}', size: ButtonSize['普通鍵size'] }) + {\n`;
+                    btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${sp}', text: '${spText}', size: ${wrapSize(sKey)} }) + {\n`;
                     btnInjectStr+=`      backgroundStyle: '${bgStyle}',\n`;
                     btnInjectStr+=`      foregroundStyle: ['${safePrefix}ButtonForegroundStyle'],\n`;
                     btnInjectStr+=`      ${specialObjStr},\n`;
@@ -76,7 +83,7 @@ function gen(){
                     btnInjectStr+=`    }),\n`;
                     return;
                 }
-                btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ButtonSize['普通鍵size'] }),\n`;
+                btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ${wrapSize('普通')} }),\n`;
                 styleInjectStr+=`  + createHintStyle('${safeOutCode}')\n`;
                 if(isPinyinTemplate){styleInjectStr+=`  + createSchemaStyles(theme, '${safeOutCode}')\n`;}
                 else{styleInjectStr+=`  + createExtraStyles(theme, '${safeOutCode}')\n`;}
@@ -214,7 +221,26 @@ function gen(){
     let out="// ==========================================\n";out+="// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出\n";out+="// ==========================================\n\n";out+="// 鍵盤佈局定義\n";out+="local color = import 'color.libsonnet';\n\n";out+="local keyboardLayout(theme='light') = {\n";
     const ns={portraitPinyin:'竖屏中文26键',landscapePinyin:'横屏中文26键',portraitEn:'竖屏英文26键',landscapeEn:'横屏英文26键'};
     Object.entries(layouts).forEach(([m,d])=>{out+=`  '${ns[m]}': {\n    keyboardLayout: [\n`;d.rows.forEach(r=>{out+=`      { HStack: { subviews: [ ${r.keys.map(k=>`{ Cell: '${getCellName(k)}' }`).join(', ')} ] } },\n`;});out+=`    ],\n`;out+=`    keyboardStyle: { backgroundStyle: 'keyboardBackgroundStyle' },\n`;out+=`    keyboardBackgroundStyle: { buttonStyleType: 'geometry', normalColor: color[theme]['键盘背景颜色'] },\n`;out+=`  },\n\n`;});
-    const getSizesBlock=(modes)=>{let sizeMap={};let commonWidths={};modes.forEach(m=>{layouts[m].rows.forEach(r=>{r.keys.forEach(k=>{let outCode=k.outCode||k.code;let sysCode=getSysCode(outCode);let sizeName=sysCode==='tildedirect'?'tilde':sysCode;if(sizeName){sizeMap[sizeName]=k.width;if(sizeName.length===1&&sizeName!==' '){commonWidths[k.width]=(commonWidths[k.width]||0)+1;}}});});});let defaultW=0.1;let maxCount=0;Object.keys(commonWidths).forEach(w=>{if(commonWidths[w]>maxCount){maxCount=commonWidths[w];defaultW=w;}});let block=`    '普通鍵size': { width: { percentage: ${defaultW} } },\n`;Object.keys(sizeMap).forEach(c=>{let safeC=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");block+=`    '${safeC}鍵size': { width: { percentage: ${sizeMap[c]} } },\n`;if(c==='t'||c==='y'){block+=`    '${safeC}鍵bounds': null,\n`;}else if(c==='a'){block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'right' },\n`;}else if(c==='l'){block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'left' },\n`;}else if(c==='shift'){block+=`    '${safeC}鍵bounds': null,\n`;}else if(c==='backspace'){block+=`    '${safeC}鍵bounds': null,\n`;}});return block;};
+    const getSizesBlock=(modes)=>{let sizeMap={};let commonWidths={};modes.forEach(m=>{layouts[m].rows.forEach(r=>{r.keys.forEach(k=>{let outCode=k.outCode||k.code;let sysCode=getSysCode(outCode);let sizeName=sysCode==='tildedirect'?'tilde':sysCode;if(sizeName){sizeMap[sizeName]=k.width;if(sizeName.length===1&&sizeName!==' '){commonWidths[k.width]=(commonWidths[k.width]||0)+1;}}});});});let defaultW=0.1;let maxCount=0;Object.keys(commonWidths).forEach(w=>{if(commonWidths[w]>maxCount){maxCount=commonWidths[w];defaultW=w;}});
+        let block = `    '普通鍵size': { width: { percentage: ${defaultW} } },\n    '普通键size': { width: { percentage: ${defaultW} } },\n`;
+        Object.keys(sizeMap).forEach(c=>{
+            let safeC=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");
+            let sLine = ` { width: { percentage: ${sizeMap[c]} } }`;
+            block+=`    '${safeC}鍵size':${sLine},\n    '${safeC}键size':${sLine},\n`;
+            if(c==='t'||c==='y'){
+                block+=`    '${safeC}鍵bounds': null,\n    '${safeC}键bounds': null,\n`;
+            }else if(c==='a'){
+                block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'right' },\n    '${safeC}键bounds': { width: '111/168.75', alignment: 'right' },\n`;
+            }else if(c==='l'){
+                block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'left' },\n    '${safeC}键bounds': { width: '111/168.75', alignment: 'left' },\n`;
+            }else if(c==='shift'){
+                block+=`    '${safeC}鍵bounds': null,\n    '${safeC}键bounds': null,\n`;
+            }else if(c==='backspace'){
+                block+=`    '${safeC}鍵bounds': null,\n    '${safeC}键bounds': null,\n`;
+            }
+        });
+        return block;
+    };
     out+=`  '豎屏按鍵尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '橫屏按鍵尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n    else keyboardLayout(theme)['横屏英文26键'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['豎屏按鍵尺寸']\n    else keyboardLayout(theme)['橫屏按鍵尺寸'],\n}\n";
     document.getElementById('outArea').value=out;flashBtn('btnGen','✅ libsonnet 產出成功');
 }
