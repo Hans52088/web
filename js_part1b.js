@@ -17,23 +17,16 @@ function gen(){
         layouts[portMode].rows.forEach(r=>r.keys.forEach(addKey));
         layouts[landMode].rows.forEach(r=>r.keys.forEach(addKey));
 
-        const wrapBg=(sysKey,lightHex,darkHex)=>{
+        const wrapBg=(labels,lightHex,darkHex)=>{
             if(dmMode==='unified') return `'${lightHex}'`;
             if(dmMode==='custom') return `if theme == 'dark' then '${darkHex}' else '${lightHex}'`;
             if(dmMode==='system') {
-                let fallbacks = [sysKey];
-                if(sysKey.includes('字母键')) fallbacks.push('按键背景颜色','字母鍵背景顏色','按鍵背景顏色');
-                if(sysKey.includes('功能键')) fallbacks.push('系统键背景颜色','功能鍵背景顏色','系統鍵背景顏色');
-                if(sysKey.includes('键盘')) fallbacks.push('背景颜色','鍵盤背景顏色','背景顏色');
-                let checkStr = `if theme == 'dark' then (`;
-                fallbacks.forEach((f, idx) => {
-                    checkStr += `if std.objectHas(color['dark'], '${f}') then color['dark']['${f}'] else `;
-                });
-                checkStr += `'${darkHex}') else '${lightHex}'`;
-                return checkStr;
+                let labelArray = Array.isArray(labels) ? labels : [labels];
+                let checkStr = labelArray.map(l => `if std.objectHas(color['dark'], '${l}') then color['dark']['${l}']`).join(' else ');
+                return `if theme == 'dark' then (${checkStr} else '${darkHex}') else '${lightHex}'`;
             }
         };
-        let kbBg=document.getElementById('kbBgHex').value||'#D1D5DB';let defTextC=document.getElementById('defKeyHex').value||'#000000';let generalKeyBg=document.getElementById('keyBgHex').value||'#FFFFFF';let sysKeyBg=document.getElementById('sysKeyHex').value||'#B3BCE2';let enterBg=document.getElementById('enterBgHex').value||'#007AFF';let enterText=document.getElementById('enterTextHex').value||'#FFFFFF';
+        let kbBg=document.getElementById('kbBgHex').value||'#D1D5DB';let defTextC=document.getElementById('defKeyHex').value||'#000000';let generalKeyBg=document.getElementById('keyBgHex').value||'#FFFFFF';let sysKeyBg=document.getElementById('sysKeyHex').value||'#AAAAAA';let enterBg=document.getElementById('enterBgHex').value||'#007AFF';let enterText=document.getElementById('enterTextHex').value||'#FFFFFF';
         let kbBgD=document.getElementById('kbBgHexD').value||'#1C1C1E';let defTextCD=document.getElementById('defKeyHexD').value||'#FFFFFF';let generalKeyBgD=document.getElementById('keyBgHexD').value||'#4A4A4C';let sysKeyBgD=document.getElementById('sysKeyHexD').value||'#2C2C2E';let enterBgD=document.getElementById('enterBgHexD').value||'#0A60FE';let enterTextD=document.getElementById('enterTextHexD').value||'#FFFFFF';
 
         let btnInjectStr="";let styleInjectStr="";
@@ -98,13 +91,13 @@ function gen(){
         let overrideMap=new Map();
         const addToOverrideMap=(btn,prop,val)=>{if(!overrideMap.has(btn))overrideMap.set(btn,new Map());overrideMap.get(btn).set(prop,val);};
         
-        addToOverrideMap('keyboardBackgroundStyle','normalColor',wrapBg('键盘背景颜色',kbBg,kbBgD));
-        addToOverrideMap('alphabeticBackgroundStyle','normalColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
-        addToOverrideMap('alphabeticBackgroundStyle','highlightColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
-        addToOverrideMap('systemButtonBackgroundStyle','normalColor',wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD));
-        addToOverrideMap('systemButtonBackgroundStyle','highlightColor',wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD));
-        addToOverrideMap('numberButtonBackgroundStyle','normalColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
-        addToOverrideMap('numberButtonBackgroundStyle','highlightColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('keyboardBackgroundStyle','normalColor',wrapBg(['鍵盤背景顏色','键盘背景颜色'],kbBg,kbBgD));
+        addToOverrideMap('alphabeticBackgroundStyle','normalColor',wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
+        addToOverrideMap('alphabeticBackgroundStyle','highlightColor',wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
+        addToOverrideMap('systemButtonBackgroundStyle','normalColor',wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD));
+        addToOverrideMap('systemButtonBackgroundStyle','highlightColor',wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD));
+        addToOverrideMap('numberButtonBackgroundStyle','normalColor',wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
+        addToOverrideMap('numberButtonBackgroundStyle','highlightColor',wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
         
         let eBgLogic,eBgLowerLogic;
         if(dmMode==='unified'){eBgLogic=`'${enterBg}'`;eBgLowerLogic=`'${enterBg}'`;}else if(dmMode==='system'){eBgLogic=`if theme == 'dark' then '#0A60FE' else '${enterBg}'`;eBgLowerLogic=`if theme == 'dark' then '#0040A8' else '${enterBg}'`;}else{eBgLogic=`if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;eBgLowerLogic=`if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;}
@@ -126,13 +119,25 @@ function gen(){
         });
         
         let allRows=layouts[portMode].rows.concat(layouts[landMode].rows);
-        allRows.forEach(r=>{r.keys.forEach(k=>{let color=(k.color||defTextC).toUpperCase();let rawDisplay=String(k.code||'');let rawOutput=String(k.outCode||rawDisplay);let rawCode=rawOutput.toLowerCase();let prefix=sysCodeMap[rawCode]||rawCode;let isDefaultColor=(color===defTextC.toUpperCase()||color==='');let textInject='';if(rawDisplay!==rawOutput&&rawDisplay.toLowerCase()!==rawOutput.toLowerCase()&&rawDisplay!==''&&!['enter','backspace','shift','space','numeric','tab','globe'].includes(prefix.toLowerCase())){let safeDisplay=rawDisplay.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");textInject=`text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;}
+        allRows.forEach(r=>{r.keys.forEach(k=>{
+            let color=(k.color||defTextC).toUpperCase();
+            let rawDisplay=String(k.code||'');
+            let rawOutput=String(k.outCode||rawDisplay);
+            let rawCode=rawOutput.toLowerCase();
+            let prefix=sysCodeMap[rawCode]||rawCode;
+            let isDefaultColor=(color===defTextC.toUpperCase()||color==='');
+            let textInject='';
+            if(rawDisplay!==rawOutput&&rawDisplay.toLowerCase()!==rawOutput.toLowerCase()&&rawDisplay!==''&&!['enter','backspace','shift','space','numeric','tab','globe'].includes(prefix.toLowerCase())){
+                let safeDisplay=rawDisplay.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");
+                textInject=`text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;
+            }
+            
             let colorStr;
             if(dmMode==='unified'){
                 colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
             }else if(dmMode==='system'){
                 if(isDefaultColor){
-                    colorStr=`{ ${textInject}normalColor: if theme == 'dark' then (if std.objectHas(color['dark'], '按键前景颜色') then color['dark']['按键前景颜色'] else if std.objectHas(color['dark'], '按鍵前景顏色') then color['dark']['按鍵前景顏色'] else '${defTextCD}') else '${color}', highlightColor: if theme == 'dark' then (if std.objectHas(color['dark'], '按键前景颜色') then color['dark']['按键前景颜色'] else if std.objectHas(color['dark'], '按鍵前景顏色') then color['dark']['按鍵前景顏色'] else '${defTextCD}') else '${color}' }`;
+                    colorStr=`{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;
                 }else{
                     colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
                 }
@@ -143,21 +148,35 @@ function gen(){
                     colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;
                 }
             }
-            let permutations=new Set([rawCode,prefix]);permutations.forEach(p=>{if(!p)return;let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p==='tab'||p.startsWith('shortcut_');
-                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+            
+            let permutations=new Set([rawCode,prefix]);
+            permutations.forEach(p=>{
+                if(!p)return;
+                let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p==='tab'||p.startsWith('shortcut_');
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
                 
                 let ncMatch = colorStr.match(/normalColor:\s*(.*?)[,}]/);
                 let hcMatch = colorStr.match(/highlightColor:\s*(.*?)[,}]/);
                 if(ncMatch) addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',ncMatch[1]);
                 if(hcMatch) addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',hcMatch[1]);
-                if(textInject){addToOverrideMap(`${p}ButtonForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);addToOverrideMap(`${p}ButtonForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);}
                 
-                if(isSys){let sp=p.toLowerCase();let act='';let txt='';
-                    if(sp==='globe'||sp==='nextkeyboard'){act="'nextKeyboard'";txt="'sf:globe'";}else if(sp==='tab'){act="'tab'";txt="'sf:arrow.right.to.line'";}else if(sp==='backspace'){act="'backspace'";txt="'sf:delete.left'";}else if(sp==='enter'){act="'enter'";txt="'sf:return'";}else if(sp==='shift'){act="'shift'";txt="'sf:shift'";}else if(sp==='space'){act="'space'";txt="'sf:space'";}else if(sp==='undo'){act="'shortcut_undo'";txt="'sf:arrow.uturn.backward'";}else if(sp==='deletetext'){act="'shortcut_deleteText'";txt="'sf:delete.left'";}else if(sp==='copy'){act="'shortcut_copy'";txt="'sf:doc.on.doc'";}else if(sp==='paste'){act="'shortcut_paste'";txt="'sf:doc.on.clipboard'";}else if(sp==='cut'){act="'shortcut_cut'";txt="'sf:scissors'";}else if(sp==='selecttext'){act="'shortcut_selectText'";txt="'sf:square.dashed'";}else if(sp==='home'){act="'shortcut_home'";txt="'sf:arrow.left.to.line'";}else if(sp==='end'){act="'shortcut_end'";txt="'sf:arrow.right.to.line'";}else if(sp==='onehanded'){act="'shortcut_onehanded'";txt="'sf:keyboard.onehanded.left'";}
-                    if(act){addToOverrideMap(`${p}Button`,'action',act);addToOverrideMap(`${p}Button`,'text',txt);addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);}
+                if(textInject){
+                    addToOverrideMap(`${p}ButtonForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
+                    addToOverrideMap(`${p}ButtonForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
+                }
+                
+                if(isSys){
+                    let sp=p.toLowerCase();let act='';let txt='';
+                    if(sp==='globe'||sp==='nextkeyboard'){act="'nextKeyboard'";txt="'sf:globe'";}else if(sp==='tab'){act="'tab'";txt="'sf:arrow.right.to.line'";}else if(sp==='backspace'){act="'backspace'";txt="'sf:delete.left'";}else if(sp==='enter'){act="'enter'";txt="'sf:return'";}else if(sp==='shift'){act="'shift'";txt="'sf:shift'";}else if(sp==='space'){act="'sf:space'";txt="'sf:space'";}else if(sp==='undo'){act="'shortcut_undo'";txt="'sf:arrow.uturn.backward'";}else if(sp==='deletetext'){act="'shortcut_deleteText'";txt="'sf:delete.left'";}else if(sp==='copy'){act="'shortcut_copy'";txt="'sf:doc.on.doc'";}else if(sp==='paste'){act="'shortcut_paste'";txt="'sf:doc.on.clipboard'";}else if(sp==='cut'){act="'shortcut_cut'";txt="'sf:scissors'";}else if(sp==='selecttext'){act="'shortcut_selectText'";txt="'sf:square.dashed'";}else if(sp==='home'){act="'shortcut_home'";txt="'sf:arrow.left.to.line'";}else if(sp==='end'){act="'shortcut_end'";txt="'sf:arrow.right.to.line'";}else if(sp==='onehanded'){act="'shortcut_onehanded'";txt="'sf:keyboard.onehanded.left'";}
+                    if(act){
+                        addToOverrideMap(`${p}Button`,'action',act);
+                        addToOverrideMap(`${p}Button`,'text',txt);
+                        // For system keys, ensure we don't break the symbol display by missing font size in non-existent styles
+                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['systemButtonForegroundStyle']`);
+                    }
                 }
             });
             if(prefix==='space'){
@@ -196,6 +215,6 @@ function gen(){
     const ns={portraitPinyin:'竖屏中文26键',landscapePinyin:'横屏中文26键',portraitEn:'竖屏英文26键',landscapeEn:'横屏英文26键'};
     Object.entries(layouts).forEach(([m,d])=>{out+=`  '${ns[m]}': {\n    keyboardLayout: [\n`;d.rows.forEach(r=>{out+=`      { HStack: { subviews: [ ${r.keys.map(k=>`{ Cell: '${getCellName(k)}' }`).join(', ')} ] } },\n`;});out+=`    ],\n`;out+=`    keyboardStyle: { backgroundStyle: 'keyboardBackgroundStyle' },\n`;out+=`    keyboardBackgroundStyle: { buttonStyleType: 'geometry', normalColor: color[theme]['键盘背景颜色'] },\n`;out+=`  },\n\n`;});
     const getSizesBlock=(modes)=>{let sizeMap={};let commonWidths={};modes.forEach(m=>{layouts[m].rows.forEach(r=>{r.keys.forEach(k=>{let outCode=k.outCode||k.code;let sysCode=getSysCode(outCode);let sizeName=sysCode==='tildedirect'?'tilde':sysCode;if(sizeName){sizeMap[sizeName]=k.width;if(sizeName.length===1&&sizeName!==' '){commonWidths[k.width]=(commonWidths[k.width]||0)+1;}}});});});let defaultW=0.1;let maxCount=0;Object.keys(commonWidths).forEach(w=>{if(commonWidths[w]>maxCount){maxCount=commonWidths[w];defaultW=w;}});let block=`    '普通鍵size': { width: { percentage: ${defaultW} } },\n`;Object.keys(sizeMap).forEach(c=>{let safeC=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");block+=`    '${safeC}鍵size': { width: { percentage: ${sizeMap[c]} } },\n`;if(c==='t'||c==='y'){block+=`    '${safeC}鍵bounds': null,\n`;}else if(c==='a'){block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'right' },\n`;}else if(c==='l'){block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'left' },\n`;}else if(c==='shift'){block+=`    '${safeC}鍵bounds': null,\n`;}else if(c==='backspace'){block+=`    '${safeC}鍵bounds': null,\n`;}});return block;};
-    out+=`  '豎屏按鍵尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '橫屏按鍵尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n    else keyboardLayout(theme)['横屏英文26键'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏按键尺寸']\n    else keyboardLayout(theme)['横屏按鍵尺寸'],\n}\n";
+    out+=`  '豎屏按鍵尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '橫屏按鍵尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n    else keyboardLayout(theme)['横屏英文26键'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['豎屏按鍵尺寸']\n    else keyboardLayout(theme)['橫屏按鍵尺寸'],\n}\n";
     document.getElementById('outArea').value=out;flashBtn('btnGen','✅ libsonnet 產出成功');
 }

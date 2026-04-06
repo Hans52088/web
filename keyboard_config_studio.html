@@ -234,7 +234,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
-            <span class="version-badge">版本: 260406-1635</span>
+            <span class="version-badge">版本: 260406-1655</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -307,7 +307,7 @@
                             <div class="color-cell"><span class="color-label">鍵盤底色</span><input type="color" class="color-picker" id="kbBgColor" value="#d1d5db" oninput="syncC('kbBgColor','kbBgHex')"><input type="text" id="kbBgHex" class="hex-input" value="#D1D5DB" oninput="syncH('kbBgHex','kbBgColor')"></div>
                             <div class="color-cell"><span class="color-label">預設字色</span><input type="color" class="color-picker" id="defKeyColor" value="#000000" oninput="syncGlobalDefColor(this.value)"><input type="text" id="defKeyHex" class="hex-input" value="#000000" oninput="syncGlobalDefHex(this.value)"></div>
                             <div class="color-cell"><span class="color-label">一般鍵底</span><input type="color" class="color-picker" id="keyBgColor" value="#ffffff" oninput="syncC('keyBgColor','keyBgHex')"><input type="text" id="keyBgHex" class="hex-input" value="#FFFFFF" oninput="syncH('keyBgHex','keyBgColor')"></div>
-                            <div class="color-cell"><span class="color-label">系統鍵底</span><input type="color" class="color-picker" id="sysKeyBgColor" value="#b3bce2" oninput="syncC('sysKeyBgColor','sysKeyHex')"><input type="text" id="sysKeyHex" class="hex-input" value="#B3BCE2" oninput="syncH('sysKeyHex','sysKeyBgColor')"></div>
+                            <div class="color-cell"><span class="color-label">系統鍵底</span><input type="color" class="color-picker" id="sysKeyBgColor" value="#aaaaaa" oninput="syncC('sysKeyBgColor','sysKeyHex')"><input type="text" id="sysKeyHex" class="hex-input" value="#AAAAAA" oninput="syncH('sysKeyHex','sysKeyBgColor')"></div>
                             <div class="color-cell"><span class="color-label">Enter底色</span><input type="color" class="color-picker" id="enterBgColor" value="#007aff" oninput="syncC('enterBgColor','enterBgHex')"><input type="text" id="enterBgHex" class="hex-input" value="#007AFF" oninput="syncH('enterBgHex','enterBgColor')"></div>
                             <div class="color-cell"><span class="color-label">Enter字色</span><input type="color" class="color-picker" id="enterTextColor" value="#ffffff" oninput="syncC('enterTextColor','enterTextHex')"><input type="text" id="enterTextHex" class="hex-input" value="#FFFFFF" oninput="syncH('enterTextHex','enterTextColor')"></div>
                         </div>
@@ -926,10 +926,10 @@
     function copyC(){const a=document.getElementById('outArea');a.select();document.execCommand('copy');flashBtn('btnCopyC','✅ 複製成功');}
     function getCellName(k){let outCode=k.outCode||k.code;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';return `${prefix}Button`;}
     </script>
-    <script src="js_part1b.js?v=260406-1635"></script>
-    <script src="js_part1c.js?v=260406-1635"></script>
-    <script src="js_part2.js?v=260406-1635"></script>
-    <script src="js_part2b.js?v=260406-1635"></script>
+    <script src="js_part1b.js?v=260406-1655"></script>
+    <script src="js_part1c.js?v=260406-1655"></script>
+    <script src="js_part2.js?v=260406-1655"></script>
+    <script src="js_part2b.js?v=260406-1655"></script>
     <script>
     /* ======================================================================
        PART 3: INITIALIZATION — Bind events, set up drop zones, init
