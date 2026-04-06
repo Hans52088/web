@@ -84,12 +84,12 @@ function gen(){
         const addToOverrideMap=(btn,prop,val)=>{if(!overrideMap.has(btn))overrideMap.set(btn,new Map());overrideMap.get(btn).set(prop,val);};
         
         addToOverrideMap('keyboardBackgroundStyle','normalColor',wrapBg('键盘背景颜色',kbBg,kbBgD));
-        addToOverrideMap('alphabeticBackgroundStyle','normalColor',wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
-        addToOverrideMap('alphabeticBackgroundStyle','highlightColor',wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
-        addToOverrideMap('systemButtonBackgroundStyle','normalColor',wrapBg('功能鍵背景顏色-普通',sysKeyBg,sysKeyBgD));
-        addToOverrideMap('systemButtonBackgroundStyle','highlightColor',wrapBg('功能鍵背景顏色-高亮',sysKeyBg,sysKeyBgD));
-        addToOverrideMap('numberButtonBackgroundStyle','normalColor',wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
-        addToOverrideMap('numberButtonBackgroundStyle','highlightColor',wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('alphabeticBackgroundStyle','normalColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('alphabeticBackgroundStyle','highlightColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('systemButtonBackgroundStyle','normalColor',wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD));
+        addToOverrideMap('systemButtonBackgroundStyle','highlightColor',wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD));
+        addToOverrideMap('numberButtonBackgroundStyle','normalColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('numberButtonBackgroundStyle','highlightColor',wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
         
         let eBgLogic,eBgLowerLogic;
         if(dmMode==='unified'){eBgLogic=`'${enterBg}'`;eBgLowerLogic=`'${enterBg}'`;}else if(dmMode==='system'){eBgLogic=`if theme == 'dark' then '#0A60FE' else '${enterBg}'`;eBgLowerLogic=`if theme == 'dark' then '#0040A8' else '${enterBg}'`;}else{eBgLogic=`if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;eBgLowerLogic=`if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;}
@@ -114,10 +114,10 @@ function gen(){
         allRows.forEach(r=>{r.keys.forEach(k=>{let color=(k.color||defTextC).toUpperCase();let rawDisplay=String(k.code||'');let rawOutput=String(k.outCode||rawDisplay);let rawCode=rawOutput.toLowerCase();let prefix=sysCodeMap[rawCode]||rawCode;let isDefaultColor=(color===defTextC.toUpperCase()||color==='');let textInject='';if(rawDisplay!==rawOutput&&rawDisplay.toLowerCase()!==rawOutput.toLowerCase()&&rawDisplay!==''&&!['enter','backspace','shift','space','numeric','tab','globe'].includes(prefix.toLowerCase())){let safeDisplay=rawDisplay.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");textInject=`text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;}
             let colorStr;if(dmMode==='unified'){colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}else if(dmMode==='system'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}else if(dmMode==='custom'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}
             let permutations=new Set([rawCode,prefix]);permutations.forEach(p=>{if(!p)return;let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p==='tab'||p.startsWith('shortcut_');
-                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg('功能鍵背景顏色-普通',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg('功能鍵背景顏色-高亮',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg('功能鍵背景顏色-普通',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg('功能鍵背景顏色-高亮',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg('功能键背景颜色',sysKeyBg,sysKeyBgD):wrapBg('字母键背景颜色',generalKeyBg,generalKeyBgD));
                 
                 let ncMatch = colorStr.match(/normalColor:\s*(.*?)[,}]/);
                 let hcMatch = colorStr.match(/highlightColor:\s*(.*?)[,}]/);
