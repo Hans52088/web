@@ -38,6 +38,7 @@
         .nav-left { display: flex; align-items: center; gap: 12px; }
         .nav-title { font-size: 20px; font-weight: 700; }
         .author-badge { background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple)); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+        .version-badge { background: var(--fill); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
         .theme-toggle { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all var(--transition); }
         .theme-toggle:hover { transform: scale(1.1); box-shadow: var(--shadow-md); }
 
@@ -114,7 +115,7 @@
 
         /* === LAYOUT EDITOR ROWS === */
         .row-item { background: var(--card-secondary); border: 1px solid var(--border); margin-bottom: 16px; padding: 16px; border-radius: var(--radius-md); transition: all var(--transition); }
-        .key-grid-header, .key-input-row, .sum-header-row { display: grid; grid-template-columns: 20px 95px 65px 65px 45px 75px 115px 45px 35px; gap: 8px; }
+        .key-grid-header, .key-input-row, .sum-header-row { display: grid; grid-template-columns: 20px 80px 45px 120px 24px 55px 90px 38px 28px; gap: 5px; }
         .key-grid-header { margin-bottom: 8px; font-size: 11px; color: var(--text-secondary); font-weight: 600; text-align: center; }
         .key-input-row { margin-bottom: 6px; align-items: center; }
         .sum-header-row { margin-bottom: 4px; }
@@ -233,6 +234,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
+            <span class="version-badge">版本: 260406-1200</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -785,27 +787,30 @@
             // Generate zip Blob
             const content = await newZip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
             
-            // Force .zip extension so macOS doesn't drop it
-            let orig = cskinOriginalName || 'exported.cskin';
-            const fileName = orig.replace(/\.cskin$/i, '.zip');
+            // Keep .cskin extension for users that have systems correctly preserving names
+            let fileName = cskinOriginalName || 'exported.cskin';
+            if (!fileName.endsWith('.cskin')) fileName += '.cskin';
             
-            const blobUrl = URL.createObjectURL(content);
+            const blob = new Blob([content], { type: 'application/octet-stream' });
+            const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = blobUrl;
             link.download = fileName;
+            link.style.display = 'none';
             
             // Auto click to download
             document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+            }, 1000);
             
             // Render a visible link as a fallback if Safari still blocked the name
             const statusDiv = document.getElementById('cskinStatus');
             statusDiv.innerHTML += `<div style="margin-top:15px; padding:10px; background:var(--bg-secondary); border-radius:8px;">
-                ✅ 準備就緒！如果下載的檔案變成亂碼，請對右方連結<strong style="color:var(--primary-color)">按右鍵 -> 下載連結檔案 (儲存連結為)</strong>：
+                ✅ 準備就緒！如果自動下載的檔案變成亂碼或無法開啟，請對右方連結<strong style="color:var(--primary-color)">按右鍵 -> 下載連結檔案 (儲存連結為)</strong>：
                 <a href="${blobUrl}" download="${fileName}" style="color:var(--primary-color); font-weight:bold; text-decoration:underline;">📥 下載 ${fileName}</a>
-                <br><small style="color:var(--text-tertiary);">下載後請自行將 .zip 改名為 .cskin 即可使用。</small>
             </div>`;
             
             btn.innerText = '✅ 匯出成功！';
@@ -821,9 +826,10 @@
     /* ======================================================================
        PART 1: LAYOUT & COLOR EDITOR (from keyboard_layout_color_tools.html)
        ====================================================================== */
-    const symbolMap = {'SEMICOLON':';','COMMA':',','PERIOD':'.','SLASH':'/','NUMERIC':'123','SHIFT':'⇧','BACKSPACE':'⌫','ENTER':'↵','SPACE':' ','TILDEDIRECT':'~','PERIODDIRECT':'.','UNDO':'↩️','DELETETEXT':'⌫ (全刪)','COPY':'📄','PASTE':'📋','CUT':'✂️','SELECTTEXT':'⬚','HOME':'⇤','END':'⇥','NEXTKEYBOARD':'🌐','TAB':'⇥ (Tab)','ONEHANDED':'👈','RIME2':'②','RIME3':'③','NONE':'(無)'};
-    const sysCodeMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','~':'tildeDirect','tildedirect':'tildeDirect',';':'semicolon','semicolon':'semicolon',',':'comma','comma':'comma','.':'period','period':'period','/':'slash','slash':'slash','perioddirect':'periodDirect','globe':'nextKeyboard'};
-    const reverseKeyMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','TILDEDIRECT':'tildeDirect','SEMICOLON':'semicolon','COMMA':'comma','PERIOD':'period','SLASH':'slash','PERIODDIRECT':'periodDirect','BACKSPACE':'backspace','ENTER':'enter','SHIFT':'shift','SPACE':'space','NUMERIC':'numeric','NEXTKEYBOARD':'nextKeyboard','TAB':'tab','UNDO':'undo','DELETETEXT':'deleteText','COPY':'copy','PASTE':'paste','CUT':'cut','SELECTTEXT':'selectText','HOME':'home','END':'end','ONEHANDED':'onehanded','RIME2':'rime2','RIME3':'rime3','NONE':'none'};
+    const cmdToSfMapT1 = {'NEXTKEYBOARD':'sf:globe','SHIFT':'sf:shift','BACKSPACE':'sf:delete.left','ENTER':'sf:return','SPACE':'sf:space','TAB':'sf:arrow.right.to.line','SHORT_UNDO':'sf:arrow.uturn.backward','SHORT_DELETETEXT':'sf:delete.left','SHORT_COPY':'sf:doc.on.doc','SHORT_PASTE':'sf:doc.on.clipboard','SHORT_CUT':'sf:scissors','SHORT_SELECTTEXT':'sf:square.dashed','SHORT_HOME':'sf:arrow.left.to.line','SHORT_END':'sf:arrow.right.to.line','SHORT_ONEHANDED':'sf:keyboard.onehanded.left','SHORT_RIME2':'sf:2.circle','SHORT_RIME3':'sf:3.circle'};
+    const symbolMap = {'SEMICOLON':';','COMMA':',','PERIOD':'.','SLASH':'/','NUMERIC':'123','SHIFT':'⇧','BACKSPACE':'⌫','ENTER':'↵','SPACE':' ','TILDEDIRECT':'~','PERIODDIRECT':'.','UNDO':'↩️','DELETETEXT':'⌫ (全刪)','COPY':'📄','PASTE':'📋','CUT':'✂️','SELECTTEXT':'⬚','HOME':'⇤','END':'⇥','NEXTKEYBOARD':'🌐','TAB':'⇥','ONEHANDED':'👈','RIME2':'②','RIME3':'③','NONE':'(無)'};
+    const sysCodeMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','~':'tildeDirect','tildedirect':'tildeDirect',';':'semicolon','semicolon':'semicolon',',':'comma','comma':'comma','.':'period','period':'period','/':'slash','slash':'slash','perioddirect':'periodDirect','globe':'globe','nextkeyboard':'globe','undo':'undo','deletetext':'deleteText','copy':'copy','paste':'paste','cut':'cut','selecttext':'selectText','home':'home','end':'end','onehanded':'oneHanded','rime2':'rime2','rime3':'rime3','none':'none'};
+    const reverseKeyMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','TILDEDIRECT':'tildeDirect','SEMICOLON':'semicolon','COMMA':'comma','PERIOD':'period','SLASH':'slash','PERIODDIRECT':'periodDirect','BACKSPACE':'backspace','ENTER':'enter','SHIFT':'shift','SPACE':'space','NUMERIC':'numeric','NEXTKEYBOARD':'globe','TAB':'tab','UNDO':'undo','DELETETEXT':'deleteText','COPY':'copy','PASTE':'paste','CUT':'cut','SELECTTEXT':'selectText','HOME':'home','END':'end','ONEHANDED':'onehanded','RIME2':'rime2','RIME3':'rime3','NONE':'none'};
     const defaultWidths = {'SPACE':0.36,'ENTER':0.12,'BACKSPACE':0.12,'SHIFT':0.12,'NUMERIC':0.12,'TILDEDIRECT':0.08,'PERIODDIRECT':0.08,'COMMA':0.1,'PERIOD':0.1,'SLASH':0.1,'SEMICOLON':0.1};
     const systemKeys = ['BACKSPACE','ENTER','SHIFT','SPACE','NUMERIC','NEXTKEYBOARD','TAB','UNDO','DELETETEXT','COPY','PASTE','CUT','SELECTTEXT','HOME','END','ONEHANDED','RIME2','RIME3','NONE'];
     const dropdownOptions = [{label:'字元(char)',val:''},{label:'退格(back)',val:'BACKSPACE'},{label:'回車(ent)',val:'ENTER'},{label:'Shift',val:'SHIFT'},{label:'數字(num)',val:'NUMERIC'},{label:'空格',val:'SPACE'},{label:'分號(;)',val:'SEMICOLON'},{label:'逗號(,)',val:'COMMA'},{label:'句號(.)',val:'PERIOD'},{label:'斜槓(/)',val:'SLASH'},{label:'波浪(~)',val:'TILDEDIRECT'},{label:'句號(底排)',val:'PERIODDIRECT'},{label:'地球(globe)',val:'NEXTKEYBOARD'},{label:'縮進(tab)',val:'TAB'},{label:'撤銷(undo)',val:'UNDO'},{label:'全刪除',val:'DELETETEXT'},{label:'複製(copy)',val:'COPY'},{label:'貼上(paste)',val:'PASTE'},{label:'剪下(cut)',val:'CUT'},{label:'全選',val:'SELECTTEXT'},{label:'移至行首',val:'HOME'},{label:'移至行尾',val:'END'},{label:'單手切換',val:'ONEHANDED'},{label:'次選上屏',val:'RIME2'},{label:'三選上屏',val:'RIME3'},{label:'占位/無(none)',val:'NONE'}];
@@ -838,6 +844,12 @@
     function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
     function getSysCode(code){let str=String(code||'').toLowerCase();let res=sysCodeMap[str]||str;return res.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");}
     function getSyncTargets(mode){if(!document.getElementById('syncAllCheck').checked)return[mode];if(mode.includes('Pinyin'))return['portraitPinyin','landscapePinyin'];if(mode.includes('En'))return['portraitEn','landscapeEn'];return[mode];}
+    let currentIconTargetT1 = null;
+    function openIconModalT1(r, k){
+        currentIconTargetT1 = {r: r, k: k};
+        let m = document.getElementById('iconModalOverlay');
+        if(m) m.style.display='flex';
+    }
     function toggleDarkPanel(){const m=document.getElementById('darkModeHandling').value;document.getElementById('darkPanelWrap').style.display=m==='custom'?'block':'none';renderPreview();}
 
     function init(){renderEditor();renderPreview();}
@@ -846,14 +858,15 @@
         const container=document.getElementById('rowsContainer');container.innerHTML='';
         layouts[currentMode].rows.forEach((row,rIdx)=>{
             const div=document.createElement('div');div.className='row-item';
-            div.innerHTML=`<div style="display:flex;align-items:center;margin-bottom:10px;"><b style="font-size:15px;margin-right:15px;">第 ${rIdx+1} 排</b><b style="font-size:15px;display:flex;align-items:center;">按鍵數: <input type="number" value="${row.keys.length}" style="width:50px;margin-left:8px;font-weight:normal;" onchange="setK(${rIdx},this.value)"></b><div style="flex-grow:1"></div><button class="btn btn-red btn-sm" onclick="removeRSync(${rIdx})">刪除排</button></div><div class="sum-header-row"><span></span><span></span><span></span><span></span><span></span><div class="sum-text">加總：<span id="sum-${rIdx}">0.00</span></div><span></span><span></span><span></span></div><div class="key-grid-header"><span></span><span>類型選單</span><span>輸出內容</span><span>按鍵顯示</span><span>調整</span><span>寬度比例</span><span>日間顏色</span><span>尺寸</span><span>刪</span></div><div id="keys-${rIdx}"></div>`;
+            div.innerHTML=`<div style="display:flex;align-items:center;margin-bottom:10px;"><b style="font-size:15px;margin-right:15px;">第 ${rIdx+1} 排</b><b style="font-size:15px;display:flex;align-items:center;">按鍵數: <input type="number" value="${row.keys.length}" style="width:50px;margin-left:8px;font-weight:normal;" onchange="setK(${rIdx},this.value)"></b><div style="flex-grow:1"></div><button class="btn btn-red btn-sm" onclick="removeRSync(${rIdx})">刪除排</button></div><div class="sum-header-row"><span></span><span></span><span></span><span></span><span></span><div class="sum-text" style="grid-column:6;">加總：<span id="sum-${rIdx}">0.00</span></div><span></span><span></span><span></span></div><div class="key-grid-header"><span></span><span>類型</span><span>輸出</span><span>按鍵顯示</span><span>調整</span><span>比例</span><span>顏色</span><span>尺寸</span><span>刪</span></div><div id="keys-${rIdx}"></div>`;
             const kBox=div.querySelector(`#keys-${rIdx}`);
             row.keys.forEach((key,kIdx)=>{
                 const kRow=document.createElement('div');kRow.className='key-input-row';
                 const safeCode=String(key.code||'').replace(/'/g,"&#39;");
                 const safeOutCode=String(key.outCode||'').replace(/'/g,"&#39;");
                 let optionsHTML=dropdownOptions.map(opt=>`<option value="${opt.val}" ${safeOutCode.toUpperCase()===opt.val?'selected':''}>${opt.label}</option>`).join('');
-                kRow.innerHTML=`<div class="drag-handle" style="cursor:grab; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:18px;">☰</div><select onchange="updateKey(${rIdx},${kIdx},'type',this.value,this);renderEditor();">${optionsHTML}</select><input type="text" class="out-code-input" value="${safeOutCode}" placeholder="如:e" oninput="updateKey(${rIdx},${kIdx},'outCode',this.value,this)"><input type="text" class="code-input" value="${safeCode}" placeholder="如:E" oninput="updateKey(${rIdx},${kIdx},'code',this.value,this)"><button class="btn btn-orange btn-sm" onclick="autoWidth(${rIdx},${kIdx})">Auto</button><input type="number" step="0.01" value="${key.width}" oninput="updateKey(${rIdx},${kIdx},'width',this.value,this);updateSum(${rIdx});"><div class="color-cell" style="padding:0;background:transparent;border:none;"><input type="color" class="color-picker" value="${key.color}" oninput="updateKey(${rIdx},${kIdx},'color',this.value,this);"><input type="text" class="hex-input" value="${(key.color||'#000000').toUpperCase()}" oninput="updateKey(${rIdx},${kIdx},'color',this.value,this);"></div><input type="number" value="${key.fontSize}" oninput="updateKey(${rIdx},${kIdx},'fontSize',this.value,this)"><button class="btn btn-red btn-sm" style="width:35px;height:35px;padding:0;" onclick="removeKSync(${rIdx},${kIdx})">×</button>`;
+                let sfEmoji='';if(safeCode.startsWith('sf:')){let iName=safeCode.slice(3);sfEmoji=typeof sfSymbolEmojiMap!=='undefined'?sfSymbolEmojiMap[iName]||'❖':'❖';}
+                kRow.innerHTML=`<div class="drag-handle" style="cursor:grab; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:18px;">☰</div><select onchange="updateKey(${rIdx},${kIdx},'type',this.value,this);renderEditor();" style="width:100%;padding:0 4px;font-size:12px;">${optionsHTML}</select><input type="text" class="out-code-input" style="width:100%;padding:4px;" value="${safeOutCode}" placeholder="如:e" oninput="updateKey(${rIdx},${kIdx},'outCode',this.value,this)"><div style="display:flex;gap:2px;align-items:center;width:100%;"><div class="sf-input-container" style="flex:1;min-width:0;height:36px;display:flex;align-items:center;padding:0 6px;background:var(--card-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);"><div class="sf-preview-box" style="width:18px;height:18px;font-size:13px;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${sfEmoji}</div><input type="text" class="code-input" style="flex:1;min-width:0;width:100%;background:transparent;border:none;padding:0 4px;font-size:13px;height:100%;" value="${safeCode}" placeholder="如:E" oninput="updateKey(${rIdx},${kIdx},'code',this.value,this);"></div><button class="btn btn-ghost btn-sm" style="padding:0;width:20px;height:24px;min-width:20px;" onclick="openIconModalT1(${rIdx},${kIdx})" title="選擇庫">🔍</button></div><button class="btn btn-orange btn-sm" style="width:100%;padding:0;font-size:12px;height:32px;" onclick="autoWidth(${rIdx},${kIdx})" title="Auto Width">A</button><input type="number" step="0.01" value="${key.width}" style="width:100%;padding:2px;" oninput="updateKey(${rIdx},${kIdx},'width',this.value,this);updateSum(${rIdx});"><div class="color-cell" style="padding:0;background:transparent;border:none;width:100%;gap:2px;"><input type="color" class="color-picker" style="width:28px!important;height:28px!important;" value="${key.color}" oninput="updateKey(${rIdx},${kIdx},'color',this.value,this);"><input type="text" class="hex-input" style="width:calc(100% - 32px)!important;font-size:11px!important;padding:2px;" value="${(key.color||'#000000').toUpperCase()}" oninput="updateKey(${rIdx},${kIdx},'color',this.value,this);"></div><input type="number" value="${key.fontSize}" style="width:100%;padding:2px;" oninput="updateKey(${rIdx},${kIdx},'fontSize',this.value,this)"><button class="btn btn-red btn-sm" style="width:28px;height:28px;padding:0;" onclick="removeKSync(${rIdx},${kIdx})">×</button>`;
                 kBox.appendChild(kRow);
             });
             container.appendChild(div);updateSum(rIdx);
@@ -901,10 +914,10 @@
         const lightDefC=document.getElementById('defKeyHex').value;
         preview.style.width=document.getElementById('kbWidthPerc').value+'%';preview.style.backgroundColor=curKbBg;preview.style.gap=gap+'px';preview.innerHTML='';
         const rowC=data.rows.length;let h=hMode==='total'?(hIn-(gap*(rowC-1)))/rowC:hIn;
-        data.rows.forEach(row=>{const rDiv=document.createElement('div');rDiv.className='keyboard-row-preview';rDiv.style.height=h+'px';rDiv.style.gap=gap+'px';row.keys.forEach(key=>{const k=document.createElement('div');k.className='preview-key';const rawCode=String(key.code||key.outCode||'');const upperCode=rawCode.toUpperCase();k.innerText=symbolMap[upperCode]!==undefined?symbolMap[upperCode]:rawCode;k.style.width=(key.width*100)+'%';k.style.fontSize=key.fontSize+'px';k.style.borderRadius=document.getElementById('keyRadius').value+'px';const isEnter=['ENTER','↵','RETURN'].includes(String(key.outCode||key.code||'').toUpperCase());const isSys=systemKeys.includes(String(key.outCode||key.code||'').toUpperCase());let keyHex=(key.color||'').toUpperCase();let displayColor;if(keyHex===lightDefC||keyHex===''||keyHex==='#000000'){displayColor=curDefC;}else{displayColor=key.color;}if(isEnter){k.style.backgroundColor=curEnterBg;k.style.color=curEnterText;}else if(isSys){k.style.backgroundColor=curSysBg;k.style.color=displayColor;}else{k.style.backgroundColor=curKeyBg;k.style.color=displayColor;}rDiv.appendChild(k);});preview.appendChild(rDiv);});
+        data.rows.forEach(row=>{const rDiv=document.createElement('div');rDiv.className='keyboard-row-preview';rDiv.style.height=h+'px';rDiv.style.gap=gap+'px';row.keys.forEach(key=>{const k=document.createElement('div');k.className='preview-key';const rawCode=String(key.code||key.outCode||'');const upperCode=rawCode.toUpperCase();let dChar=symbolMap[upperCode]!==undefined?symbolMap[upperCode]:rawCode;if(rawCode.startsWith('sf:')){let iN=rawCode.slice(3);dChar=typeof sfSymbolEmojiMap!=='undefined'?sfSymbolEmojiMap[iN]||'❖':'❖';}k.innerText=dChar;k.style.width=(key.width*100)+'%';k.style.fontSize=key.fontSize+'px';k.style.borderRadius=document.getElementById('keyRadius').value+'px';const isEnter=['ENTER','↵','RETURN'].includes(String(key.outCode||key.code||'').toUpperCase());const isSys=systemKeys.includes(String(key.outCode||key.code||'').toUpperCase());let keyHex=(key.color||'').toUpperCase();let displayColor;if(keyHex===lightDefC||keyHex===''||keyHex==='#000000'){displayColor=curDefC;}else{displayColor=key.color;}if(isEnter){k.style.backgroundColor=curEnterBg;k.style.color=curEnterText;}else if(isSys){k.style.backgroundColor=curSysBg;k.style.color=displayColor;}else{k.style.backgroundColor=curKeyBg;k.style.color=displayColor;}rDiv.appendChild(k);});preview.appendChild(rDiv);});
     }
 
-    function updateKey(r,k,f,v,el){const val=(f==='width'||f==='fontSize')?parseFloat(v):v;const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m].rows[r]&&layouts[m].rows[r].keys[k]){let keyObj=layouts[m].rows[r].keys[k];if(f==='type'){keyObj.outCode=val;keyObj.code=val;}else if(f==='outCode'){if(!keyObj.code){keyObj.code=val;if(el&&currentMode===m){let ci=el.parentElement.querySelector('.code-input');if(ci)ci.value=val;}}keyObj.outCode=val;}else if(f==='code'){if(!keyObj.outCode){keyObj.outCode=val;if(el&&currentMode===m){let oi=el.parentElement.querySelector('.out-code-input');if(oi)oi.value=val;}}keyObj.code=val;}else{keyObj[f]=val;}}});renderPreview();}
+    function updateKey(r,k,f,v,el){const val=(f==='width'||f==='fontSize')?parseFloat(v):v;const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m].rows[r]&&layouts[m].rows[r].keys[k]){let keyObj=layouts[m].rows[r].keys[k];if(f==='type'){keyObj.outCode=val;let vU=val.toUpperCase().replace('SHORTCUT_','SHORT_');keyObj.code=cmdToSfMapT1[vU]||val;}else if(f==='outCode'){if(!keyObj.code){keyObj.code=val;if(el&&currentMode===m){let ci=el.parentElement.querySelector('.code-input');if(ci)ci.value=val;}}keyObj.outCode=val;}else if(f==='code'){if(!keyObj.outCode){keyObj.outCode=val;if(el&&currentMode===m){let oi=el.parentElement.querySelector('.out-code-input');if(oi)oi.value=val;}}keyObj.code=val;if(el&&currentMode===m){let pb=el.parentElement.querySelector('.sf-preview-box');if(pb){let sfEmoji='';if(val.startsWith('sf:')){let iN=val.slice(3);sfEmoji=typeof sfSymbolEmojiMap!=='undefined'?sfSymbolEmojiMap[iN]||'❖':'❖';}pb.innerText=sfEmoji;}}}else{keyObj[f]=val;}}});renderPreview();}
     function setK(r,c){const num=Math.max(1,parseInt(c));const defC=document.getElementById('defKeyColor').value;const targets=getSyncTargets(currentMode);targets.forEach(m=>{const row=layouts[m].rows[r];if(!row)return;if(num>row.keys.length){for(let i=row.keys.length;i<num;i++)row.keys.push({code:'',outCode:'',width:(1/num).toFixed(4),color:defC,fontSize:18});}else{row.keys=row.keys.slice(0,num);}row.keys.forEach(k=>k.width=(1/num).toFixed(4));});renderEditor();renderPreview();}
 
     function flashBtn(id,text){const btn=document.getElementById(id);if(!btn)return;const old=btn.innerText;btn.innerText=text;setTimeout(()=>btn.innerText=old,2000);}
