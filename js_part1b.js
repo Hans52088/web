@@ -22,7 +22,7 @@ function gen(){
         let kbBgD=document.getElementById('kbBgHexD').value||'#1C1C1E';let defTextCD=document.getElementById('defKeyHexD').value||'#FFFFFF';let generalKeyBgD=document.getElementById('keyBgHexD').value||'#4A4A4C';let sysKeyBgD=document.getElementById('sysKeyHexD').value||'#2C2C2E';let enterBgD=document.getElementById('enterBgHexD').value||'#0A60FE';let enterTextD=document.getElementById('enterTextHexD').value||'#FFFFFF';
 
         let btnInjectStr="";let styleInjectStr="";
-        uniqueKeys.forEach((data,cellName)=>{let prefix=data.prefix;let isSystemKey=['enter','backspace','shift','space','numeric','tildedirect','perioddirect','comma','period','slash','semicolon','globe','nextkeyboard','undo','deletetext','copy','paste','cut','selecttext','home','end','onehanded','rime2','rime3','none'].includes(prefix.toLowerCase());let sameCode=String(data.code).toUpperCase()===String(data.outCode).toUpperCase()||(sysCodeMap[String(data.code).toLowerCase()]===prefix);let safeOutCode=String(data.outCode||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");let safePrefix=prefix.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");let btnDefRegex=new RegExp(`(?:^|[^a-zA-Z0-9_])['"]?${safePrefix}Button['"]?\\s*:`,'i');
+        uniqueKeys.forEach((data,cellName)=>{let prefix=data.prefix;let isSystemKey=['enter','backspace','shift','space','numeric','tildedirect','perioddirect','comma','period','slash','semicolon','globe','nextkeyboard','tab','undo','deletetext','copy','paste','cut','selecttext','home','end','onehanded','rime2','rime3','none'].includes(prefix.toLowerCase());let sameCode=String(data.code).toUpperCase()===String(data.outCode).toUpperCase()||(sysCodeMap[String(data.code).toLowerCase()]===prefix);let safeOutCode=String(data.outCode||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");let safePrefix=prefix.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");let btnDefRegex=new RegExp(`(?:^|[^a-zA-Z0-9_])['"]?${safePrefix}Button['"]?\\s*:`,'i');
             if(!btnDefRegex.test(newCode)){
                 let themeArg=isPinyinTemplate?'theme, ':'';
                 if(isSystemKey){
@@ -54,7 +54,7 @@ function gen(){
                     
                     let bgStyle = (sp==='enter')?'searchButtonBackgroundStyle':'systemButtonBackgroundStyle';
                     
-                    btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${sp}', text: '${spText}', size: ButtonSize['普通键size'] }) + {\n`;
+                    btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${sp}', text: '${spText}', size: ButtonSize['普通鍵size'] }) + {\n`;
                     btnInjectStr+=`      backgroundStyle: '${bgStyle}',\n`;
                     btnInjectStr+=`      foregroundStyle: ['${safePrefix}ButtonForegroundStyle'],\n`;
                     btnInjectStr+=`      ${specialObjStr},\n`;
@@ -64,11 +64,11 @@ function gen(){
                     btnInjectStr+=`      text: '${spText}',\n`;
                     btnInjectStr+=`      normalColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
                     btnInjectStr+=`      highlightColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
-                    btnInjectStr+=`      fontSize: fontSize['按键前景文字大小'],\n`;
+                    btnInjectStr+=`      fontSize: fontSize['按鍵前景文字大小'],\n`;
                     btnInjectStr+=`    }),\n`;
                     return;
                 }
-                btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ButtonSize['普通键size'] }),\n`;
+                btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ButtonSize['普通鍵size'] }),\n`;
                 styleInjectStr+=`  + createHintStyle('${safeOutCode}')\n`;
                 if(isPinyinTemplate){styleInjectStr+=`  + createSchemaStyles(theme, '${safeOutCode}')\n`;}
                 else{styleInjectStr+=`  + createExtraStyles(theme, '${safeOutCode}')\n`;}
@@ -79,28 +79,77 @@ function gen(){
         let lSIdx=newCode.indexOf(layoutStartMarker);let lEIdx=newCode.indexOf(layoutEndMarker);
         if(lSIdx!==-1&&lEIdx!==-1){newCode=newCode.substring(0,lSIdx)+layoutReplacement+newCode.substring(lEIdx+layoutEndMarker.length);}else{let klRegex=/keyboardLayout\s*:\s*(?:if\s+orientation\s*==\s*['"]portrait['"]\s*then\s*)?\[/i;let klMatch=newCode.match(klRegex);if(klMatch){let startIndex=klMatch.index;let bracketCount=0;let endIndex=-1;let inArray=false;for(let i=startIndex;i<newCode.length;i++){if(newCode[i]==='['){bracketCount++;inArray=true;}else if(newCode[i]===']'){bracketCount--;}if(inArray&&bracketCount===0){let remainder=newCode.substring(i+1);if(remainder.match(/^\s*else\s*\[/)){inArray=false;}else{endIndex=i;break;}}}if(endIndex!==-1){newCode=newCode.substring(0,startIndex)+layoutReplacement+newCode.substring(endIndex+1);}}}
 
-        let sysKeyBgStr=`{ normalColor: ${wrapBg('功能键背景颜色-普通',sysKeyBg,sysKeyBgD)}, highlightColor: ${wrapBg('功能键背景颜色-高亮',sysKeyBg,sysKeyBgD)} }`;
-        let genKeyBgStr=`{ normalColor: ${wrapBg('字母键背景颜色-普通',generalKeyBg,generalKeyBgD)}, highlightColor: ${wrapBg('字母键背景颜色-高亮',generalKeyBg,generalKeyBgD)} }`;
-
         const overrideStartMarker="// === 編輯器強制顏色覆寫 ===";const overrideEndMarker="// === 覆寫結束 ===";const sIdx=newCode.indexOf(overrideStartMarker);const eIdx=newCode.indexOf(overrideEndMarker);
         let overrideMap=new Map();
-        overrideMap.set('keyboardBackgroundStyle',`{ normalColor: ${wrapBg('键盘背景颜色',kbBg,kbBgD)} }`);
-        overrideMap.set('alphabeticBackgroundStyle',genKeyBgStr);
-        overrideMap.set('systemButtonBackgroundStyle',sysKeyBgStr);
-        overrideMap.set('numberButtonBackgroundStyle',genKeyBgStr);
+        const addToOverrideMap=(btn,prop,val)=>{if(!overrideMap.has(btn))overrideMap.set(btn,new Map());overrideMap.get(btn).set(prop,val);};
+        
+        addToOverrideMap('keyboardBackgroundStyle','normalColor',wrapBg('键盘背景颜色',kbBg,kbBgD));
+        addToOverrideMap('alphabeticBackgroundStyle','normalColor',wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('alphabeticBackgroundStyle','highlightColor',wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('systemButtonBackgroundStyle','normalColor',wrapBg('功能鍵背景顏色-普通',sysKeyBg,sysKeyBgD));
+        addToOverrideMap('systemButtonBackgroundStyle','highlightColor',wrapBg('功能鍵背景顏色-高亮',sysKeyBg,sysKeyBgD));
+        addToOverrideMap('numberButtonBackgroundStyle','normalColor',wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
+        addToOverrideMap('numberButtonBackgroundStyle','highlightColor',wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
+        
         let eBgLogic,eBgLowerLogic;
         if(dmMode==='unified'){eBgLogic=`'${enterBg}'`;eBgLowerLogic=`'${enterBg}'`;}else if(dmMode==='system'){eBgLogic=`if theme == 'dark' then '#0A60FE' else '${enterBg}'`;eBgLowerLogic=`if theme == 'dark' then '#0040A8' else '${enterBg}'`;}else{eBgLogic=`if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;eBgLowerLogic=`if theme == 'dark' then '${enterBgD}' else '${enterBg}'`;}
-        overrideMap.set('searchButtonBackgroundStyle',`{ normalColor: ${eBgLogic}, highlightColor: ${eBgLogic}, normalLowerEdgeColor: ${eBgLowerLogic}, highlightLowerEdgeColor: ${eBgLowerLogic} }`);
-        overrideMap.set('returnKeyTypeChangedNotification',`{ backgroundStyle: 'searchButtonBackgroundStyle', foregroundStyle: 'enterButtonForegroundStyle' }`);
+        
+        addToOverrideMap('searchButtonBackgroundStyle','normalColor',eBgLogic);
+        addToOverrideMap('searchButtonBackgroundStyle','highlightColor',eBgLogic);
+        addToOverrideMap('searchButtonBackgroundStyle','normalLowerEdgeColor',eBgLowerLogic);
+        addToOverrideMap('searchButtonBackgroundStyle','highlightLowerEdgeColor',eBgLowerLogic);
+        addToOverrideMap('returnKeyTypeChangedNotification','backgroundStyle',"'searchButtonBackgroundStyle'");
+        addToOverrideMap('returnKeyTypeChangedNotification','foregroundStyle',"'enterButtonForegroundStyle'");
+        
         let portWidths={};layouts[portMode].rows.forEach(r=>r.keys.forEach(k=>{portWidths[getCellName(k)]=parseFloat(k.width).toFixed(4);}));
         let landWidths={};layouts[landMode].rows.forEach(r=>r.keys.forEach(k=>{landWidths[getCellName(k)]=parseFloat(k.width).toFixed(4);}));
         let allCellNames=new Set([...Object.keys(portWidths),...Object.keys(landWidths)]);
-        allCellNames.forEach(cell=>{let pw=portWidths[cell]||"0.1";let lw=landWidths[cell]||"0.1";let swipeInject='';if(cell==='commaButton'||cell==='periodButton'){let outC=(cell==='commaButton')?',':'.';let safeOut=String(outC).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");swipeInject=`, foregroundStyle: std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${safeOut}') then '${safeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${safeOut}') then '${safeOut}ButtonDownForegroundStyle' else null])`;}overrideMap.set(cell,`{ size: { width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }, bounds: null${swipeInject} }`);});
+        allCellNames.forEach(cell=>{let pw=portWidths[cell]||"0.1";let lw=landWidths[cell]||"0.1";let swipeInject='';let loopSafeOut='';if(cell==='commaButton'||cell==='periodButton'){let outC=(cell==='commaButton')?',':'.';loopSafeOut=String(outC).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");swipeInject=`, foregroundStyle: std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${loopSafeOut}') then '${loopSafeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${loopSafeOut}') then '${loopSafeOut}ButtonDownForegroundStyle' else null])`;}
+            addToOverrideMap(cell,'size',`{ width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }`);
+            addToOverrideMap(cell,'bounds',`null`);
+            if(swipeInject){addToOverrideMap(cell,'foregroundStyle',`std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${loopSafeOut}') then '${loopSafeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${loopSafeOut}') then '${loopSafeOut}ButtonDownForegroundStyle' else null])`);}
+        });
+        
         let allRows=layouts[portMode].rows.concat(layouts[landMode].rows);
-        allRows.forEach(r=>{r.keys.forEach(k=>{let color=(k.color||defTextC).toUpperCase();let rawDisplay=String(k.code||'');let rawOutput=String(k.outCode||rawDisplay);let rawCode=rawOutput.toLowerCase();let prefix=sysCodeMap[rawCode]||rawCode;let isDefaultColor=(color===defTextC.toUpperCase()||color==='');let textInject='';if(rawDisplay!==rawOutput&&rawDisplay.toLowerCase()!==rawOutput.toLowerCase()&&rawDisplay!==''&&!['enter','backspace','shift','space','numeric','tab','globe'].includes(prefix.toLowerCase())){let safeDisplay=rawDisplay.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");textInject=`text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;}let colorStr;if(dmMode==='unified'){colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}else if(dmMode==='system'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}else if(dmMode==='custom'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}let permutations=new Set([rawCode,prefix]);permutations.forEach(p=>{if(!p)return;let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p.startsWith('shortcut_');overrideMap.set(`${p}ButtonBackgroundStyle`,isSys?sysKeyBgStr:genKeyBgStr);overrideMap.set(`${p}BackgroundStyle`,isSys?sysKeyBgStr:genKeyBgStr);overrideMap.set(`${p}ButtonForegroundStyle`,colorStr);overrideMap.set(`${p}ForegroundStyle`,colorStr);overrideMap.set(`${p}SchemaLiurForegroundStyle`,colorStr);overrideMap.set(`${p}SchemaEasyEnForegroundStyle`,colorStr);overrideMap.set(`${p}ButtonUppercasedStateForegroundStyle`,colorStr);let upperP=p.toUpperCase();if(upperP!==p){overrideMap.set(`${upperP}ButtonForegroundStyle`,colorStr);overrideMap.set(`${upperP}ButtonUppercasedStateForegroundStyle`,colorStr);}if(/^[0-9]$/.test(p)){overrideMap.set(`number${p}ButtonForegroundStyle`,colorStr);}});if(prefix==='space'){overrideMap.set(`spaceButtonLiurForegroundStyle`,colorStr);overrideMap.set(`spaceButtonEasyEnForegroundStyle`,colorStr);}});});
+        allRows.forEach(r=>{r.keys.forEach(k=>{let color=(k.color||defTextC).toUpperCase();let rawDisplay=String(k.code||'');let rawOutput=String(k.outCode||rawDisplay);let rawCode=rawOutput.toLowerCase();let prefix=sysCodeMap[rawCode]||rawCode;let isDefaultColor=(color===defTextC.toUpperCase()||color==='');let textInject='';if(rawDisplay!==rawOutput&&rawDisplay.toLowerCase()!==rawOutput.toLowerCase()&&rawDisplay!==''&&!['enter','backspace','shift','space','numeric','tab','globe'].includes(prefix.toLowerCase())){let safeDisplay=rawDisplay.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");textInject=`text: '${safeDisplay}', uppercaseText: '${safeDisplay}', `;}
+            let colorStr;if(dmMode==='unified'){colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}else if(dmMode==='system'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}', highlightColor: if theme == 'dark' then color['dark']['按键前景颜色'] else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}else if(dmMode==='custom'){if(isDefaultColor){colorStr=`{ ${textInject}normalColor: if theme == 'dark' then '${defTextCD}' else '${color}', highlightColor: if theme == 'dark' then '${defTextCD}' else '${color}' }`;}else{colorStr=`{ ${textInject}normalColor: '${color}', highlightColor: '${color}' }`;}}
+            let permutations=new Set([rawCode,prefix]);permutations.forEach(p=>{if(!p)return;let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p==='tab'||p.startsWith('shortcut_');
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg('功能鍵背景顏色-普通',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg('功能鍵背景顏色-高亮',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg('功能鍵背景顏色-普通',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-普通',generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg('功能鍵背景顏色-高亮',sysKeyBg,sysKeyBgD):wrapBg('字母鍵背景顏色-高亮',generalKeyBg,generalKeyBgD));
+                
+                let ncMatch = colorStr.match(/normalColor:\s*(.*?)[,}]/);
+                let hcMatch = colorStr.match(/highlightColor:\s*(.*?)[,}]/);
+                if(ncMatch) addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',ncMatch[1]);
+                if(hcMatch) addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',hcMatch[1]);
+                if(textInject){addToOverrideMap(`${p}ButtonForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);addToOverrideMap(`${p}ButtonForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);}
+                
+                if(isSys){let sp=p.toLowerCase();let act='';let txt='';
+                    if(sp==='globe'||sp==='nextkeyboard'){act="'nextKeyboard'";txt="'sf:globe'";}else if(sp==='tab'){act="'tab'";txt="'sf:arrow.right.to.line'";}else if(sp==='backspace'){act="'backspace'";txt="'sf:delete.left'";}else if(sp==='enter'){act="'enter'";txt="'sf:return'";}else if(sp==='shift'){act="'shift'";txt="'sf:shift'";}else if(sp==='space'){act="'space'";txt="'sf:space'";}else if(sp==='undo'){act="'shortcut_undo'";txt="'sf:arrow.uturn.backward'";}else if(sp==='deletetext'){act="'shortcut_deleteText'";txt="'sf:delete.left'";}else if(sp==='copy'){act="'shortcut_copy'";txt="'sf:doc.on.doc'";}else if(sp==='paste'){act="'shortcut_paste'";txt="'sf:doc.on.clipboard'";}else if(sp==='cut'){act="'shortcut_cut'";txt="'sf:scissors'";}else if(sp==='selecttext'){act="'shortcut_selectText'";txt="'sf:square.dashed'";}else if(sp==='home'){act="'shortcut_home'";txt="'sf:arrow.left.to.line'";}else if(sp==='end'){act="'shortcut_end'";txt="'sf:arrow.right.to.line'";}else if(sp==='onehanded'){act="'shortcut_onehanded'";txt="'sf:keyboard.onehanded.left'";}
+                    if(act){addToOverrideMap(`${p}Button`,'action',act);addToOverrideMap(`${p}Button`,'text',txt);addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);}
+                }
+            });
+            if(prefix==='space'){
+                let ncMatch = colorStr.match(/normalColor:\s*(.*?)[,}]/);
+                if(ncMatch) {
+                    addToOverrideMap(`spaceButtonLiurForegroundStyle`,'normalColor',ncMatch[1]);
+                    addToOverrideMap(`spaceButtonEasyEnForegroundStyle`,'normalColor',ncMatch[1]);
+                }
+            }
+        });});
+
         let eTextLogic;if(dmMode==='unified'){eTextLogic=`'${enterText}'`;}else if(dmMode==='system'){eTextLogic=`if theme == 'dark' then '#FFFFFF' else '${enterText}'`;}else if(dmMode==='custom'){eTextLogic=`if theme == 'dark' then '${enterTextD}' else '${enterText}'`;}let enterColorStr=`{ normalColor: ${eTextLogic}, highlightColor: ${eTextLogic} }`;
-        let enterPermutations=['enter','return','↵','ENTER','RETURN'];enterPermutations.forEach(p=>{overrideMap.set(`${p}ButtonForegroundStyle`,enterColorStr);overrideMap.set(`${p}ForegroundStyle`,enterColorStr);overrideMap.set(`${p}SchemaLiurForegroundStyle`,enterColorStr);overrideMap.set(`${p}SchemaEasyEnForegroundStyle`,enterColorStr);overrideMap.set(`${p}ButtonUppercasedStateForegroundStyle`,enterColorStr);});
-        let overrides=`\n    ${overrideStartMarker}\n    + {\n`;overrideMap.forEach((val,key)=>{let safeKey=key.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");overrides+=`      '${safeKey}'+: ${val},\n`;});overrides+=`    } ${overrideEndMarker}\n`;
+        let enterPermutations=['enter', 'return', '↵', 'ENTER', 'RETURN'];enterPermutations.forEach(p=>{addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',eTextLogic);addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',eTextLogic);});
+
+        let overrides=`\n    ${overrideStartMarker}\n    + {\n`;
+        overrideMap.forEach((props, btnName) => {
+            let fieldsStr = "{ " + Array.from(props).map(([f, v]) => `${f}: ${v}`).join(", ") + " }";
+            let safeKey=btnName.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");
+            overrides += `      '${safeKey}'+: ${fieldsStr},\n`;
+        });
+        overrides += `    } ${overrideEndMarker}\n`;
+
         if(sIdx!==-1&&eIdx!==-1){let beforeStr=newCode.substring(0,sIdx);beforeStr=beforeStr.replace(/,\s*$/,'\n    ');newCode=beforeStr+styleInjectStr+overrides+newCode.substring(eIdx+overrideEndMarker.length);}else{let lastBraceIdx=newCode.lastIndexOf('}');if(lastBraceIdx!==-1){let beforeStr=newCode.substring(0,lastBraceIdx);beforeStr=beforeStr.replace(/,\s*$/,'\n    ');newCode=beforeStr+"    "+styleInjectStr+overrides+newCode.substring(lastBraceIdx);}}
         document.getElementById('outArea').value=newCode;flashBtn('btnGen','✅ jsonnet 產出成功');return;
     }
@@ -108,13 +157,7 @@ function gen(){
     let out="// ==========================================\n";out+="// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出\n";out+="// ==========================================\n\n";out+="// 鍵盤佈局定義\n";out+="local color = import 'color.libsonnet';\n\n";out+="local keyboardLayout(theme='light') = {\n";
     const ns={portraitPinyin:'竖屏中文26键',landscapePinyin:'横屏中文26键',portraitEn:'竖屏英文26键',landscapeEn:'横屏英文26键'};
     Object.entries(layouts).forEach(([m,d])=>{out+=`  '${ns[m]}': {\n    keyboardLayout: [\n`;d.rows.forEach(r=>{out+=`      { HStack: { subviews: [ ${r.keys.map(k=>`{ Cell: '${getCellName(k)}' }`).join(', ')} ] } },\n`;});out+=`    ],\n`;out+=`    keyboardStyle: { backgroundStyle: 'keyboardBackgroundStyle' },\n`;out+=`    keyboardBackgroundStyle: { buttonStyleType: 'geometry', normalColor: color[theme]['键盘背景颜色'] },\n`;out+=`  },\n\n`;});
-    const getSizesBlock=(modes)=>{let sizeMap={};let commonWidths={};modes.forEach(m=>{layouts[m].rows.forEach(r=>{r.keys.forEach(k=>{let outCode=k.outCode||k.code;let sysCode=getSysCode(outCode);let sizeName=sysCode==='tildedirect'?'tilde':sysCode;if(sizeName){sizeMap[sizeName]=k.width;if(sizeName.length===1&&sizeName!==' '){commonWidths[k.width]=(commonWidths[k.width]||0)+1;}}});});});let defaultW=0.1;let maxCount=0;Object.keys(commonWidths).forEach(w=>{if(commonWidths[w]>maxCount){maxCount=commonWidths[w];defaultW=w;}});let block=`    '普通键size': { width: { percentage: ${defaultW} } },\n`;Object.keys(sizeMap).forEach(c=>{let safeC=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");block+=`    '${safeC}键size': { width: { percentage: ${sizeMap[c]} } },\n`;if(c==='t'||c==='y'){block+=`    '${safeC}键bounds': null,\n`;}else if(c==='a'){block+=`    '${safeC}键bounds': { width: '111/168.75', alignment: 'right' },\n`;}else if(c==='l'){block+=`    '${safeC}键bounds': { width: '111/168.75', alignment: 'left' },\n`;}else if(c==='shift'){block+=`    '${safeC}键bounds': null,\n`;}else if(c==='backspace'){block+=`    '${safeC}键bounds': null,\n`;}});return block;};
-    out+=`  '竖屏按键尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '横屏按键尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n    else keyboardLayout(theme)['横屏英文26键'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏按键尺寸']\n    else keyboardLayout(theme)['横屏按键尺寸'],\n}\n";
+    const getSizesBlock=(modes)=>{let sizeMap={};let commonWidths={};modes.forEach(m=>{layouts[m].rows.forEach(r=>{r.keys.forEach(k=>{let outCode=k.outCode||k.code;let sysCode=getSysCode(outCode);let sizeName=sysCode==='tildedirect'?'tilde':sysCode;if(sizeName){sizeMap[sizeName]=k.width;if(sizeName.length===1&&sizeName!==' '){commonWidths[k.width]=(commonWidths[k.width]||0)+1;}}});});});let defaultW=0.1;let maxCount=0;Object.keys(commonWidths).forEach(w=>{if(commonWidths[w]>maxCount){maxCount=commonWidths[w];defaultW=w;}});let block=`    '普通鍵size': { width: { percentage: ${defaultW} } },\n`;Object.keys(sizeMap).forEach(c=>{let safeC=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");block+=`    '${safeC}鍵size': { width: { percentage: ${sizeMap[c]} } },\n`;if(c==='t'||c==='y'){block+=`    '${safeC}鍵bounds': null,\n`;}else if(c==='a'){block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'right' },\n`;}else if(c==='l'){block+=`    '${safeC}鍵bounds': { width: '111/168.75', alignment: 'left' },\n`;}else if(c==='shift'){block+=`    '${safeC}鍵bounds': null,\n`;}else if(c==='backspace'){block+=`    '${safeC}鍵bounds': null,\n`;}});return block;};
+    out+=`  '豎屏按鍵尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '橫屏按鍵尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n    else keyboardLayout(theme)['横屏英文26键'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏按键尺寸']\n    else keyboardLayout(theme)['横屏按鍵尺寸'],\n}\n";
     document.getElementById('outArea').value=out;flashBtn('btnGen','✅ libsonnet 產出成功');
 }
-
-function dl(){const exportFmt=document.getElementById('exportFormat').value;const b=new Blob([document.getElementById('outArea').value],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(exportFmt==='jsonnet'&&currentFileName)?currentFileName:"keyboardLayout.libsonnet";a.click();}
-function addNewRowSync(){try{const defC=document.getElementById('defKeyColor').value;const rowTpl={keys:[{code:'',outCode:'',width:1.0,color:defC,fontSize:18}]};getSyncTargets(currentMode).forEach(m=>{layouts[m].rows.push(JSON.parse(JSON.stringify(rowTpl)));});renderEditor();renderPreview();}catch(e){console.error("Add Row Error: ",e);}}
-function removeRSync(i){getSyncTargets(currentMode).forEach(m=>{layouts[m].rows.splice(i,1);});renderEditor();renderPreview();}
-function removeKSync(r,k){getSyncTargets(currentMode).forEach(m=>{if(!layouts[m].rows[r])return;layouts[m].rows[r].keys.splice(k,1);const len=layouts[m].rows[r].keys.length;if(len>0){const avg=(1/len).toFixed(4);layouts[m].rows[r].keys.forEach(i=>i.width=parseFloat(avg));}});renderEditor();renderPreview();}
-function applyG(){const s=document.getElementById('globalFontSize').value;Object.values(layouts).forEach(l=>l.rows.forEach(r=>r.keys.forEach(k=>k.fontSize=s)));renderEditor();renderPreview();}

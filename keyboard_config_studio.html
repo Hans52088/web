@@ -234,7 +234,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
-            <span class="version-badge">版本: 260406-1200</span>
+            <span class="version-badge">版本: 260406-1520</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -828,7 +828,7 @@
        ====================================================================== */
     const cmdToSfMapT1 = {'NEXTKEYBOARD':'sf:globe','SHIFT':'sf:shift','BACKSPACE':'sf:delete.left','ENTER':'sf:return','SPACE':'sf:space','TAB':'sf:arrow.right.to.line','SHORT_UNDO':'sf:arrow.uturn.backward','SHORT_DELETETEXT':'sf:delete.left','SHORT_COPY':'sf:doc.on.doc','SHORT_PASTE':'sf:doc.on.clipboard','SHORT_CUT':'sf:scissors','SHORT_SELECTTEXT':'sf:square.dashed','SHORT_HOME':'sf:arrow.left.to.line','SHORT_END':'sf:arrow.right.to.line','SHORT_ONEHANDED':'sf:keyboard.onehanded.left','SHORT_RIME2':'sf:2.circle','SHORT_RIME3':'sf:3.circle'};
     const symbolMap = {'SEMICOLON':';','COMMA':',','PERIOD':'.','SLASH':'/','NUMERIC':'123','SHIFT':'⇧','BACKSPACE':'⌫','ENTER':'↵','SPACE':' ','TILDEDIRECT':'~','PERIODDIRECT':'.','UNDO':'↩️','DELETETEXT':'⌫ (全刪)','COPY':'📄','PASTE':'📋','CUT':'✂️','SELECTTEXT':'⬚','HOME':'⇤','END':'⇥','NEXTKEYBOARD':'🌐','TAB':'⇥','ONEHANDED':'👈','RIME2':'②','RIME3':'③','NONE':'(無)'};
-    const sysCodeMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','~':'tildeDirect','tildedirect':'tildeDirect',';':'semicolon','semicolon':'semicolon',',':'comma','comma':'comma','.':'period','period':'period','/':'slash','slash':'slash','perioddirect':'periodDirect','globe':'globe','nextkeyboard':'globe','undo':'undo','deletetext':'deleteText','copy':'copy','paste':'paste','cut':'cut','selecttext':'selectText','home':'home','end':'end','onehanded':'oneHanded','rime2':'rime2','rime3':'rime3','none':'none'};
+    const sysCodeMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','~':'tildeDirect','tildedirect':'tildeDirect',';':'semicolon','semicolon':'semicolon',',':'comma','comma':'comma','.':'period','period':'period','/':'slash','slash':'slash','perioddirect':'periodDirect','globe':'globe','nextkeyboard':'globe','tab':'tab','undo':'undo','deletetext':'deleteText','copy':'copy','paste':'paste','cut':'cut','selecttext':'selectText','home':'home','end':'end','onehanded':'oneHanded','rime2':'rime2','rime3':'rime3','none':'none'};
     const reverseKeyMap = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','0':'zero','TILDEDIRECT':'tildeDirect','SEMICOLON':'semicolon','COMMA':'comma','PERIOD':'period','SLASH':'slash','PERIODDIRECT':'periodDirect','BACKSPACE':'backspace','ENTER':'enter','SHIFT':'shift','SPACE':'space','NUMERIC':'numeric','NEXTKEYBOARD':'globe','TAB':'tab','UNDO':'undo','DELETETEXT':'deleteText','COPY':'copy','PASTE':'paste','CUT':'cut','SELECTTEXT':'selectText','HOME':'home','END':'end','ONEHANDED':'onehanded','RIME2':'rime2','RIME3':'rime3','NONE':'none'};
     const defaultWidths = {'SPACE':0.36,'ENTER':0.12,'BACKSPACE':0.12,'SHIFT':0.12,'NUMERIC':0.12,'TILDEDIRECT':0.08,'PERIODDIRECT':0.08,'COMMA':0.1,'PERIOD':0.1,'SLASH':0.1,'SEMICOLON':0.1};
     const systemKeys = ['BACKSPACE','ENTER','SHIFT','SPACE','NUMERIC','NEXTKEYBOARD','TAB','UNDO','DELETETEXT','COPY','PASTE','CUT','SELECTTEXT','HOME','END','ONEHANDED','RIME2','RIME3','NONE'];
@@ -926,10 +926,10 @@
     function copyC(){const a=document.getElementById('outArea');a.select();document.execCommand('copy');flashBtn('btnCopyC','✅ 複製成功');}
     function getCellName(k){let outCode=k.outCode||k.code;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';return `${prefix}Button`;}
     </script>
-    <script src="js_part1b.js"></script>
-    <script src="js_part1c.js"></script>
-    <script src="js_part2.js"></script>
-    <script src="js_part2b.js"></script>
+    <script src="js_part1b.js?v=260406-1520"></script>
+    <script src="js_part1c.js?v=260406-1520"></script>
+    <script src="js_part2.js?v=260406-1520"></script>
+    <script src="js_part2b.js?v=260406-1520"></script>
     <script>
     /* ======================================================================
        PART 3: INITIALIZATION — Bind events, set up drop zones, init
