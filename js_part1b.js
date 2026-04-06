@@ -27,7 +27,6 @@ function gen(){
             }
         };
         
-        // Helper for safe size access to prevent "field does not exist" errors
         const wrapSize = (label) => {
             return `if std.objectHas(ButtonSize, '${label}鍵size') then ButtonSize['${label}鍵size'] else ButtonSize['${label}键size']`;
         };
@@ -176,12 +175,14 @@ function gen(){
                 }
                 
                 if(isSys){
-                    let sp=p.toLowerCase();let act='';let txt='';
-                    if(sp==='globe'||sp==='nextkeyboard'){act="'nextKeyboard'";txt="'sf:globe'";}else if(sp==='tab'){act="'tab'";txt="'sf:arrow.right.to.line'";}else if(sp==='backspace'){act="'backspace'";txt="'sf:delete.left'";}else if(sp==='enter'){act="'enter'";txt="'sf:return'";}else if(sp==='shift'){act="'shift'";txt="'sf:shift'";}else if(sp==='space'){act="'sf:space'";txt="'sf:space'";}else if(sp==='undo'){act="'shortcut_undo'";txt="'sf:arrow.uturn.backward'";}else if(sp==='deletetext'){act="'shortcut_deleteText'";txt="'sf:delete.left'";}else if(sp==='copy'){act="'shortcut_copy'";txt="'sf:doc.on.doc'";}else if(sp==='paste'){act="'shortcut_paste'";txt="'sf:doc.on.clipboard'";}else if(sp==='cut'){act="'shortcut_cut'";txt="'sf:scissors'";}else if(sp==='selecttext'){act="'shortcut_selectText'";txt="'sf:square.dashed'";}else if(sp==='home'){act="'shortcut_home'";txt="'sf:arrow.left.to.line'";}else if(sp==='end'){act="'shortcut_end'";txt="'sf:arrow.right.to.line'";}else if(sp==='onehanded'){act="'shortcut_onehanded'";txt="'sf:keyboard.onehanded.left'";}
-                    if(act){
+                    let sp=p.toLowerCase();
+                    // CRITICAL FIX: Only override globe/tab. DO NOT TOUCH standard keys that are already working.
+                    if(sp==='globe'||sp==='nextkeyboard'||sp==='tab'){
+                        let act=sp==='tab'?"'tab'":"'nextKeyboard'";
+                        let txt=sp==='tab'?"'sf:arrow.right.to.line'":"'sf:globe'";
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
-                        // For system keys, ensure we don't break the symbol display by missing font size in non-existent styles
+                        // Only force this shared style for globe/tab to ensure symbols show up
                         addToOverrideMap(`${p}Button`,'foregroundStyle',`['systemButtonForegroundStyle']`);
                     }
                 }
