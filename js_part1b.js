@@ -30,6 +30,10 @@ function gen(){
         const wrapSize = (label) => {
             return `if std.objectHas(ButtonSize, '${label}鍵size') then ButtonSize['${label}鍵size'] else ButtonSize['${label}键size']`;
         };
+        
+        const wrapFontSize = (label) => {
+            return `if std.objectHas(fontSize, '${label}') then fontSize['${label}'] else fontSize['${label.replace('鍵','键')}']`;
+        };
 
         let kbBg=document.getElementById('kbBgHex').value||'#D1D5DB';let defTextC=document.getElementById('defKeyHex').value||'#000000';let generalKeyBg=document.getElementById('keyBgHex').value||'#FFFFFF';let sysKeyBg=document.getElementById('sysKeyHex').value||'#AAAAAA';let enterBg=document.getElementById('enterBgHex').value||'#007AFF';let enterText=document.getElementById('enterTextHex').value||'#FFFFFF';
         let kbBgD=document.getElementById('kbBgHexD').value||'#1C1C1E';let defTextCD=document.getElementById('defKeyHexD').value||'#FFFFFF';let generalKeyBgD=document.getElementById('keyBgHexD').value||'#4A4A4C';let sysKeyBgD=document.getElementById('sysKeyHexD').value||'#2C2C2E';let enterBgD=document.getElementById('enterBgHexD').value||'#0A60FE';let enterTextD=document.getElementById('enterTextHexD').value||'#FFFFFF';
@@ -78,7 +82,7 @@ function gen(){
                     btnInjectStr+=`      text: '${spText}',\n`;
                     btnInjectStr+=`      normalColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
                     btnInjectStr+=`      highlightColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
-                    btnInjectStr+=`      fontSize: fontSize['按鍵前景文字大小'],\n`;
+                    btnInjectStr+=`      fontSize: ${wrapFontSize('按鍵前景文字大小')},\n`;
                     btnInjectStr+=`    }),\n`;
                     return;
                 }
@@ -176,13 +180,11 @@ function gen(){
                 
                 if(isSys){
                     let sp=p.toLowerCase();
-                    // CRITICAL FIX: Only override globe/tab. DO NOT TOUCH standard keys that are already working.
                     if(sp==='globe'||sp==='nextkeyboard'||sp==='tab'){
                         let act=sp==='tab'?"'tab'":"'nextKeyboard'";
                         let txt=sp==='tab'?"'sf:arrow.right.to.line'":"'sf:globe'";
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
-                        // Only force this shared style for globe/tab to ensure symbols show up
                         addToOverrideMap(`${p}Button`,'foregroundStyle',`['systemButtonForegroundStyle']`);
                     }
                 }
@@ -242,6 +244,6 @@ function gen(){
         });
         return block;
     };
-    out+=`  '豎屏按鍵尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '橫屏按鍵尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏英文26键']\n    else keyboardLayout(theme)['横屏英文26键'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['豎屏按鍵尺寸']\n    else keyboardLayout(theme)['橫屏按鍵尺寸'],\n}\n";
+    out+=`  '豎屏按鍵尺寸': {\n${getSizesBlock(['portraitPinyin','portraitEn'])}  },\n\n`;out+=`  '橫屏按鍵尺寸': {\n${getSizesBlock(['landscapePinyin','landscapeEn'])}  },\n`;out+="};\n\n";out+="{\n  getPinyinLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['竖屏中文26键']\n    else keyboardLayout(theme)['横屏中文26键'],\n\n  getEnLayout(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['豎屏英文26鍵']\n    else keyboardLayout(theme)['橫屏英文26鍵'],\n\n  getButtonSize(theme, orientation):\n    if orientation == 'portrait' then keyboardLayout(theme)['豎屏按鍵尺寸']\n    else keyboardLayout(theme)['橫屏按鍵尺寸'],\n}\n";
     document.getElementById('outArea').value=out;flashBtn('btnGen','✅ libsonnet 產出成功');
 }
