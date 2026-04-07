@@ -185,9 +185,8 @@ function gen(){
                         let txt=sp==='tab'?"'sf:arrow.right.to.line'":"'sf:globe'";
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
-                        // DO NOT force 'systemButtonForegroundStyle'. 
-                        // Instead, point back to the locally generated prefix style that HAS the font size.
-                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);
+                        // Point to the brand new 'editorSystemIconStyle' injected below
+                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['editorSystemIconStyle']`);
                     }
                 }
             });
@@ -212,6 +211,9 @@ function gen(){
         let enterPermutations=['enter', 'return', '↵', 'ENTER', 'RETURN'];enterPermutations.forEach(p=>{addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',eTextLogic);addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',eTextLogic);});
 
         let overrides=`\n    ${overrideStartMarker}\n    + {\n`;
+        // INJECT THE GUARANTEED ICON STYLE HERE
+        overrides += `      'editorSystemIconStyle': { normalColor: if theme == 'dark' then '${defTextCD}' else '${defTextC}', fontSize: ${wrapFontSize('按鍵前景文字大小')} },\n`;
+        
         overrideMap.forEach((props, btnName) => {
             let fieldsStr = "{ " + Array.from(props).map(([f, v]) => `${f}: ${v}`).join(", ") + " }";
             let safeKey=btnName.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");
