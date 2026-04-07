@@ -185,7 +185,9 @@ function gen(){
                         let txt=sp==='tab'?"'sf:arrow.right.to.line'":"'sf:globe'";
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
-                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['systemButtonForegroundStyle']`);
+                        // DO NOT force 'systemButtonForegroundStyle'. 
+                        // Instead, point back to the locally generated prefix style that HAS the font size.
+                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);
                     }
                 }
             });
