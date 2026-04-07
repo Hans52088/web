@@ -38,9 +38,17 @@ function gen(){
         let kbBg=document.getElementById('kbBgHex').value||'#D1D5DB';let defTextC=document.getElementById('defKeyHex').value||'#000000';let generalKeyBg=document.getElementById('keyBgHex').value||'#FFFFFF';let sysKeyBg=document.getElementById('sysKeyHex').value||'#AAAAAA';let enterBg=document.getElementById('enterBgHex').value||'#007AFF';let enterText=document.getElementById('enterTextHex').value||'#FFFFFF';
         let kbBgD=document.getElementById('kbBgHexD').value||'#1C1C1E';let defTextCD=document.getElementById('defKeyHexD').value||'#FFFFFF';let generalKeyBgD=document.getElementById('keyBgHexD').value||'#4A4A4C';let sysKeyBgD=document.getElementById('sysKeyHexD').value||'#2C2C2E';let enterBgD=document.getElementById('enterBgHexD').value||'#0A60FE';let enterTextD=document.getElementById('enterTextHexD').value||'#FFFFFF';
 
-        let btnInjectStr="";let styleInjectStr="";
-        uniqueKeys.forEach((data,cellName)=>{let prefix=data.prefix;let isSystemKey=['enter','backspace','shift','space','numeric','tildedirect','perioddirect','comma','period','slash','semicolon','globe','nextkeyboard','tab','undo','deletetext','copy','paste','cut','selecttext','home','end','onehanded','rime2','rime3','none'].includes(prefix.toLowerCase());let sameCode=String(data.code).toUpperCase()===String(data.outCode).toUpperCase()||(sysCodeMap[String(data.code).toLowerCase()]===prefix);let safeOutCode=String(data.outCode||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");let safePrefix=prefix.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");let btnDefRegex=new RegExp(`(?:^|[^a-zA-Z0-9_])['"]?${safePrefix}Button['"]?\\s*:`,'i');
-            if(!btnDefRegex.test(newCode)){
+        let lSIdxMatch = newCode.indexOf("// === EDITOR LAYOUT START ===");
+        let lEIdxMatch = newCode.indexOf("// === EDITOR LAYOUT END ===");
+        let codeOutsideMarkers = newCode;
+        if(lSIdxMatch!==-1 && lEIdxMatch!==-1){
+            codeOutsideMarkers = newCode.substring(0, lSIdxMatch) + newCode.substring(lEIdxMatch + "// === EDITOR LAYOUT END ===".length);
+        }
+
+        let btnInjectStr = "";
+        let styleInjectStr = "";
+        uniqueKeys.forEach((data,cellName)=>{let prefix=data.prefix;let isSystemKey=['enter', 'backspace', 'shift', 'space', 'numeric', 'tildedirect', 'perioddirect', 'comma', 'period', 'slash', 'semicolon', 'globe', 'nextkeyboard', 'tab', 'undo', 'deletetext', 'copy', 'paste', 'cut', 'selecttext', 'home', 'end', 'onehanded', 'rime2', 'rime3', 'none'].includes(prefix.toLowerCase());let sameCode=String(data.code).toUpperCase()===String(data.outCode).toUpperCase()||(sysCodeMap[String(data.code).toLowerCase()]===prefix);let safeOutCode=String(data.outCode||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").trim();let safePrefix=prefix.replace(/\\/g,'\\\\').replace(/'/g,"\\'").trim();let btnDefRegex=new RegExp(`(?:^|[^a-zA-Z0-9_])['"]?${safePrefix}Button['"]?\\s*:`,'i');
+            if(!btnDefRegex.test(codeOutsideMarkers)){
                 let themeArg=isPinyinTemplate?'theme, ':'';
                 if(isSystemKey){
                     let sp = prefix.toLowerCase();
@@ -49,7 +57,10 @@ function gen(){
                     let userText = String(data.code || '');
                     let isSf = userText.toLowerCase().startsWith('sf:');
                     
-                    if (sp === 'globe' || sp === 'nextkeyboard') { spText = isSf ? userText : 'sf:globe'; specialObjStr = `action: 'nextKeyboard', click: 'nextKeyboard'`; }
+                    if (sp === 'globe' || sp === 'nextkeyboard') {
+                        spText = isSf ? userText : (userText || '🌐');
+                        specialObjStr = `action: 'nextKeyboard', click: 'nextKeyboard'`;
+                    }
                     else if (sp === 'undo') { spText = isSf ? userText : 'sf:arrow.uturn.backward'; specialObjStr = `action: 'shortcut_undo', click: 'shortcut_undo'`; }
                     else if (sp === 'copy') { spText = isSf ? userText : 'sf:doc.on.doc'; specialObjStr = `action: 'shortcut_copy', click: 'shortcut_copy'`; }
                     else if (sp === 'paste') { spText = isSf ? userText : 'sf:doc.on.clipboard'; specialObjStr = `action: 'shortcut_paste', click: 'shortcut_paste'`; }
@@ -80,8 +91,13 @@ function gen(){
                     btnInjectStr+=`    },\n`;
                     btnInjectStr+=`    '${safePrefix}ButtonForegroundStyle': utils.makeTextStyle({\n`;
                     btnInjectStr+=`      text: '${spText}',\n`;
-                    btnInjectStr+=`      normalColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
-                    btnInjectStr+=`      highlightColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
+                    if (sp === 'globe' || sp === 'nextkeyboard') {
+                        btnInjectStr+=`      normalColor: if theme == 'dark' then '#FFFFFF' else '#000000',\n`;
+                        btnInjectStr+=`      highlightColor: if theme == 'dark' then '#FFFFFF' else '#000000',\n`;
+                    } else {
+                        btnInjectStr+=`      normalColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
+                        btnInjectStr+=`      highlightColor: if theme == 'dark' then '${defTextCD}' else '${(data.color||defTextC).toUpperCase()}',\n`;
+                    }
                     btnInjectStr+=`      fontSize: ${wrapFontSize('按鍵前景文字大小')},\n`;
                     btnInjectStr+=`    }),\n`;
                     return;
@@ -185,8 +201,9 @@ function gen(){
                         let txt=sp==='tab'?"'sf:arrow.right.to.line'":"'sf:globe'";
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
-                        // Point to the brand new 'editorSystemIconStyle' injected below
-                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['editorSystemIconStyle']`);
+                        // DO NOT force 'systemButtonForegroundStyle'. 
+                        // Instead, point back to the locally generated prefix style that HAS the font size.
+                        addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);
                     }
                 }
             });
@@ -211,9 +228,6 @@ function gen(){
         let enterPermutations=['enter', 'return', '↵', 'ENTER', 'RETURN'];enterPermutations.forEach(p=>{addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',eTextLogic);addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',eTextLogic);});
 
         let overrides=`\n    ${overrideStartMarker}\n    + {\n`;
-        // INJECT THE GUARANTEED ICON STYLE HERE
-        overrides += `      'editorSystemIconStyle': { normalColor: if theme == 'dark' then '${defTextCD}' else '${defTextC}', fontSize: ${wrapFontSize('按鍵前景文字大小')} },\n`;
-        
         overrideMap.forEach((props, btnName) => {
             let fieldsStr = "{ " + Array.from(props).map(([f, v]) => `${f}: ${v}`).join(", ") + " }";
             let safeKey=btnName.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");
