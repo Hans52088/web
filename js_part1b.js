@@ -138,16 +138,54 @@ function gen(){
         let portWidths={};layouts[portMode].rows.forEach(r=>r.keys.forEach(k=>{portWidths[getCellName(k)]=parseFloat(k.width).toFixed(4);}));
         let landWidths={};layouts[landMode].rows.forEach(r=>r.keys.forEach(k=>{landWidths[getCellName(k)]=parseFloat(k.width).toFixed(4);}));
         let allCellNames=new Set([...Object.keys(portWidths),...Object.keys(landWidths)]);
-        allCellNames.forEach(cell=>{let pw=portWidths[cell]||"0.1";let lw=landWidths[cell]||"0.1";let swipeInject='';let loopSafeOut='';if(cell==='commaButton'||cell==='periodButton'){let outC=(cell==='commaButton')?',':'.';loopSafeOut=String(outC).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");swipeInject=`, foregroundStyle: std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${loopSafeOut}') then '${loopSafeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${loopSafeOut}') then '${loopSafeOut}ButtonDownForegroundStyle' else null])`;}
+        allCellNames.forEach(cell=>{let pw=portWidths[cell]||"0.1";let lw=landWidths[cell]||"0.1";let swipeInject='';let loopSafeOut='';if(cell==='commaButton'||cell==='periodButton'||cell==='slashButton'){let outC=(cell==='commaButton')?',':(cell==='periodButton'?'.':'/');loopSafeOut=String(outC).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");swipeInject=`, foregroundStyle: std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${loopSafeOut}') then '${loopSafeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${loopSafeOut}') then '${loopSafeOut}ButtonDownForegroundStyle' else null]), swipeUpAction: if std.objectHas(swipe_up, '${loopSafeOut}') then swipe_up['${loopSafeOut}'].action else null, swipeDownAction: if std.objectHas(swipe_down, '${loopSafeOut}') then swipe_down['${loopSafeOut}'].action else null`;
+                addToOverrideMap(`${cell}ForegroundStyle`, 'buttonStyleType', "'text'");
+                addToOverrideMap(`${cell}ForegroundStyle`, 'text', `'${loopSafeOut}'`);
+                addToOverrideMap(`${cell}ForegroundStyle`, 'uppercaseText', `'${loopSafeOut}'`);
+                addToOverrideMap(`${cell}ForegroundStyle`, 'fontSize', "fontSize['按键前景文字大小']");
+                addToOverrideMap(`${cell}ForegroundStyle`, 'normalColor', "color[theme]['按键前景颜色']");
+                addToOverrideMap(`${cell}ForegroundStyle`, 'highlightColor', "color[theme]['按键前景颜色']");
+            }
             addToOverrideMap(cell,'size',`{ width: { percentage: if orientation == 'portrait' then ${pw} else ${lw} } }`);
             addToOverrideMap(cell,'bounds',`null`);
-            if(swipeInject){addToOverrideMap(cell,'foregroundStyle',`std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${loopSafeOut}') then '${loopSafeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${loopSafeOut}') then '${loopSafeOut}ButtonDownForegroundStyle' else null])`);}
+            if(swipeInject){
+                addToOverrideMap(cell,'foregroundStyle',`std.prune(['${cell}ForegroundStyle', if std.objectHas(swipe_up, '${loopSafeOut}') then '${loopSafeOut}ButtonUpForegroundStyle' else null, if std.objectHas(swipe_down, '${loopSafeOut}') then '${loopSafeOut}ButtonDownForegroundStyle' else null])`);
+                addToOverrideMap(cell,'swipeUpAction',`if std.objectHas(swipe_up, '${loopSafeOut}') then swipe_up['${loopSafeOut}'].action else null`);
+                addToOverrideMap(cell,'swipeDownAction',`if std.objectHas(swipe_down, '${loopSafeOut}') then swipe_down['${loopSafeOut}'].action else null`);
+            }
+            if(!isPinyinTemplate){
+                if(cell==='tildeDirectButton'){ 
+                    addToOverrideMap(cell,'action',"{ character: '~' }");
+                    addToOverrideMap('tildeDirectForegroundStyle', 'buttonStyleType', "'text'");
+                    addToOverrideMap('tildeDirectForegroundStyle', 'text', "'~'");
+                    addToOverrideMap('tildeDirectForegroundStyle', 'uppercaseText', "'~'");
+                    addToOverrideMap('tildeDirectForegroundStyle', 'fontSize', "fontSize['按键前景文字大小']");
+                    addToOverrideMap('tildeDirectForegroundStyle', 'normalColor', "color[theme]['按键前景颜色']");
+                    addToOverrideMap('tildeDirectForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
+                }
+                else if(cell==='periodDirectButton'){ 
+                    addToOverrideMap(cell,'action',"{ character: '.' }"); 
+                    addToOverrideMap('periodDirectForegroundStyle', 'buttonStyleType', "'text'");
+                    addToOverrideMap('periodDirectForegroundStyle', 'text', "'.'");
+                    addToOverrideMap('periodDirectForegroundStyle', 'uppercaseText', "'.'");
+                    addToOverrideMap('periodDirectForegroundStyle', 'fontSize', "fontSize['按键前景文字大小']");
+                    addToOverrideMap('periodDirectForegroundStyle', 'normalColor', "color[theme]['按键前景颜色']");
+                    addToOverrideMap('periodDirectForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
+                }
+            }
         });
         
         let allRows=layouts[portMode].rows.concat(layouts[landMode].rows);
         allRows.forEach(r=>{r.keys.forEach(k=>{
             let color=(k.color||defTextC).toUpperCase();
             let rawDisplay=String(k.code||'');
+            if(!isPinyinTemplate){
+                let lowDisplay=rawDisplay.toLowerCase();
+                if(lowDisplay==='tildedirect') rawDisplay='~';
+                else if(lowDisplay==='perioddirect'||lowDisplay==='period') rawDisplay='.';
+                else if(lowDisplay==='comma') rawDisplay=',';
+                else if(lowDisplay==='slash') rawDisplay='/';
+            }
             let rawOutput=String(k.outCode||rawDisplay);
             let rawCode=rawOutput.toLowerCase();
             let prefix=sysCodeMap[rawCode]||rawCode;
@@ -228,10 +266,12 @@ function gen(){
         let enterPermutations=['enter', 'return', '↵', 'ENTER', 'RETURN'];enterPermutations.forEach(p=>{addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',eTextLogic);addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',eTextLogic);});
 
         let overrides=`\n    ${overrideStartMarker}\n    + {\n`;
+        let forceDefine=['commaButtonForegroundStyle','periodButtonForegroundStyle','slashButtonForegroundStyle','tildeDirectForegroundStyle','periodDirectForegroundStyle'];
         overrideMap.forEach((props, btnName) => {
             let fieldsStr = "{ " + Array.from(props).map(([f, v]) => `${f}: ${v}`).join(", ") + " }";
             let safeKey=btnName.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,"");
-            overrides += `      '${safeKey}'+: ${fieldsStr},\n`;
+            let op = forceDefine.includes(safeKey) ? ":" : "+:";
+            overrides += `      '${safeKey}'${op} ${fieldsStr},\n`;
         });
         overrides += `    } ${overrideEndMarker}\n`;
 

@@ -96,7 +96,9 @@ function renderKeyboard(){
                     if(upperCode === 'SPACE') displayChar = '空白鍵';
                     if(upperCode === 'NUMERIC') displayChar = '123';
                     keyBtn.innerText = displayChar;
+
                     const upData=swipeData.swipe_up[keyChar];
+
                     if(upData&&upData.label){const s=document.createElement('span');s.className='swipe-label swipe-up-label';s.innerText=upData.label.systemImageName?(sfSymbolEmojiMap[upData.label.systemImageName]||'❖'):(upData.label.text||'');if(upData.fontSize)s.style.fontSize=upData.fontSize+'px';let c2=upData.normalColor||upData.label.color;if(c2)s.style.color=c2;keyBtn.appendChild(s);}
                     const downData=swipeData.swipe_down[keyChar];
                     if(downData&&downData.label){const s=document.createElement('span');s.className='swipe-label swipe-down-label';s.innerText=downData.label.systemImageName?(sfSymbolEmojiMap[downData.label.systemImageName]||'❖'):(downData.label.text||'');if(downData.fontSize)s.style.fontSize=downData.fontSize+'px';let c2=downData.normalColor||downData.label.color;if(c2)s.style.color=c2;keyBtn.appendChild(s);}
