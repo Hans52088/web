@@ -149,6 +149,7 @@
         html[data-theme="dark"] .key { background: #4a4a4c; box-shadow: 0 1px 2px rgba(0,0,0,0.6); border-bottom: 2px solid rgba(0,0,0,0.6); color: #fff; }
         .key.selected { border: 3px solid var(--ios-blue); box-shadow: 0 0 12px rgba(0,122,255,0.4); transform: scale(1.05); z-index: 10; }
         .swipe-label { position: absolute; font-size: 11px; color: var(--text-secondary); font-weight: 500; pointer-events: none; }
+
         .swipe-up-label { top: 4px; }
         .swipe-down-label { bottom: 4px; }
         .key.has-hint::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--ios-blue); border-radius: 50%; }
@@ -234,7 +235,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
-            <span class="version-badge">Ver 260407-1018 (Globe Emoji)</span>
+            <span class="version-badge">Ver 260408-1520 (Auto-Heal Plus++ Rendering Fix)</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -926,10 +927,10 @@
     function copyC(){const a=document.getElementById('outArea');a.select();document.execCommand('copy');flashBtn('btnCopyC','✅ 複製成功');}
     function getCellName(k){let outCode=k.outCode||k.code;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';return `${prefix}Button`;}
     </script>
-    <script src="js_part1b.js?v=260407-1000"></script>
-    <script src="js_part1c.js?v=260407-1000"></script>
-    <script src="js_part2.js?v=260407-1000"></script>
-    <script src="js_part2b.js?v=260407-1000"></script>
+    <script src="js_part1b.js?v=260408-1300"></script>
+    <script src="js_part1c.js?v=260408-1300"></script>
+    <script src="js_part2.js?v=260408-1300"></script>
+    <script src="js_part2b.js?v=260408-1300"></script>
     <script>
     /* ======================================================================
        PART 3: INITIALIZATION — Bind events, set up drop zones, init
