@@ -9,6 +9,13 @@
 * **`index.html`**
     專案的主頁面與導覽入口，元書輸入法安裝與增加大易輸入法方案說明。
 
+* **`keyboard_config_studio.html`**
+    **鍵盤配置工作室(整合鍵盤佈局與按鍵滑動工具)**：更容易與方便使用者編輯元書皮膚，頁面會直接解壓縮取得對應的檔案，並且匯入相對應的頁面，匯出.cskin檔案即可匯入裝置(匯入後記得長按皮膚選擇運行main.jsonnet)
+
+省掉複雜步驟的困擾:
+原本: 改檔名-->解壓縮-->找對應檔案-->修攻-->重新壓縮-->改檔名-->匯入裝置
+現在: 直接上傳皮膚檔.cskin-->修改-->匯出.cskin-->匯入裝置，
+
 * **`keyboard_layout_color_tools.html`**
     **鍵盤佈局與配色工具**：提供視覺化的介面，讓你可以輕鬆配置鍵盤的按鍵排列與顏色主題，即時預覽各種主題風格下的鍵盤外觀。
 
@@ -22,6 +29,9 @@
 
 * 元書輸入法安裝與增加大易輸入方案說明網頁
 https://hans52088.github.io/web/
+
+* 元書皮膚cskin整合打包修改工作室
+https://hans52088.github.io/web/keyboard_config_studio.html
 
 * 鍵盤佈局與顏色視覺化編輯器
 https://hans52088.github.io/web/keyboard_layout_color_tools.html
