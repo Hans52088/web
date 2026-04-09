@@ -79,22 +79,36 @@ function renderKeyboard(){
                     else if(code === 'perioddirect') keyChar = 'perioddirect';
                     const keyBtn=document.createElement('div');
                     keyBtn.className='key';
-                    let upperCode = String(keyObj.outCode || keyObj.code).toUpperCase();
-                    let isEnter = ['ENTER','↵','RETURN'].includes(upperCode);
+                    
+                    let displayCode = String(keyObj.code || keyObj.outCode || '');
+                    let upperCode = displayCode.toUpperCase();
+                    let outUpper = String(keyObj.outCode || '').toUpperCase();
+                    
+                    let isEnter = ['ENTER','↵','RETURN'].includes(outUpper);
                     let sysKeys = (typeof systemKeys !== 'undefined') ? systemKeys : ['BACKSPACE','ENTER','SHIFT','SPACE','NUMERIC'];
-                    let isSys = sysKeys.includes(upperCode);
+                    let isSys = sysKeys.includes(outUpper);
+                    
                     let bgStyle='alphabeticBackgroundStyle';
                     if(isSys) bgStyle='systemButtonBackgroundStyle';
                     if(isEnter) bgStyle='searchButtonBackgroundStyle';
+                    
                     keyBtn.style.backgroundColor=getKeyBg(bgStyle);
-                    keyBtn.style.color=getKeyTextColor();
-                    if(isEnter) keyBtn.style.color='#ffffff';
+                    
+                    // Color logic matching Tab 1
+                    let displayColor = keyObj.color || getKeyTextColor();
+                    if (isEnter) displayColor = '#ffffff';
+                    keyBtn.style.color = displayColor;
+                    
+                    keyBtn.style.fontSize = (keyObj.fontSize || 18) + 'px';
+                    
                     const pct = (keyObj.width * 100);
                     keyBtn.style.width = 'calc(' + pct + '% - ' + (keyObj.width * totalGap) + 'px)';
+                    
                     let displayChar = upperCode;
                     if(typeof symbolMap !== 'undefined' && symbolMap && symbolMap[upperCode] !== undefined) displayChar = symbolMap[upperCode];
-                    if(upperCode === 'SPACE') displayChar = '空白鍵';
-                    if(upperCode === 'NUMERIC') displayChar = '123';
+                    if(upperCode === 'SPACE' || outUpper === 'SPACE') displayChar = '空白鍵';
+                    if(upperCode === 'NUMERIC' || outUpper === 'NUMERIC') displayChar = '123';
+                    
                     keyBtn.innerText = displayChar;
 
                     const upData=swipeData.swipe_up[keyChar];
@@ -183,7 +197,30 @@ function renderKeyboard(){
     }
 }
 
-function switchCategory(cat){if(currentSelectedKey)silentSaveCurrentKey();currentCategory=cat;document.getElementById('btn-both').className=cat==='both'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';document.getElementById('btn-pinyin').className=cat==='pinyin'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';document.getElementById('btn-alphabetic').className=cat==='alphabetic'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';currentSelectedKey=null;document.getElementById('editorArea').style.opacity='0.5';document.getElementById('editorArea').style.pointerEvents='none';document.getElementById('currentKeyDisplay').innerText='-';renderKeyboard();}
+function switchSwipeLayoutMode(mode){
+    currentMode = (mode === 'pinyin') ? 'portraitPinyin' : 'portraitEn';
+    document.getElementById('btn-layout-pinyin').className = mode === 'pinyin' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    document.getElementById('btn-layout-en').className = mode === 'en' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    renderKeyboard();
+}
+
+function switchCategory(cat){
+    if(currentSelectedKey)silentSaveCurrentKey();
+    currentCategory=cat;
+    document.getElementById('btn-both').className=cat==='both'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';
+    document.getElementById('btn-pinyin').className=cat==='pinyin'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';
+    document.getElementById('btn-alphabetic').className=cat==='alphabetic'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';
+    
+    // Auto sync layout mode if switching to a specific category
+    if(cat === 'pinyin') switchSwipeLayoutMode('pinyin');
+    else if(cat === 'alphabetic') switchSwipeLayoutMode('en');
+    
+    currentSelectedKey=null;
+    document.getElementById('editorArea').style.opacity='0.5';
+    document.getElementById('editorArea').style.pointerEvents='none';
+    document.getElementById('currentKeyDisplay').innerText='-';
+    renderKeyboard();
+}
 function switchEditorMode(mode){currentEditorMode=mode;document.getElementById('editorModeSwipe').className=mode==='swipe'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';document.getElementById('editorModeHint').className=mode==='hint'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';document.getElementById('swipeEditorSection').style.display=mode==='swipe'?'block':'none';document.getElementById('hintEditorSection').style.display=mode==='hint'?'block':'none';document.getElementById('copyPastePanelSwipe').style.display=mode==='swipe'?'flex':'none';document.getElementById('copyPastePanelHint').style.display=mode==='hint'?'flex':'none';document.getElementById('categoryTabs').style.display=mode==='hint'?'flex':'none';switchCodeTab(mode);}
 
 function selectKey(keyChar){if(currentSelectedKey&&currentSelectedKey!==keyChar)silentSaveCurrentKey();currentSelectedKey=keyChar;renderKeyboard();let displayName=keyChar.toUpperCase();if(keyChar==='perioddirect')displayName='. (符號)';else if(keyChar==='comma')displayName=', (COMMA)';else if(keyChar==='period')displayName='. (PERIOD)';else if(keyChar===';')displayName='; (SEMICOLON)';else if(keyChar==='/')displayName='/ (SLASH)';document.getElementById('currentKeyDisplay').innerText=`${displayName}`;document.getElementById('editorArea').style.opacity='1';document.getElementById('editorArea').style.pointerEvents='auto';setupSwipePanel('up',swipeData.swipe_up[keyChar]||{});setupSwipePanel('down',swipeData.swipe_down[keyChar]||{});if(!hintSymbolsData.alphabetic)hintSymbolsData.alphabetic={};if(!hintSymbolsData.pinyin)hintSymbolsData.pinyin={};if(currentCategory==='both'){if(!hintSymbolsData.alphabetic[keyChar])hintSymbolsData.alphabetic[keyChar]={selectedIndex:0,list:[]};if(!hintSymbolsData.pinyin[keyChar])hintSymbolsData.pinyin[keyChar]={selectedIndex:0,list:[]};}else{if(!hintSymbolsData[currentCategory][keyChar])hintSymbolsData[currentCategory][keyChar]={selectedIndex:0,list:[]};}const activeCat=currentCategory==='both'?'alphabetic':currentCategory;document.getElementById('selectedIndexInput').value=hintSymbolsData[activeCat][keyChar].selectedIndex||0;const widthInput=document.getElementById('hintWidthInput');if(hintSymbolsData[activeCat][keyChar].size&&hintSymbolsData[activeCat][keyChar].size.width){widthInput.value=hintSymbolsData[activeCat][keyChar].size.width;}else{widthInput.value='';}renderHintItems();}

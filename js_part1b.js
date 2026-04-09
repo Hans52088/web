@@ -102,7 +102,8 @@ function gen(){
                     btnInjectStr+=`    }),\n`;
                     return;
                 }
-                btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ key: '${safeOutCode}', size: ${wrapSize('普通')} }),\n`;
+                let btnTextPart = (data.code && String(data.code).toUpperCase() !== String(data.outCode).toUpperCase()) ? `text: '${String(data.code).replace(/'/g, "\\'")}', ` : "";
+                btnInjectStr+=`    '${safePrefix}Button': createButton(${themeArg}{ ${btnTextPart}key: '${safeOutCode}', size: ${wrapSize('普通')} }),\n`;
                 styleInjectStr+=`  + createHintStyle('${safeOutCode}')\n`;
                 if(isPinyinTemplate){styleInjectStr+=`  + createSchemaStyles(theme, '${safeOutCode}')\n`;}
                 else{styleInjectStr+=`  + createExtraStyles(theme, '${safeOutCode}')\n`;}
@@ -230,6 +231,11 @@ function gen(){
                 if(textInject){
                     addToOverrideMap(`${p}ButtonForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
                     addToOverrideMap(`${p}ButtonForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
+                    // Ensure custom schema styles also get the text override
+                    addToOverrideMap(`${p}SchemaLiurForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
+                    addToOverrideMap(`${p}SchemaLiurForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
+                    addToOverrideMap(`${p}SchemaEasyEnForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
+                    addToOverrideMap(`${p}SchemaEasyEnForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
                 }
                 
                 if(isSys){
