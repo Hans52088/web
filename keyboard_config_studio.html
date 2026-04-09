@@ -235,7 +235,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
-            <span class="version-badge">Ver 260408-1700 (Direct Symbol Logic Final Fix)</span>
+            <span class="version-badge">Ver 260409-1540 (Preview Sync Fix)</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -381,6 +381,11 @@
                 <div class="swipe-left">
                     <!-- Keyboard area -->
                     <div class="ios-card" id="keyboardArea">
+                        <div class="category-tabs" id="layoutToggleTabs" style="margin-bottom: 8px;">
+                            <span style="font-size:13px;color:var(--text-secondary);align-self:center;margin-right:5px;">預覽佈局語系:</span>
+                            <button class="btn btn-primary btn-sm" id="btn-layout-pinyin" onclick="switchSwipeLayoutMode('pinyin')">中文佈局</button>
+                            <button class="btn btn-ghost btn-sm" id="btn-layout-en" onclick="switchSwipeLayoutMode('en')">英文佈局</button>
+                        </div>
                         <div class="category-tabs" id="categoryTabs" style="display:none;">
                             <span style="font-size:13px;color:var(--text-secondary);align-self:center;margin-right:5px;">長按功能預覽群組:</span>
                             <button class="btn btn-primary btn-sm" id="btn-both" onclick="switchCategory('both')">中文與英文</button>
@@ -927,10 +932,10 @@
     function copyC(){const a=document.getElementById('outArea');a.select();document.execCommand('copy');flashBtn('btnCopyC','✅ 複製成功');}
     function getCellName(k){let outCode=k.outCode||k.code;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';return `${prefix}Button`;}
     </script>
-    <script src="js_part1b.js?v=260408-1700"></script>
-    <script src="js_part1c.js?v=260408-1700"></script>
-    <script src="js_part2.js?v=260408-1700"></script>
-    <script src="js_part2b.js?v=260408-1700"></script>
+    <script src="js_part1b.js?v=260409-1540"></script>
+    <script src="js_part1c.js?v=260409-1540"></script>
+    <script src="js_part2.js?v=260409-1540"></script>
+    <script src="js_part2b.js?v=260409-1540"></script>
     <script>
     /* ======================================================================
        PART 3: INITIALIZATION — Bind events, set up drop zones, init
