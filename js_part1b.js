@@ -7,11 +7,9 @@ function gen(){
     if(exportFormat==='jsonnet'){
         if(!rawTemplateStr){alert('⚠️ 請先上傳 .jsonnet 檔案作為模板，或將產出格式改為 .libsonnet！');return;}
         let newCode=rawTemplateStr;
-        let isPinyinTemplate=newCode.includes('createSchemaStyles');
-        const newComment="// ==========================================\n// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出\n// ==========================================\n";
-        if(newCode.includes('// 本配置檔由 WHY 製作的編輯器產出')){newCode=newCode.replace('// 本配置檔由 WHY 製作的編輯器產出','// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出');}else if(!newCode.includes('// 本配置檔由 WHY 製作的鍵盤佈局與顏色編輯器產出')){newCode=newComment+"\n"+newCode;}
-        let portMode=(currentFileName.includes('en')||currentFileName.includes('alphabetic'))?'portraitEn':'portraitPinyin';
-        let landMode=(currentFileName.includes('en')||currentFileName.includes('alphabetic'))?'landscapeEn':'landscapePinyin';
+        let isPinyinTemplate=newCode.includes('getPinyinLayout') || newCode.includes('createSchemaStyles');
+        let portMode=isPinyinTemplate ? 'portraitPinyin' : 'portraitEn';
+        let landMode=isPinyinTemplate ? 'landscapePinyin' : 'landscapeEn';
         let uniqueKeys=new Map();
         const addKey=(k)=>{let code=k.code||'';let outCode=k.outCode||code;if(!code&&!outCode)return;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';let cellName=`${prefix}Button`;uniqueKeys.set(cellName,{code:code,outCode:outCode,prefix:prefix});};
         layouts[portMode].rows.forEach(r=>r.keys.forEach(addKey));
@@ -75,6 +73,8 @@ function gen(){
                     else if (sp === 'shift') { spText = isSf ? userText : 'sf:shift'; specialObjStr = `action: 'shift', click: 'shift'`; }
                     else if (sp === 'space') { spText = isSf ? userText : 'sf:space'; specialObjStr = `action: 'space', click: 'space'`; }
                     else if (sp === 'tab') { spText = isSf ? userText : 'sf:arrow.right.to.line'; specialObjStr = `action: 'tab', click: 'tab'`; }
+                    else if (sp === 'tildedirect') { spText = '~'; specialObjStr = `action: { symbol: '~' }`; }
+                    else if (sp === 'perioddirect') { spText = '.'; specialObjStr = `action: { symbol: '.' }`; }
                     else {
                          spText = userText || safeOutCode;
                          specialObjStr = `action: { symbol: '${safeOutCode}' }`;
@@ -155,7 +155,7 @@ function gen(){
             }
             if(!isPinyinTemplate){
                 if(cell==='tildeDirectButton'){ 
-                    addToOverrideMap(cell,'action',"{ character: '~' }");
+                    addToOverrideMap(cell,'action',"{ symbol: '~' }");
                     addToOverrideMap('tildeDirectForegroundStyle', 'buttonStyleType', "'text'");
                     addToOverrideMap('tildeDirectForegroundStyle', 'text', "'~'");
                     addToOverrideMap('tildeDirectForegroundStyle', 'uppercaseText', "'~'");
@@ -164,7 +164,7 @@ function gen(){
                     addToOverrideMap('tildeDirectForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
                 }
                 else if(cell==='periodDirectButton'){ 
-                    addToOverrideMap(cell,'action',"{ character: '.' }"); 
+                    addToOverrideMap(cell,'action',"{ symbol: '.' }"); 
                     addToOverrideMap('periodDirectForegroundStyle', 'buttonStyleType', "'text'");
                     addToOverrideMap('periodDirectForegroundStyle', 'text', "'.'");
                     addToOverrideMap('periodDirectForegroundStyle', 'uppercaseText', "'.'");
