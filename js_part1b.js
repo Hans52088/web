@@ -154,31 +154,29 @@ function gen(){
                 addToOverrideMap(cell,'swipeUpAction',`if std.objectHas(swipe_up, '${loopSafeOut}') then swipe_up['${loopSafeOut}'].action else null`);
                 addToOverrideMap(cell,'swipeDownAction',`if std.objectHas(swipe_down, '${loopSafeOut}') then swipe_down['${loopSafeOut}'].action else null`);
             }
-            if(!isPinyinTemplate){
-                if(cell==='tildeDirectButton'){ 
-                    addToOverrideMap(cell,'action',"{ symbol: '~' }");
-                    addToOverrideMap(cell,'foregroundStyle',"['tildeDirectButtonForegroundStyle']");
-                    addToOverrideMap(cell,'swipeUpAction','null');
-                    addToOverrideMap(cell,'swipeDownAction','null');
-                    addToOverrideMap('tildeDirectButtonForegroundStyle', 'buttonStyleType', "'text'");
-                    addToOverrideMap('tildeDirectButtonForegroundStyle', 'text', "'~'");
-                    addToOverrideMap('tildeDirectButtonForegroundStyle', 'uppercaseText', "'~'");
-                    addToOverrideMap('tildeDirectButtonForegroundStyle', 'fontSize', "fontSize['按键前景文字大小']");
-                    addToOverrideMap('tildeDirectButtonForegroundStyle', 'normalColor', "color[theme]['按键前景颜色']");
-                    addToOverrideMap('tildeDirectButtonForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
-                }
-                else if(cell==='periodDirectButton'){ 
-                    addToOverrideMap(cell,'action',"{ symbol: '.' }"); 
-                    addToOverrideMap(cell,'foregroundStyle',"['periodDirectButtonForegroundStyle']");
-                    addToOverrideMap(cell,'swipeUpAction','null');
-                    addToOverrideMap(cell,'swipeDownAction','null');
-                    addToOverrideMap('periodDirectButtonForegroundStyle', 'buttonStyleType', "'text'");
-                    addToOverrideMap('periodDirectButtonForegroundStyle', 'text', "'.'");
-                    addToOverrideMap('periodDirectButtonForegroundStyle', 'uppercaseText', "'.'");
-                    addToOverrideMap('periodDirectButtonForegroundStyle', 'fontSize', "fontSize['按键前景文字大小']");
-                    addToOverrideMap('periodDirectButtonForegroundStyle', 'normalColor', "color[theme]['按键前景颜色']");
-                    addToOverrideMap('periodDirectButtonForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
-                }
+            if(cell==='tildeDirectButton'){ 
+                addToOverrideMap(cell,'action',"{ symbol: '~' }");
+                addToOverrideMap(cell,'foregroundStyle',"['tildeDirectButtonForegroundStyle']");
+                addToOverrideMap(cell,'swipeUpAction','null');
+                addToOverrideMap(cell,'swipeDownAction','null');
+                addToOverrideMap('tildeDirectButtonForegroundStyle', 'buttonStyleType', "'text'");
+                addToOverrideMap('tildeDirectButtonForegroundStyle', 'text', "'~'");
+                addToOverrideMap('tildeDirectButtonForegroundStyle', 'uppercaseText', "'~'");
+                addToOverrideMap('tildeDirectButtonForegroundStyle', 'fontSize', "fontSize['按键前景文字大小']");
+                addToOverrideMap('tildeDirectButtonForegroundStyle', 'normalColor', "color[theme]['按键前景颜色']");
+                addToOverrideMap('tildeDirectButtonForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
+            }
+            else if(cell==='periodDirectButton'){ 
+                addToOverrideMap(cell,'action',"{ symbol: '.' }"); 
+                addToOverrideMap(cell,'foregroundStyle',"['periodDirectButtonForegroundStyle']");
+                addToOverrideMap(cell,'swipeUpAction','null');
+                addToOverrideMap(cell,'swipeDownAction','null');
+                addToOverrideMap('periodDirectButtonForegroundStyle', 'buttonStyleType', "'text'");
+                addToOverrideMap('periodDirectButtonForegroundStyle', 'text', "'.'");
+                addToOverrideMap('periodDirectButtonForegroundStyle', 'uppercaseText', "'.'");
+                addToOverrideMap('periodDirectButtonForegroundStyle', 'fontSize', "fontSize['按键前景文字大小']");
+                addToOverrideMap('periodDirectButtonForegroundStyle', 'normalColor', "color[theme]['按键前景颜色']");
+                addToOverrideMap('periodDirectButtonForegroundStyle', 'highlightColor', "color[theme]['按键前景颜色']");
             }
         });
         
