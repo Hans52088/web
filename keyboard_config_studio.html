@@ -235,7 +235,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
-            <span class="version-badge">Ver 260410-1240 (CSKIN Full Color Fix)</span>
+            <span class="version-badge">Ver 260410-1540 (UI & CSKIN Color Full Sync)</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -923,7 +923,7 @@
         data.rows.forEach(row=>{const rDiv=document.createElement('div');rDiv.className='keyboard-row-preview';rDiv.style.height=h+'px';rDiv.style.gap=gap+'px';row.keys.forEach(key=>{const k=document.createElement('div');k.className='preview-key';const rawCode=String(key.code||key.outCode||'');const upperCode=rawCode.toUpperCase();let dChar=symbolMap[upperCode]!==undefined?symbolMap[upperCode]:rawCode;if(rawCode.startsWith('sf:')){let iN=rawCode.slice(3);dChar=typeof sfSymbolEmojiMap!=='undefined'?sfSymbolEmojiMap[iN]||'❖':'❖';}k.innerText=dChar;k.style.width=(key.width*100)+'%';k.style.fontSize=key.fontSize+'px';k.style.borderRadius=document.getElementById('keyRadius').value+'px';const isEnter=['ENTER','↵','RETURN'].includes(String(key.outCode||key.code||'').toUpperCase());const isSys=systemKeys.includes(String(key.outCode||key.code||'').toUpperCase());let keyHex=(key.color||'').toUpperCase();let displayColor;if(keyHex===lightDefC||keyHex===''||keyHex==='#000000'){displayColor=curDefC;}else{displayColor=key.color;}if(isEnter){k.style.backgroundColor=curEnterBg;k.style.color=curEnterText;}else if(isSys){k.style.backgroundColor=curSysBg;k.style.color=displayColor;}else{k.style.backgroundColor=curKeyBg;k.style.color=displayColor;}rDiv.appendChild(k);});preview.appendChild(rDiv);});
     }
 
-    function updateKey(r,k,f,v,el){const val=(f==='width'||f==='fontSize')?parseFloat(v):v;const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m].rows[r]&&layouts[m].rows[r].keys[k]){let keyObj=layouts[m].rows[r].keys[k];if(f==='type'){keyObj.outCode=val;let vU=val.toUpperCase().replace('SHORTCUT_','SHORT_');keyObj.code=cmdToSfMapT1[vU]||val;}else if(f==='outCode'){if(!keyObj.code){keyObj.code=val;if(el&&currentMode===m){let ci=el.parentElement.querySelector('.code-input');if(ci)ci.value=val;}}keyObj.outCode=val;}else if(f==='code'){if(!keyObj.outCode){keyObj.outCode=val;if(el&&currentMode===m){let oi=el.parentElement.querySelector('.out-code-input');if(oi)oi.value=val;}}keyObj.code=val;if(el&&currentMode===m){let pb=el.parentElement.querySelector('.sf-preview-box');if(pb){let sfEmoji='';if(val.startsWith('sf:')){let iN=val.slice(3);sfEmoji=typeof sfSymbolEmojiMap!=='undefined'?sfSymbolEmojiMap[iN]||'❖':'❖';}pb.innerText=sfEmoji;}}}else{keyObj[f]=val;}}});renderPreview();}
+    function updateKey(r,k,f,v,el){const val=(f==='width'||f==='fontSize')?parseFloat(v):v;const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m].rows[r]&&layouts[m].rows[r].keys[k]){let keyObj=layouts[m].rows[r].keys[k];if(f==='type'){keyObj.outCode=val;let vU=val.toUpperCase().replace('SHORTCUT_','SHORT_');keyObj.code=cmdToSfMapT1[vU]||val;}else if(f==='outCode'){if(!keyObj.code){keyObj.code=val;if(el&&currentMode===m){let ci=el.parentElement.querySelector('.code-input');if(ci)ci.value=val;}}keyObj.outCode=val;}else if(f==='code'){if(!keyObj.outCode){keyObj.outCode=val;if(el&&currentMode===m){let oi=el.parentElement.querySelector('.out-code-input');if(oi)oi.value=val;}}keyObj.code=val;if(el&&currentMode===m){let pb=el.parentElement.querySelector('.sf-preview-box');if(pb){let sfEmoji='';if(val.startsWith('sf:')){let iN=val.slice(3);sfEmoji=typeof sfSymbolEmojiMap!=='undefined'?sfSymbolEmojiMap[iN]||'❖':'❖';}pb.innerText=sfEmoji;}}}else{keyObj[f]=val;if(f==='color'&&el&&currentMode===m){const parent=el.parentElement;if(parent){const picker=parent.querySelector('.color-picker');const hex=parent.querySelector('.hex-input');if(picker&&picker!==el)picker.value=val.toLowerCase();if(hex&&hex!==el)hex.value=val.toUpperCase();}}}}});renderPreview();}
     function setK(r,c){const num=Math.max(1,parseInt(c));const defC=document.getElementById('defKeyColor').value;const targets=getSyncTargets(currentMode);targets.forEach(m=>{const row=layouts[m].rows[r];if(!row)return;if(num>row.keys.length){for(let i=row.keys.length;i<num;i++)row.keys.push({code:'',outCode:'',width:(1/num).toFixed(4),color:defC,fontSize:18});}else{row.keys=row.keys.slice(0,num);}row.keys.forEach(k=>k.width=(1/num).toFixed(4));});renderEditor();renderPreview();}
 
     function flashBtn(id,text){const btn=document.getElementById(id);if(!btn)return;const old=btn.innerText;btn.innerText=text;setTimeout(()=>btn.innerText=old,2000);}
@@ -932,10 +932,10 @@
     function copyC(){const a=document.getElementById('outArea');a.select();document.execCommand('copy');flashBtn('btnCopyC','✅ 複製成功');}
     function getCellName(k){let outCode=k.outCode||k.code;let outUiCode=String(outCode).toLowerCase();let prefix=sysCodeMap[outUiCode]||outUiCode;if(prefix==='semicolon')prefix='semicolon';return `${prefix}Button`;}
     </script>
-    <script src="js_part1b.js?v=260410-1240"></script>
-    <script src="js_part1c.js?v=260410-1240"></script>
-    <script src="js_part2.js?v=260410-1240"></script>
-    <script src="js_part2b.js?v=260410-1240"></script>
+    <script src="js_part1b.js?v=260410-1540"></script>
+    <script src="js_part1c.js?v=260410-1540"></script>
+    <script src="js_part2.js?v=260410-1540"></script>
+    <script src="js_part2b.js?v=260410-1540"></script>
     <script>
     /* ======================================================================
        PART 3: INITIALIZATION — Bind events, set up drop zones, init
