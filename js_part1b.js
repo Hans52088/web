@@ -218,25 +218,33 @@ function gen(){
             permutations.forEach(p=>{
                 if(!p)return;
                 let isSys=systemKeys.includes(p.toUpperCase())||p==='globe'||p==='tab'||p.startsWith('shortcut_');
-                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
-                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg(['功能鍵背景顏色','功能键背景颜色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母键背景颜色'],generalKeyBg,generalKeyBgD));
                 
+                // Background colors
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'normalColor',isSys?wrapBg(['功能鍵背景顏色','功能鍵背景顏色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母鍵背景顏色'],generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}ButtonBackgroundStyle`,'highlightColor',isSys?wrapBg(['功能鍵背景顏色','功能鍵背景顏色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母鍵背景顏色'],generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'normalColor',isSys?wrapBg(['功能鍵背景顏色','功能鍵背景顏色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母鍵背景顏色'],generalKeyBg,generalKeyBgD));
+                addToOverrideMap(`${p}BackgroundStyle`,'highlightColor',isSys?wrapBg(['功能鍵背景顏色','功能鍵背景顏色'],sysKeyBg,sysKeyBgD):wrapBg(['字母鍵背景顏色','字母鍵背景顏色'],generalKeyBg,generalKeyBgD));
+                
+                // Foreground (Text) colors
                 let ncMatch = colorStr.match(/normalColor:\s*(.*?)[,}]/);
                 let hcMatch = colorStr.match(/highlightColor:\s*(.*?)[,}]/);
-                if(ncMatch) addToOverrideMap(`${p}ButtonForegroundStyle`,'normalColor',ncMatch[1]);
-                if(hcMatch) addToOverrideMap(`${p}ButtonForegroundStyle`,'highlightColor',hcMatch[1]);
                 
-                if(textInject){
-                    addToOverrideMap(`${p}ButtonForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
-                    addToOverrideMap(`${p}ButtonForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
-                    // Ensure custom schema styles also get the text override
-                    addToOverrideMap(`${p}SchemaLiurForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
-                    addToOverrideMap(`${p}SchemaLiurForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
-                    addToOverrideMap(`${p}SchemaEasyEnForegroundStyle`,'text',`'${rawDisplay.replace(/'/g,"\\'")}'`);
-                    addToOverrideMap(`${p}SchemaEasyEnForegroundStyle`,'uppercaseText',`'${rawDisplay.replace(/'/g,"\\'")}'`);
-                }
+                const fgStyles = [
+                    `${p}ButtonForegroundStyle`,
+                    `${p}SchemaLiurForegroundStyle`,
+                    `${p}SchemaEasyEnForegroundStyle`
+                ];
+                
+                fgStyles.forEach(style => {
+                    if(ncMatch) addToOverrideMap(style, 'normalColor', ncMatch[1]);
+                    if(hcMatch) addToOverrideMap(style, 'highlightColor', hcMatch[1]);
+                    
+                    if(textInject){
+                        let safeD = rawDisplay.replace(/'/g,"\\'");
+                        addToOverrideMap(style, 'text', `'${safeD}'`);
+                        addToOverrideMap(style, 'uppercaseText', `'${safeD}'`);
+                    }
+                });
                 
                 if(isSys){
                     let sp=p.toLowerCase();
@@ -245,8 +253,6 @@ function gen(){
                         let txt=sp==='tab'?"'sf:arrow.right.to.line'":"'sf:globe'";
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
-                        // DO NOT force 'systemButtonForegroundStyle'. 
-                        // Instead, point back to the locally generated prefix style that HAS the font size.
                         addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);
                     }
                 }
