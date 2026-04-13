@@ -24,10 +24,10 @@
 ## 🛠️ 安裝與使用
 
 1. **檔案下載**：
-   - 確保下載了 `index.html` (或 `Dayi-ActualKB-transfer(Offline).html`)。
+   - 確保下載了 `Dayi-ActualKB-transfer(Offline).html`。
    - 確保同時下載了同目錄下的 `dayi_data.js`。
 2. **開啟方式**：
-   - 直接使用檔案管理 App (如 iOS 的「檔案」或 Documents) 開啟 `index.html`。
+   - 直接使用檔案管理 App (如 iOS 的「檔案」或 Documents) 開啟 `Dayi-ActualKB-transfer(Offline).html`。
    - 使用 iOS 的 **Safari** 或主流瀏覽器瀏覽。
 3. **輸入方式**：
    - 使用實體鍵盤進行大易字根輸入。
@@ -36,7 +36,7 @@
 
 ## 📦 檔案結構
 
-- `index.html`：主程式 UI 與邏輯。
+- `Dayi-ActualKB-transfer(Offline).html`：主程式 UI 與邏輯。
 - `dayi_data.js`：核心龐大字典檔（Rime 格式兼容）。
 
 ---
