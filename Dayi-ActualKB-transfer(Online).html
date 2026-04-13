@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大易實體鍵盤輸入轉接器 | Dayi Bridge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg: #0f172a;
+            --glass: rgba(30, 41, 59, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.1) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .version-line {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            line-height: 1;
+        }
+
+        #display-area {
+            width: 100%;
+            min-height: 100px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 22px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            overflow-y: auto;
+            word-wrap: break-word;
+            font-weight: 400;
+            position: relative;
+        }
+
+        #display-area::after {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            height: 24px;
+            background-color: var(--primary);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+
+        .composition-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .root-tag {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 15px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .meta-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #dict-status {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        #load-dict-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #load-dict-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+        }
+
+        #candidates-container {
+            min-height: 60px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        #candidates {
+            display: flex;
+            gap: 8px;
+        }
+
+        .candidate {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .candidate.active, .candidate:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+        }
+
+        .candidate-char {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .hint-box {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hint-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .hint-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .key-cap {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 10px;
+        }
+
+        #copy-toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            z-index: 1000;
+            transition: 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        #copy-toast.show { transform: translateX(-50%) translateY(0); }
+        .empty-display::before { content: attr(placeholder); color: var(--text-muted); opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⌨️ 大易實體鍵盤輸入轉接器</h1>
+        <div class="version-line">
+            <span>版權所有 ＆ 製作：WHY</span>
+            <span>VERSION: 260413-1317</span>
+        </div>
+    </header>
+
+    <div id="display-area" placeholder="開始輸入..." class="empty-display"></div>
+    
+    <div class="action-row">
+        <div class="composition-area" id="composition"></div>
+        <div class="meta-actions">
+            <div id="dict-status"></div>
+            <button id="load-dict-btn">📥 載入大易字庫</button>
+        </div>
+    </div>
+
+    <div id="candidates-container">
+        <div id="candidates"></div>
+    </div>
+
+    <div class="hint-box">
+        <div class="hint-grid">
+            <div class="hint-item"><span class="key-cap">A-Z / 0-9</span> 輸入字根</div>
+            <div class="hint-item"><span class="key-cap">Space</span> 選擇 1</div>
+            <div class="hint-item"><span class="key-cap">'</span> 選擇 2</div>
+            <div class="hint-item"><span class="key-cap">[</span> 選擇 3</div>
+            <div class="hint-item"><span class="key-cap">]</span> 選擇 4</div>
+            <div class="hint-item"><span class="key-cap">-</span> 選擇 5</div>
+            <div class="hint-item"><span class="key-cap">\</span> 選擇 6</div>
+            <div class="hint-item"><span class="key-cap">=</span> 標點模式</div>
+            <div class="hint-item"><span class="key-cap">Enter</span> 複製清空</div>
+            <div class="hint-item"><span class="key-cap">⌫</span> 刪除</div>
+        </div>
+    </div>
+</div>
+
+<div id="copy-toast">✅ 已複製到剪貼簿！</div>
+
+<script>
+    const dayiMap = {
+        '0': '金', 'i': '木', 'x': '水', 'y': '火', 'f': '土',
+        'a': '人', 'z': '心', 'o': '口', '1': '言', 'p': '耳', '3': '目', 'g': '手', '9': '足', 'l': '女',
+        '2': '牛', 'b': '馬', 'c': '鹿', ',': '犭', ';': '虫', 'n': '魚', 'h': '鳥',
+        'd': '日', 'j': '月', 'w': '山', 'q': '石', 'm': '雨',
+        '7': '田', 'v': '禾', '8': '米', '/': '竹', 'u': '艸',
+        'r': '工', '6': '車', '.': '舟', 't': '糸', 's': '革', 'k': '立', 'e': '一', '4': '四', '5': '王'
+    };
+
+    const selectionKeys = { ' ': 0, "'": 1, "[": 2, "]": 3, "-": 4, "\\": 5 };
+    const selectionNames = ["Space", "'", "[", "]", "-", "\\"];
+    const punctuationMap = ["。", "，", "「", "」", "！", "、"];
+
+    let dayiDictionary = {};
+    let fullSentence = "";
+    let currentBuffer = "";
+    let candidatesArr = [];
+    let isPunctuationMode = false;
+
+    const displayArea = document.getElementById('display-area');
+    const compositionArea = document.getElementById('composition');
+    const candidatesArea = document.getElementById('candidates');
+    const loadBtn = document.getElementById('load-dict-btn');
+    const dictStatus = document.getElementById('dict-status');
+    const toast = document.getElementById('copy-toast');
+
+    async function fetchFullDictionary() {
+        loadBtn.innerHTML = "⏳ 載入中...";
+        try {
+            const url = "https://raw.githubusercontent.com/chinese-opendesktop/cin-tables/master/dayi4.cin";
+            const response = await fetch(url);
+            const text = await response.text();
+            
+            const lines = text.split('\n');
+            let isParsing = false;
+            const newDict = {};
+            let count = 0;
+
+            for (let line of lines) {
+                line = line.trim();
+                if (line === "%chardef begin") { isParsing = true; continue; }
+                if (line === "%chardef end") { isParsing = false; break; }
+                if (isParsing && line) {
+                    const parts = line.split(/\s+/);
+                    if (parts.length >= 2) {
+                        const code = parts[0];
+                        const char = parts[1];
+                        if (!newDict[code]) newDict[code] = [];
+                        newDict[code].push(char);
+                        count++;
+                    }
+                }
+            }
+            dayiDictionary = newDict;
+            localStorage.setItem('dayi_full_dict_v10', JSON.stringify(newDict));
+            dictStatus.innerText = `字庫 (${count} 字)`;
+            loadBtn.innerHTML = "✅ 載入完成";
+        } catch (err) {
+            loadBtn.innerHTML = "❌ 載入失敗";
+        }
+    }
+
+    function initDict() {
+        const cached = localStorage.getItem('dayi_full_dict_v10');
+        if (cached) {
+            try {
+                dayiDictionary = JSON.parse(cached);
+                const count = Object.values(dayiDictionary).reduce((a, b) => a + b.length, 0);
+                dictStatus.innerText = `字庫 (${count} 字)`;
+                loadBtn.innerHTML = "✅ 載入完成";
+            } catch (e) {
+                localStorage.removeItem('dayi_full_dict_v10');
+            }
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const key = e.key;
+        const lowerKey = key.toLowerCase();
+
+        if ((currentBuffer.length > 0 || isPunctuationMode) && selectionKeys.hasOwnProperty(key)) e.preventDefault();
+        if (key === '=') e.preventDefault();
+
+        if (key === 'Backspace') {
+            if (isPunctuationMode) { isPunctuationMode = false; }
+            else if (currentBuffer) { currentBuffer = currentBuffer.slice(0, -1); }
+            else { fullSentence = fullSentence.slice(0, -1); }
+            updateUI();
+            return;
+        }
+
+        if (key === 'Enter') {
+            e.preventDefault();
+            copySentence();
+            return;
+        }
+
+        if (key === '=' && currentBuffer.length === 0) {
+            isPunctuationMode = !isPunctuationMode;
+            updateUI();
+            return;
+        }
+
+        if (selectionKeys.hasOwnProperty(key)) {
+            const idx = selectionKeys[key];
+            if (isPunctuationMode) {
+                if (punctuationMap[idx]) {
+                    fullSentence += punctuationMap[idx];
+                    isPunctuationMode = false;
+                    updateUI();
+                }
+                return;
+            } else if (currentBuffer.length > 0) {
+                if (candidatesArr[idx]) { confirmCandidate(idx); }
+                return;
+            }
+        }
+
+        if (key === ' ' && currentBuffer.length === 0 && !isPunctuationMode) {
+            fullSentence += " ";
+            updateUI();
+            return;
+        }
+
+        if (dayiMap[lowerKey]) {
+            if (isPunctuationMode) isPunctuationMode = false;
+            if (currentBuffer.length < 4) {
+                currentBuffer += lowerKey;
+                updateUI();
+            }
+        }
+    });
+
+    function updateUI() {
+        displayArea.innerText = fullSentence;
+        displayArea.classList.toggle('empty-display', !fullSentence);
+        
+        if (isPunctuationMode) {
+            compositionArea.innerHTML = `<span class="root-tag" style="background:var(--accent); color:white; border-color:var(--accent); font-size:13px">標點模式</span>`;
+        } else {
+            compositionArea.innerHTML = currentBuffer.split('').map(k => `<span class="root-tag">${dayiMap[k] || k}</span>`).join('');
+        }
+        
+        candidatesArr = isPunctuationMode ? punctuationMap : (dayiDictionary[currentBuffer] || []);
+
+        candidatesArea.innerHTML = candidatesArr.map((c, i) => `
+            <div class="candidate ${i === 0 ? 'active' : ''}" onclick="confirmPunctuationOrChar(${i})">
+                <span class="candidate-char">${c}</span>
+                <span style="font-size: 8px; opacity: 0.4; margin-left: 3px;">(${selectionNames[i]})</span>
+            </div>
+        `).slice(0, 10).join('');
+        
+        displayArea.scrollTop = displayArea.scrollHeight;
+    }
+
+    function confirmCandidate(i) {
+        if (candidatesArr[i]) {
+            fullSentence += candidatesArr[i];
+            currentBuffer = "";
+            updateUI();
+        }
+    }
+
+    function confirmPunctuationOrChar(i) {
+        if (isPunctuationMode) {
+            if (punctuationMap[i]) {
+                fullSentence += punctuationMap[i];
+                isPunctuationMode = false;
+                updateUI();
+            }
+        } else {
+            confirmCandidate(i);
+        }
+    }
+
+    async function copySentence() {
+        if (!fullSentence) return;
+        try {
+            await navigator.clipboard.writeText(fullSentence);
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+            fullSentence = ""; currentBuffer = ""; updateUI();
+        } catch (e) {
+            const el = document.createElement('textarea');
+            el.value = fullSentence;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+            fullSentence = ""; currentBuffer = ""; updateUI();
+        }
+    }
+
+    loadBtn.addEventListener('click', fetchFullDictionary);
+    initDict();
+    updateUI();
+</script>
+</body>
+</html>
