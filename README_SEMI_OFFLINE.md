@@ -13,7 +13,7 @@
 ## 🛠️ 安裝與使用
 
 1. **檔案下載或線上直接使用**：
-   - 線上使用 'https://hans52088.github.io/web/Dayi-ActualKB-transfer(Online).html'。
+   - 線上使用 https://hans52088.github.io/web/Dayi-ActualKB-transfer(Online).html
    - 下載 `Dayi-ActualKB-transfer(Online).html`。
 2. **首次連接**：
    - 開啟頁面後，點擊右下角的 **「📥 載入大易字庫」**。
