@@ -13,7 +13,7 @@
 ## 🛠️ 安裝與使用
 
 1. **檔案下載**：
-   - 下載 `index_semi_offline.html` (或 `Dayi-ActualKB-transfer(Online).html`)。
+   - 下載 `Dayi-ActualKB-transfer(Online).html`。
 2. **首次連接**：
    - 開啟頁面後，點擊右下角的 **「📥 載入大易字庫」**。
    - 程式會從 GitHub 抓取資料並快取。
@@ -25,7 +25,7 @@
 
 ## 📦 檔案結構
 
-- `index_semi_offline.html`：整合 UI、網路通訊與解析邏輯的單一 HTML 檔案。
+- `Dayi-ActualKB-transfer(Online).html`：整合 UI、網路通訊與解析邏輯的單一 HTML 檔案。
 
 ---
 製作者：WHY | VERSION: 260413-1317
