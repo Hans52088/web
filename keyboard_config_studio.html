@@ -31,7 +31,7 @@
             --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); font-family: 'Inter',-apple-system,BlinkMacSystemFont,sans-serif; color: var(--text-primary); min-height: 100vh; transition: background var(--transition), color var(--transition); }
+        body { background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif; color: var(--text-primary); min-height: 100vh; transition: background var(--transition), color var(--transition); }
 
         /* === NAV BAR === */
         .navbar { position: sticky; top: 0; z-index: 100; background: var(--nav-bg); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 0.5px solid var(--nav-border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
@@ -111,7 +111,26 @@
         /* === KEYBOARD PREVIEW (layout tool) === */
         .keyboard-preview { background: #d1d5db; padding: 12px; border-radius: var(--radius-md); display: flex; flex-direction: column; width: 100%; border: 1px solid #999; transition: 0.3s; }
         .keyboard-row-preview { display: flex; width: 100%; }
-        .preview-key { background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border-bottom: 2px solid rgba(0,0,0,0.15); font-weight: 500; overflow: hidden; white-space: nowrap; transition: 0.3s; }
+        .preview-key { 
+            background: #fff; 
+            border-radius: 7px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 1px 0px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1); 
+            border-bottom: 1.5px solid rgba(0,0,0,0.15); 
+            font-weight: 500; 
+            overflow: hidden; 
+            white-space: nowrap; 
+            transition: all 0.2s; 
+            position: relative;
+        }
+        html[data-theme="dark"] .preview-key {
+            background: #6D6D72;
+            color: #fff;
+            box-shadow: 0 1px 0px rgba(0,0,0,0.4);
+            border-bottom: 1.5px solid rgba(0,0,0,0.4);
+        }
 
         /* === LAYOUT EDITOR ROWS === */
         .row-item { background: var(--card-secondary); border: 1px solid var(--border); margin-bottom: 16px; padding: 16px; border-radius: var(--radius-md); transition: all var(--transition); }
@@ -143,10 +162,37 @@
         .keyboard-container { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 15px; background: #d1d5db; padding: 12px; border-radius: var(--radius-md); border: 1px solid #999; }
         html[data-theme="dark"] .keyboard-container { background: #1C1C1E; border-color: #38383A; }
         .keyboard-row { display: flex; width: 100%; }
-        .key { position: relative; height: 60px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border-bottom: 2px solid rgba(0,0,0,0.15); font-size: 18px; font-weight: 500; color: #000; transition: all 0.15s; overflow: hidden; white-space: nowrap; }
-        .key:hover { filter: brightness(0.95); }
-        .key:active { transform: scale(0.95); background-color: #e5e5ea; }
-        html[data-theme="dark"] .key { background: #4a4a4c; box-shadow: 0 1px 2px rgba(0,0,0,0.6); border-bottom: 2px solid rgba(0,0,0,0.6); color: #fff; }
+        .key { 
+            position: relative; 
+            height: 56px; 
+            background: #fff; 
+            border-radius: 7px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            user-select: none; 
+            box-shadow: 0 1px 0px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1); 
+            border-bottom: 1.5px solid rgba(0,0,0,0.15); 
+            font-size: 19px; 
+            font-weight: 400; 
+            color: #000; 
+            transition: all 0.1s cubic-bezier(0.2, 0, 0.2, 1); 
+            overflow: hidden; 
+            white-space: nowrap; 
+        }
+        .key:hover { background: #fdfdfd; transform: translateY(-0.5px); }
+        .key:active { transform: scale(0.92); background-color: #d1d1d6; box-shadow: none; border-bottom: none; }
+        
+        html[data-theme="dark"] .key { 
+            background: #6D6D72; 
+            box-shadow: 0 1px 0px rgba(0,0,0,0.4); 
+            border-bottom: 1.5px solid rgba(0,0,0,0.4); 
+            color: #fff; 
+        }
+        html[data-theme="dark"] .key:active {
+            background: #3A3A3C;
+        }
         .key.selected { border: 3px solid var(--ios-blue); box-shadow: 0 0 12px rgba(0,122,255,0.4); transform: scale(1.05); z-index: 10; }
         .swipe-label { position: absolute; font-size: 11px; color: var(--text-secondary); font-weight: 500; pointer-events: none; }
 
@@ -235,7 +281,7 @@
         <div class="nav-left">
             <span class="nav-title">⌨️ 鍵盤配置工作室</span>
             <span class="author-badge">版權所有 ＆ 製作：WHY</span>
-            <span class="version-badge">Ver 260410-1015 (Universal Period Fix)</span>
+            <span class="version-badge">Ver 260421-0817 (Delete Key Fix)</span>
         </div>
         <button class="theme-toggle" id="themeToggle" onclick="toggleEditorTheme()" title="切換日/夜間模式">☀️</button>
     </nav>
@@ -907,6 +953,8 @@
     function syncCD(p,h){document.getElementById(h).value=document.getElementById(p).value.toUpperCase();renderPreview();}
     function syncHD(h,p){const v=document.getElementById(h).value;if(/^#[0-9A-F]{6}$/i.test(v)){document.getElementById(p).value=v;renderPreview();}}
 
+    function removeKSync(rIdx,kIdx){const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m]&&layouts[m].rows[rIdx]&&layouts[m].rows[rIdx].keys.length>1){layouts[m].rows[rIdx].keys.splice(kIdx,1);}});renderEditor();renderPreview();}
+    function removeRSync(rIdx){const targets=getSyncTargets(currentMode);targets.forEach(m=>{if(layouts[m]&&layouts[m].rows.length>1){layouts[m].rows.splice(rIdx,1);}});renderEditor();renderPreview();}
     function autoWidth(rIdx,kIdx){const row=layouts[currentMode].rows[rIdx];let o=0;row.keys.forEach((k,i)=>{if(i!==kIdx)o+=(parseFloat(k.width)||0);});updateKey(rIdx,kIdx,'width',Math.max(0,(1-o)).toFixed(4),null);renderEditor();}
     function updateSum(rIdx){const row=layouts[currentMode].rows[rIdx];if(!row)return;const sum=row.keys.reduce((a,b)=>a+(parseFloat(b.width)||0),0);const el=document.getElementById(`sum-${rIdx}`);if(el){el.innerText=sum.toFixed(2);el.style.color=Math.abs(sum-1.0)<0.001?"#34c759":"#ff3b30";}}
 
@@ -940,10 +988,10 @@
         return `${prefix}Button`;
     }
     </script>
-    <script src="js_part1b.js?v=260410-1015"></script>
-    <script src="js_part1c.js?v=260410-1015"></script>
-    <script src="js_part2.js?v=260410-1015"></script>
-    <script src="js_part2b.js?v=260410-1015"></script>
+    <script src="js_part1b.js?v=260421-0817"></script>
+    <script src="js_part1c.js?v=260421-0817"></script>
+    <script src="js_part2.js?v=260421-0817"></script>
+    <script src="js_part2b.js?v=260421-0817"></script>
     <script>
     /* ======================================================================
        PART 3: INITIALIZATION — Bind events, set up drop zones, init
