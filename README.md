@@ -16,6 +16,9 @@
     原本: 改檔名-->解壓縮-->找對應檔案-->修攻-->重新壓縮-->改檔名-->匯入裝置<br>
     現在: 直接上傳皮膚檔.cskin-->修改-->匯出.cskin-->匯入裝置
 
+* **`keyboard_config_studio_Manual.html`**
+    **鍵盤配置工作室(整合鍵盤佈局與按鍵滑動工具)使用者操作手冊**：操作說明
+
 * **`keyboard_layout_color_tools.html`**
     **鍵盤佈局與配色工具**：提供視覺化的介面，讓你可以輕鬆配置鍵盤的按鍵排列與顏色主題，即時預覽各種主題風格下的鍵盤外觀。
 
@@ -32,6 +35,9 @@ https://hans52088.github.io/web/
 
 * 元書皮膚cskin整合打包修改工作室
 https://hans52088.github.io/web/keyboard_config_studio.html
+
+* 元書皮膚cskin整合打包修改工作室操作手冊
+https://hans52088.github.io/web/keyboard_config_studio_Manual.html
 
 * 鍵盤佈局與顏色視覺化編輯器
 https://hans52088.github.io/web/keyboard_layout_color_tools.html
