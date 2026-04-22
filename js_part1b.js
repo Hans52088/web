@@ -236,7 +236,8 @@ function gen(){
                 const fgStyles = [
                     `${p}ButtonForegroundStyle`,
                     `${p}SchemaLiurForegroundStyle`,
-                    `${p}SchemaEasyEnForegroundStyle`
+                    `${p}SchemaEasyEnForegroundStyle`,
+                    `${p}ButtonUppercasedStateForegroundStyle`
                 ];
                 
                 fgStyles.forEach(style => {
@@ -258,6 +259,15 @@ function gen(){
                         addToOverrideMap(`${p}Button`,'action',act);
                         addToOverrideMap(`${p}Button`,'text',txt);
                         addToOverrideMap(`${p}Button`,'foregroundStyle',`['${p}ButtonForegroundStyle']`);
+                        // Fix: globe/nextkeyboard 在 Shift/CapsLock 狀態下仍需顯示地球符號且執行切換鍵盤
+                        if(sp==='globe'||sp==='nextkeyboard'){
+                            addToOverrideMap(`${p}Button`,'uppercasedStateForegroundStyle',`['${p}ButtonForegroundStyle']`);
+                            addToOverrideMap(`${p}Button`,'capsLockedStateForegroundStyle',`['${p}ButtonForegroundStyle']`);
+                            // createButton 預設 isLetter=true 會產生 uppercasedStateAction:{symbol:'GLOBE'}
+                            // 必須覆寫回正確的 nextKeyboard action
+                            addToOverrideMap(`${p}Button`,'uppercasedStateAction',`'nextKeyboard'`);
+                            addToOverrideMap(`${p}Button`,'capsLockedStateAction',`'nextKeyboard'`);
+                        }
                     }
                 }
             });
